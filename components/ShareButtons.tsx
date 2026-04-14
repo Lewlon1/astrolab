@@ -34,11 +34,35 @@ export default function ShareButtons({
   const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
 
   return (
-    <div className="flex items-center gap-4 text-sm text-cream/40">
-      <span className="uppercase tracking-wider text-xs">Share</span>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        fontSize: "0.85rem",
+        color: "var(--text-muted)",
+      }}
+    >
+      <span
+        style={{
+          textTransform: "uppercase",
+          letterSpacing: "0.15em",
+          fontSize: "0.7rem",
+          fontWeight: 500,
+        }}
+      >
+        Share
+      </span>
       <button
         onClick={copyLink}
-        className="hover:text-cream/70 transition-colors"
+        style={{
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          color: "var(--coral)",
+          fontFamily: "inherit",
+          fontSize: "inherit",
+        }}
       >
         {copied ? "Copied!" : "Copy link"}
       </button>
@@ -46,7 +70,7 @@ export default function ShareButtons({
         href={twitterUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="hover:text-cream/70 transition-colors"
+        style={{ color: "var(--coral)", textDecoration: "none" }}
       >
         𝕏 Post
       </a>

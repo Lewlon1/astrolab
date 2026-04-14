@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import PageHero from "@/components/PageHero";
-import SectionHeading from "@/components/SectionHeading";
 import EventCard from "@/components/EventCard";
 import PastEventsSection from "@/components/PastEventsSection";
 import { BRAND } from "@/lib/constants";
@@ -31,28 +30,51 @@ export default async function EventsPage() {
     <>
       <PageHero
         title="Events"
-        subtitle="In-person astrology experiences in Barcelona"
+        subtitle="In-person astrology experiences in Barcelona."
         breadcrumb={[{ label: "Events", href: "/events" }]}
       />
 
-      {/* ─── Upcoming events ─── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24">
-        <SectionHeading label="What's next" title="Upcoming" />
+      <section
+        style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: "3rem 1.5rem 4rem",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p className="section-eyebrow">What&apos;s next</p>
+          <h2 className="section-title">Upcoming</h2>
+        </div>
 
         {upcoming.length > 0 ? (
-          <div className="flex flex-col gap-6 mt-12">
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "1.25rem",
+              marginTop: "2.5rem",
+            }}
+          >
             {upcoming.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
         ) : (
-          <p className="mt-12 text-cream/50 text-sm">
+          <p
+            style={{
+              marginTop: "2rem",
+              textAlign: "center",
+              color: "var(--text-muted)",
+              fontSize: "0.9rem",
+              fontWeight: 300,
+            }}
+          >
             No upcoming events — follow{" "}
             <Link
               href={BRAND.site.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gold hover:text-gold/80 transition-colors"
+              style={{ color: "var(--gold)", textDecoration: "none" }}
             >
               @astropsychelab
             </Link>{" "}
@@ -61,25 +83,59 @@ export default async function EventsPage() {
         )}
       </section>
 
-      {/* ─── Past events ─── */}
       {past.length > 0 && (
-        <section className="max-w-3xl mx-auto px-6 pb-24">
+        <section
+          style={{
+            maxWidth: "900px",
+            margin: "0 auto",
+            padding: "0 1.5rem 4rem",
+          }}
+        >
           <PastEventsSection events={past} />
         </section>
       )}
 
-      {/* ─── Host CTA ─── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24 text-center">
-        <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-12">
-          <h2 className="font-heading text-2xl md:text-3xl font-light mb-4">
+      <section
+        style={{
+          maxWidth: "700px",
+          margin: "0 auto",
+          padding: "0 1.5rem 6rem",
+          textAlign: "center",
+        }}
+      >
+        <div
+          style={{
+            background: "white",
+            border: "1px solid rgba(184,160,112,0.3)",
+            borderRadius: "16px",
+            padding: "3rem 2rem",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: "var(--font-cormorant), serif",
+              fontSize: "clamp(1.5rem, 3vw, 2.25rem)",
+              fontWeight: 300,
+              color: "var(--deep-brown)",
+              marginBottom: "1rem",
+            }}
+          >
             Want to host an event with me?
           </h2>
-          <p className="text-cream/50 text-sm mb-6">
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontSize: "0.9rem",
+              marginBottom: "1.5rem",
+              fontWeight: 300,
+              lineHeight: 1.7,
+            }}
+          >
             I collaborate on workshops, pop-ups, and branded experiences.
           </p>
           <Link
             href={`mailto:${BRAND.site.email}`}
-            className="inline-flex items-center justify-center text-sm font-medium rounded-[22px] px-6 py-2.5 bg-gold text-midnight hover:bg-gold/90 transition-colors"
+            className="btn-primary"
           >
             Get in touch
           </Link>

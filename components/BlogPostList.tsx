@@ -7,12 +7,12 @@ import type { BlogPost } from "@/types";
 const PILLARS = ["All", "Decode", "Reframe", "Navigate", "Align"] as const;
 type Pillar = (typeof PILLARS)[number];
 
-const TAB_STYLES: Record<string, string> = {
-  All: "bg-gold/10 text-gold",
-  Decode: "bg-ocean/10 text-ocean",
-  Reframe: "bg-coral/10 text-coral",
-  Navigate: "bg-sage/10 text-sage",
-  Align: "bg-gold/10 text-gold",
+const TAB_ACTIVE: Record<string, { bg: string; color: string }> = {
+  All: { bg: "var(--deep-brown)", color: "white" },
+  Decode: { bg: "rgba(212,112,74,0.2)", color: "var(--coral)" },
+  Reframe: { bg: "rgba(122,155,106,0.25)", color: "var(--forest)" },
+  Navigate: { bg: "rgba(232,168,56,0.25)", color: "var(--deep-brown)" },
+  Align: { bg: "rgba(184,160,112,0.25)", color: "var(--sage)" },
 };
 
 export default function BlogPostList({ posts }: { posts: BlogPost[] }) {
@@ -26,31 +26,62 @@ export default function BlogPostList({ posts }: { posts: BlogPost[] }) {
   return (
     <div>
       {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2 mb-10">
-        {PILLARS.map((pillar) => (
-          <button
-            key={pillar}
-            onClick={() => setActivePillar(pillar)}
-            className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
-              activePillar === pillar
-                ? TAB_STYLES[pillar]
-                : "bg-white/5 text-cream/40 hover:text-cream/60"
-            }`}
-          >
-            {pillar}
-          </button>
-        ))}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          marginBottom: "2.5rem",
+        }}
+      >
+        {PILLARS.map((pillar) => {
+          const isActive = activePillar === pillar;
+          const active = TAB_ACTIVE[pillar] ?? {
+            bg: "var(--cream)",
+            color: "var(--text-muted)",
+          };
+          return (
+            <button
+              key={pillar}
+              onClick={() => setActivePillar(pillar)}
+              style={{
+                borderRadius: "50px",
+                padding: "0.4rem 1rem",
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                border: "1px solid",
+                background: isActive ? active.bg : "transparent",
+                color: isActive ? active.color : "var(--text-muted)",
+                borderColor: isActive ? active.bg : "rgba(184,160,112,0.4)",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                letterSpacing: "0.04em",
+                fontFamily: "inherit",
+              }}
+            >
+              {pillar}
+            </button>
+          );
+        })}
       </div>
 
       {/* Post list */}
       {filtered.length > 0 ? (
-        <div className="flex flex-col gap-6">
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.25rem",
+          }}
+        >
           {filtered.map((post) => (
             <BlogPostCard key={post.id} post={post} />
           ))}
         </div>
       ) : (
-        <p className="text-cream/50 text-sm">No posts in this category yet.</p>
+        <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+          No posts in this category yet.
+        </p>
       )}
     </div>
   );
