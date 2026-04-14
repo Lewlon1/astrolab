@@ -11,29 +11,71 @@ export default function FAQ({ items }: { items: FAQItem[] }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
-    <div className="divide-y divide-white/5">
+    <div
+      style={{
+        borderTop: "1px solid rgba(184, 160, 112, 0.3)",
+      }}
+    >
       {items.map((item, i) => {
         const isOpen = openIndex === i;
         return (
           <button
             key={i}
             onClick={() => setOpenIndex(isOpen ? null : i)}
-            className="w-full text-left py-5 group"
+            style={{
+              width: "100%",
+              textAlign: "left",
+              padding: "1.25rem 0",
+              background: "transparent",
+              border: "none",
+              borderBottom: "1px solid rgba(184, 160, 112, 0.3)",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
           >
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="font-heading text-lg group-hover:text-gold/80 transition-colors">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "1rem",
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: "var(--font-cormorant), serif",
+                  fontSize: "1.15rem",
+                  fontWeight: 400,
+                  color: "var(--deep-brown)",
+                  margin: 0,
+                }}
+              >
                 {item.question}
               </h3>
               <span
-                className={`text-cream/30 text-xl shrink-0 transition-transform ${
-                  isOpen ? "rotate-45" : ""
-                }`}
+                style={{
+                  color: "var(--gold)",
+                  fontSize: "1.3rem",
+                  flexShrink: 0,
+                  transition: "transform 0.3s",
+                  transform: isOpen ? "rotate(45deg)" : undefined,
+                  fontWeight: 300,
+                }}
               >
                 +
               </span>
             </div>
             {isOpen && (
-              <p className="mt-3 text-sm text-cream/50 leading-relaxed pr-8">
+              <p
+                style={{
+                  marginTop: "0.75rem",
+                  fontSize: "0.9rem",
+                  color: "var(--text-muted)",
+                  lineHeight: 1.7,
+                  paddingRight: "2rem",
+                  fontWeight: 300,
+                }}
+              >
                 {item.answer}
               </p>
             )}

@@ -7,25 +7,59 @@ export default function PageHero({
   breadcrumb,
 }: PageHeroProps) {
   return (
-    <section className="relative pt-32 pb-16 px-6 overflow-hidden">
-      {/* Radial gradient background effects */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-deep/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-sage/10 rounded-full blur-[100px]" />
-      </div>
-
-      <div className="relative max-w-4xl mx-auto text-center">
+    <section
+      style={{
+        position: "relative",
+        paddingTop: "9rem",
+        paddingBottom: "4rem",
+        paddingLeft: "1.5rem",
+        paddingRight: "1.5rem",
+        overflow: "hidden",
+        background:
+          "linear-gradient(160deg, var(--cream) 0%, var(--gold-pale) 40%, var(--cream) 100%)",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          maxWidth: "900px",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
         {breadcrumb && breadcrumb.length > 0 && (
-          <nav className="flex justify-center items-center gap-2 text-sm text-cream/40 mb-6">
-            <Link href="/" className="hover:text-cream/60 transition-colors">
+          <nav
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontSize: "0.75rem",
+              color: "var(--text-light)",
+              marginBottom: "1.5rem",
+            }}
+          >
+            <Link
+              href="/"
+              style={{
+                color: "inherit",
+                textDecoration: "none",
+              }}
+            >
               Home
             </Link>
             {breadcrumb.map((item, i) => (
-              <span key={i} className="flex items-center gap-2">
+              <span
+                key={i}
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
                 <span>/</span>
                 <Link
                   href={item.href}
-                  className="hover:text-cream/60 transition-colors"
+                  style={{
+                    color: "var(--text-muted)",
+                    textDecoration: "none",
+                  }}
                 >
                   {item.label}
                 </Link>
@@ -34,14 +68,31 @@ export default function PageHero({
           </nav>
         )}
 
-        <p className="text-gold text-xs uppercase tracking-[0.2em] font-medium mb-4">
-          The Astro Psyche Lab
-        </p>
-        <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-light">
+        <p className="section-eyebrow">The Astro Psyche Lab</p>
+        <h1
+          style={{
+            fontFamily: "var(--font-cormorant), serif",
+            fontSize: "clamp(2.5rem, 5vw, 4rem)",
+            fontWeight: 300,
+            color: "var(--deep-brown)",
+            lineHeight: 1.1,
+          }}
+        >
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-4 text-lg text-cream/50 max-w-2xl mx-auto">
+          <p
+            style={{
+              marginTop: "1rem",
+              fontSize: "1.05rem",
+              color: "var(--text-muted)",
+              maxWidth: "600px",
+              marginLeft: "auto",
+              marginRight: "auto",
+              lineHeight: 1.7,
+              fontWeight: 300,
+            }}
+          >
             {subtitle}
           </p>
         )}
