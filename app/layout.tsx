@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit, Syne } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Outfit,
+  Syne,
+  Fraunces,
+  Instrument_Serif,
+  Spectral,
+  DM_Mono,
+} from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import ManyChatScript from "@/components/ManyChatScript";
 import "./globals.css";
@@ -23,6 +31,38 @@ const syne = Syne({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-syne",
+  display: "swap",
+});
+
+// Editorial Cosmic fonts (public homepage redesign)
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+const spectral = Spectral({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  style: ["normal", "italic"],
+  variable: "--font-spectral",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-dm-mono",
   display: "swap",
 });
 
@@ -52,7 +92,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${outfit.variable} ${syne.variable}`}
+      className={`${cormorant.variable} ${outfit.variable} ${syne.variable} ${fraunces.variable} ${instrumentSerif.variable} ${spectral.variable} ${dmMono.variable}`}
     >
       <body className="antialiased font-body">
         {children}

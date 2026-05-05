@@ -1,126 +1,264 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import LangText from "@/components/LangText";
-import LangToggle from "@/components/LangToggle";
+import { useLang } from "@/context/LangContext";
+import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 
 type NavLink = {
   href: string;
   labelEn: string;
   labelEs: string;
-  cta?: boolean;
 };
 
 const NAV_LINKS: NavLink[] = [
   { href: "/#founder", labelEn: "About", labelEs: "Sobre Mí" },
   { href: "/#tarot", labelEn: "Sessions", labelEs: "Sesiones" },
-  { href: "/#magazine", labelEn: "Travel Magazine", labelEs: "Revista de Viaje" },
+  {
+    href: "/#magazine",
+    labelEn: "Travel Magazine",
+    labelEs: "Revista de Viaje",
+  },
   { href: "/#reviews", labelEn: "Reviews", labelEs: "Reseñas" },
   { href: "/blog", labelEn: "Blog", labelEs: "Blog" },
 ];
 
 const BOOK_LINK = {
   href: "/#book",
-  labelEn: "Book Now",
+  labelEn: "Book a Session",
   labelEs: "Reservar",
 };
 
-export default function SiteHeader() {
-  const [scrolled, setScrolled] = useState(false);
+type Props = {
+  editorialDate?: EditorialDate;
+};
+
+export default function SiteHeader({ editorialDate }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const { lang, setLang } = useLang();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
+  const ed = editorialDate ?? getEditorialDate();
+  const issueLabelEn = `Issue ${ed.issueNum} · ${ed.monthEn} ${ed.year}`;
+  const issueLabelEs = `Número ${ed.issueNum} · ${ed.monthEs} ${ed.year}`;
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-[100] backdrop-blur-xl transition-all duration-300 ${
-        scrolled ? "py-3 shadow-[0_2px_20px_rgba(0,0,0,0.06)]" : "py-[1.15rem]"
-      }`}
+      className="sticky top-0 z-[50]"
       style={{
-        background: "rgba(255, 248, 242, 0.88)",
-        borderBottom: "1px solid rgba(0,0,0,0.04)",
+        background: "var(--ed-paper)",
+        borderBottom: "1px solid var(--ed-ink)",
       }}
     >
-      <nav className="max-w-7xl mx-auto px-6 md:px-8 flex items-center justify-between gap-4">
-        {/* Logo */}
+      {/* Masthead row */}
+      <div className="hidden md:grid grid-cols-[1fr_auto_1fr] items-center px-14 py-5 gap-6">
+        <div
+          className="font-dm-mono uppercase"
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.28em",
+            color: "var(--ed-text-mute)",
+          }}
+        >
+          <LangText en={issueLabelEn} es={issueLabelEs} />
+        </div>
+
         <Link
           href="/"
-          className="font-display font-bold text-[1.05rem] tracking-[0.08em] uppercase text-[var(--deep-brown)] whitespace-nowrap"
+          className="font-fraunces text-center whitespace-nowrap"
+          style={{
+            fontSize: 22,
+            fontWeight: 400,
+            letterSpacing: "-0.01em",
+            color: "var(--ed-ink)",
+          }}
         >
-          The Astro Psyche <span className="text-[var(--gold)]">Lab</span>
+          The Astro{" "}
+          <em
+            style={{ fontStyle: "italic", color: "var(--ed-rust)" }}
+          >
+            Psyche
+          </em>{" "}
+          Lab
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-[1.4rem]">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[var(--text-muted)] hover:text-[var(--deep-brown)] text-[0.78rem] tracking-[0.04em] uppercase transition-colors whitespace-nowrap"
+        <div className="flex items-center gap-3.5 justify-end">
+          <div
+            className="flex"
+            style={{ fontSize: 10, letterSpacing: "0.14em" }}
+          >
+            <button
+              onClick={() => setLang("en")}
+              className="border-0 cursor-pointer font-medium font-dm-mono"
+              style={{
+                padding: "4px 10px",
+                background: lang === "en" ? "var(--ed-ink)" : "transparent",
+                color:
+                  lang === "en" ? "var(--ed-paper)" : "var(--ed-text-mute)",
+                borderRight: "1px solid var(--ed-rule)",
+              }}
+              aria-pressed={lang === "en"}
             >
-              <LangText en={link.labelEn} es={link.labelEs} />
-            </Link>
-          ))}
-          <LangToggle />
+              EN
+            </button>
+            <button
+              onClick={() => setLang("es")}
+              className="border-0 cursor-pointer font-medium font-dm-mono"
+              style={{
+                padding: "4px 10px",
+                background: lang === "es" ? "var(--ed-ink)" : "transparent",
+                color:
+                  lang === "es" ? "var(--ed-paper)" : "var(--ed-text-mute)",
+              }}
+              aria-pressed={lang === "es"}
+            >
+              ES
+            </button>
+          </div>
           <Link
             href={BOOK_LINK.href}
-            className="bg-[var(--deep-brown)] text-white text-[0.78rem] font-medium px-5 py-[0.55rem] rounded-full hover:bg-[var(--mid-brown)] transition-colors uppercase tracking-[0.04em] whitespace-nowrap"
+            className="font-medium font-dm-mono uppercase"
+            style={{
+              background: "var(--ed-ink)",
+              color: "var(--ed-paper)",
+              padding: "10px 20px",
+              fontSize: 10.5,
+              letterSpacing: "0.18em",
+              textDecoration: "none",
+            }}
           >
             <LangText en={BOOK_LINK.labelEn} es={BOOK_LINK.labelEs} />
           </Link>
         </div>
+      </div>
 
-        {/* Mobile controls */}
-        <div className="flex md:hidden items-center gap-3">
-          <LangToggle />
+      {/* Desktop nav row */}
+      <nav
+        className="hidden md:flex justify-center font-dm-mono uppercase"
+        style={{
+          gap: 38,
+          padding: "14px 56px",
+          borderTop: "1px solid var(--ed-rule)",
+          fontSize: 10.5,
+          letterSpacing: "0.24em",
+          color: "var(--ed-ink-soft)",
+        }}
+      >
+        {NAV_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className="hover:opacity-70 transition-opacity"
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            <LangText en={link.labelEn} es={link.labelEs} />
+          </Link>
+        ))}
+      </nav>
+
+      {/* Mobile masthead */}
+      <div className="flex md:hidden items-center justify-between px-5 py-4">
+        <Link
+          href="/"
+          className="font-fraunces"
+          style={{
+            fontSize: 18,
+            fontWeight: 400,
+            letterSpacing: "-0.01em",
+            color: "var(--ed-ink)",
+          }}
+        >
+          The Astro{" "}
+          <em style={{ fontStyle: "italic", color: "var(--ed-rust)" }}>
+            Psyche
+          </em>{" "}
+          Lab
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex" style={{ fontSize: 10 }}>
+            <button
+              onClick={() => setLang("en")}
+              className="border-0 cursor-pointer font-medium font-dm-mono"
+              style={{
+                padding: "3px 8px",
+                background: lang === "en" ? "var(--ed-ink)" : "transparent",
+                color:
+                  lang === "en" ? "var(--ed-paper)" : "var(--ed-text-mute)",
+              }}
+              aria-pressed={lang === "en"}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLang("es")}
+              className="border-0 cursor-pointer font-medium font-dm-mono"
+              style={{
+                padding: "3px 8px",
+                background: lang === "es" ? "var(--ed-ink)" : "transparent",
+                color:
+                  lang === "es" ? "var(--ed-paper)" : "var(--ed-text-mute)",
+              }}
+              aria-pressed={lang === "es"}
+            >
+              ES
+            </button>
+          </div>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="flex flex-col gap-1.5 p-2"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
             <span
-              className={`block w-5 h-px bg-[var(--deep-brown)] transition-all duration-300 ${
+              className={`block w-5 h-px transition-all duration-300 ${
                 mobileOpen ? "rotate-45 translate-y-[4px]" : ""
               }`}
+              style={{ background: "var(--ed-ink)" }}
             />
             <span
-              className={`block w-5 h-px bg-[var(--deep-brown)] transition-all duration-300 ${
+              className={`block w-5 h-px transition-all duration-300 ${
                 mobileOpen ? "opacity-0" : ""
               }`}
+              style={{ background: "var(--ed-ink)" }}
             />
             <span
-              className={`block w-5 h-px bg-[var(--deep-brown)] transition-all duration-300 ${
+              className={`block w-5 h-px transition-all duration-300 ${
                 mobileOpen ? "-rotate-45 -translate-y-[4px]" : ""
               }`}
+              style={{ background: "var(--ed-ink)" }}
             />
           </button>
         </div>
-      </nav>
+      </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
         <div
-          className="md:hidden backdrop-blur-xl border-b border-black/5"
-          style={{ background: "rgba(255, 248, 242, 0.96)" }}
+          className="md:hidden"
+          style={{
+            background: "var(--ed-paper)",
+            borderTop: "1px solid var(--ed-rule)",
+          }}
         >
-          <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-3">
+          <div className="px-5 py-4 flex flex-col gap-3">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-[var(--text-muted)] hover:text-[var(--deep-brown)] text-sm uppercase tracking-[0.04em] py-1"
+                className="font-dm-mono uppercase"
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  color: "var(--ed-ink-soft)",
+                  textDecoration: "none",
+                  padding: "6px 0",
+                }}
               >
                 <LangText en={link.labelEn} es={link.labelEs} />
               </Link>
@@ -128,7 +266,15 @@ export default function SiteHeader() {
             <Link
               href={BOOK_LINK.href}
               onClick={() => setMobileOpen(false)}
-              className="bg-[var(--deep-brown)] text-white text-sm font-medium px-5 py-2.5 rounded-full text-center mt-2 uppercase tracking-[0.04em]"
+              className="font-dm-mono uppercase text-center mt-2"
+              style={{
+                background: "var(--ed-ink)",
+                color: "var(--ed-paper)",
+                padding: "12px 20px",
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                textDecoration: "none",
+              }}
             >
               <LangText en={BOOK_LINK.labelEn} es={BOOK_LINK.labelEs} />
             </Link>

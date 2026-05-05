@@ -9,6 +9,7 @@ import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
 import HomeCTA from "@/components/HomeCTA";
 import { organizationJsonLd } from "@/lib/jsonld";
+import { getEditorialDate } from "@/lib/editorialDate";
 import type { Service, Testimonial, BlogPost } from "@/types";
 
 const TAROT_SLUGS = [
@@ -21,6 +22,7 @@ const TAROT_SLUGS = [
 
 export default async function HomePage() {
   const supabase = await createClient();
+  const editorialDate = getEditorialDate();
 
   const [{ data: services }, { data: testimonials }, { data: posts }] =
     await Promise.all([
@@ -58,11 +60,14 @@ export default async function HomePage() {
         }}
       />
 
-      <Hero />
+      <Hero editorialDate={editorialDate} />
       <JungRibbon />
-      <Founder />
+      <Founder editorialDate={editorialDate} />
       <TarotDeck services={services ?? []} />
-      <MagazineDetail magazineCalendlyUrl={magazineCalendly} />
+      <MagazineDetail
+        magazineCalendlyUrl={magazineCalendly}
+        editorialDate={editorialDate}
+      />
       <Testimonials testimonials={testimonials ?? []} />
       <LeadCaptureSection />
       <BlogPreview posts={posts ?? []} />
