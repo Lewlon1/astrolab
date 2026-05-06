@@ -2,42 +2,78 @@
 // Pure function — imported by both:
 //   - app/api/transit-draft/route.ts  (server, calls Bedrock)
 //   - components/admin/transits/DraftModal.tsx  (client, "Copy Prompt" button)
-// Do NOT add server-only imports (fs, path, etc.).
+// Do NOT add server-only imports.
 //
-// TODO: Once `transit_planner_v2.jsx` is supplied, replace the prompt body
-// below with the prototype's `buildPrompt()` text verbatim. The function
-// signature stays the same so callers don't break.
+// Text ported verbatim from `transit_planner_v2.jsx::buildPrompt()`.
+// The prototype emitted a single string for Anthropic Messages API; here it's
+// split into a SYSTEM (voice/rules/format/pillar/language — stable per-call
+// instructions) and USER (transit context + angle + output instruction)
+// to fit Bedrock's Converse API. Concatenating SYSTEM + "\n\n" + USER yields
+// a prompt functionally equivalent to the prototype's output.
 
 import type { Transit, Pillar, Format, Language } from "./types";
 
-const PILLARS: Record<Pillar, string> = {
+const PILLAR_INSTRUCTION: Record<Pillar, string> = {
   decode:
-    "Decode — explain what the transit IS and how it actually works astrologically + psychologically. Specific, never generic.",
+    "DECODE pillar — your job is to teach. Take a piece of astrology and explain it clearly through a psychological lens. Avoid pop-astrology clichés. Use concrete language and one human example.",
   reframe:
-    "Reframe — shift the lens. Take a common interpretation people hear and challenge it with a more useful, psychology-informed angle.",
+    "REFRAME pillar — your job is to challenge a common misconception. Open with the assumption people hold, then flip it with depth. The post should leave them seeing something familiar differently.",
   relate:
-    "Relate — bring it down to lived experience. Relationships, attachment patterns, how this shows up in conversations and bodies, not just charts.",
+    "RELATE pillar — your job is to be vulnerable and human. Lead with a personal observation, story, or feeling. Astrology is the lens, not the lesson. The reader should feel seen.",
   convert:
-    "Convert — invite the reader to take action: book a Cosmic Quick Hit (€25), Stellar Insights (€65), Star-Crossed synastry (€95), Cosmic Alliance with astrocartography (€180), or grab the free Love & Career Code lead magnet.",
+    "CONVERT pillar — your job is to move someone toward booking. Lead with the problem they're feeling NOW (use the transit), name the specific service that solves it (Cosmic Quick Hit €25, Blend Reading €65, Stellar Reading €120, Cosmic Alliance €180, Star-Crossed €95), and end with a low-friction CTA (DM keyword LOVECODE for the free voice note, or 'link in bio').",
 };
 
-const FORMATS: Record<Format, string> = {
+const FORMAT_INSTRUCTION: Record<Format, string> = {
   reel:
-    "30-60 second vertical Reel script. Structure: HOOK (first 3s, grab attention) / BODY (3 specific points or one tight story) / CTA. Conversational, never scripted-sounding. Output as labelled sections.",
+    "A 30–60 second VERTICAL VIDEO SCRIPT. Structure: HOOK (1-2 lines, scroll-stopping) | BODY (3-5 short beats with on-screen text suggestions) | CTA (1 line). Include suggested visual/B-roll notes in [brackets]. Total spoken: ~120-150 words.",
   carousel:
-    "6-8 slide Instagram carousel. Slide 1 hook, slide 2 myth/misconception, slides 3-N specific insights, second-to-last takeaway, last CTA. Each slide under 30 words. Output as numbered slides.",
+    "A 6-7 SLIDE CAROUSEL. For each slide: headline (max 8 words), body (1-2 sentences), and on-slide design note. Slide 1 = hook, slides 2-5 = insight, slide 6 = takeaway, slide 7 = CTA.",
   caption:
-    "Standalone Instagram caption. Engaging, personal, under 2200 chars. Open with a hook, deliver the insight, close with a question or CTA. Add 8-12 relevant hashtags at the end.",
+    "A LONG-FORM IG CAPTION (200-300 words). Structure: hook line (must work as preview text), 2-3 paragraphs of insight + personal angle, soft CTA at the end. No bullet points unless natural.",
   story:
-    "2-3 Instagram story slides. Punchy, single-thought-per-slide, designed to be tapped through. Last slide has the CTA or sticker prompt. Output as numbered slides.",
+    "A 3-5 FRAME STORY SEQUENCE. Each frame: short on-screen text (max 15 words), suggested background mood, sticker/poll suggestion if relevant. Last frame = CTA with link sticker note.",
 };
 
-const LANGUAGES: Record<Language, string> = {
-  en: "Write in English only.",
-  es: "Write in Spanish only (warm, conversational, Barcelona-natural).",
+const LANGUAGE_INSTRUCTION: Record<Language, string> = {
+  en: "Write in English.",
+  es: "Escribe en español (España, voz natural y cálida).",
   both:
-    "Provide TWO versions: an English version first, then a Spanish version. Label each clearly with 'EN:' and 'ES:' headers. Don't translate word-for-word — adapt the tone naturally for each language.",
+    "Write BOTH versions: first English, then a section labeled 'ESPAÑOL' with the Spanish version below it.",
 };
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+const MONTHS_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function formatDate(iso: string): { weekday: string; day: number; month: string } {
+  const d = new Date(iso + "T12:00:00");
+  return {
+    weekday: WEEKDAYS[d.getDay()],
+    day: d.getDate(),
+    month: MONTHS_LONG[d.getMonth()],
+  };
+}
 
 export interface BuildDraftPromptInput {
   transit: Transit;
@@ -52,53 +88,49 @@ export interface BuiltPrompt {
   user: string;
 }
 
-const BRAND_VOICE = `You are a content writer for The Astro Psyche Lab, an astrology + psychology brand run by Gabs in Barcelona. Her voice:
-- Warm, insightful, never fluffy or generic
-- Specific and slightly provocative
-- Blends astrological knowledge with psychological depth (attachment theory, somatic awareness, cognitive patterns)
-- Bilingual audience (English primary, some Spanish)
-- Always ties insights back to recognisable, lived patterns — not abstract horoscope-speak`;
-
 export function buildDraftPrompt(input: BuildDraftPromptInput): BuiltPrompt {
   const { transit, pillar, format, language, angle } = input;
 
-  const personalHitsBlock =
+  const personalHitContext =
     transit.personalHits.length > 0
-      ? `\n\nPERSONAL HITS to Gabs's natal chart (use these only if they strengthen the post — don't force):\n${transit.personalHits
-          .map(
-            (h) =>
-              `- ${h.aspect} to natal ${h.natalPoint} (${h.natalDegree}° ${h.natalSign}, orb ${h.orb}°): ${h.reading}`
-          )
-          .join("\n")}`
+      ? `\n\nThis transit personally hits Gabs's chart:\n${transit.personalHits
+          .map((h) => `- ${h.aspect} to natal ${h.planet} (${h.natal}): ${h.meaning}`)
+          .join("\n")}\nIf the pillar is RELATE, lean into this for the personal story angle.`
       : "";
 
-  const angleBlock = angle?.trim() ? `\n\nANGLE / hook the post should hit:\n${angle.trim()}` : "";
+  const angleNote = angle?.trim()
+    ? `\n\nGABS'S SPECIFIC ANGLE FOR THIS POST: ${angle.trim()}\n`
+    : "";
 
-  const system = `${BRAND_VOICE}
+  const { weekday, day, month } = formatDate(transit.date);
 
-You're drafting a single piece of content built around one specific astrological transit.
+  const system = `You are drafting Instagram content for Gabriela ("Gabs"), a psychotherapist (10+ years) and astrologer. Brand: Astropsyche Lab.
 
-CONTENT PILLAR
-${PILLARS[pillar]}
+VOICE:
+- Intelligent, warm, grounded. Therapist energy meets astrologer.
+- NEVER pop-astrology ("Mercury retrograde is making you crazy!" — banned).
+- Psychology-informed framing always available: attachment, defenses, projection, integration.
+- Bilingual native (English + Spanish, Puerto Rico → Barcelona).
+- Confident but never preachy. Knows when to be soft.
+- Specific over vague. One real human example > three abstractions.
 
-FORMAT
-${FORMATS[format]}
+NEVER:
+- Use emojis as filler. One purposeful emoji max if any.
+- Open with "Did you know..." or "Let's talk about..."
+- Generic CTAs like "double tap if you agree"
 
-LANGUAGE
-${LANGUAGES[language]}
+PILLAR: ${PILLAR_INSTRUCTION[pillar]}
 
-Output ONLY the content itself. No preamble, no meta-commentary, no "Here's your post:". The content should be ready to paste directly into the platform.`;
+FORMAT: ${FORMAT_INSTRUCTION[format]}
 
-  const user = `TRANSIT
-${transit.title} — ${transit.subtype}
-Date: ${transit.date} at ${transit.time} Barcelona local
-Position: ${transit.position}
-Type: ${transit.type}, intensity: ${transit.intensity}
+LANGUAGE: ${LANGUAGE_INSTRUCTION[language]}`;
 
-SKY READING
-${transit.description}${personalHitsBlock}${angleBlock}
+  const user = `TRANSIT CONTEXT:
+- ${transit.title} on ${weekday} ${day} ${month} 2026 at ${transit.time} Barcelona local
+- ${transit.subtype} at ${transit.position}
+- Sky reading: ${transit.description}${personalHitContext}${angleNote}
 
-Draft the ${format} now.`;
+Output ONLY the content shell — no preamble, no "Here's your draft", no meta-commentary. Start directly with the content. Use clear section headers in the content shell where helpful (HOOK, BODY, CTA, etc.) so Gabs can scan it fast.`;
 
   return { system, user };
 }

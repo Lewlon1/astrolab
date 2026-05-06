@@ -174,10 +174,16 @@ A fourth admin tool at `/admin/transits` with:
 
 ## What's deferred
 
-- **Transit data:** ships with 3 placeholder entries (one of each render branch — lunation / ingress / aspect). Top-of-file `TODO` in `lib/transits/transits-data.ts` flags the verbatim port of `transit_planner_v2.jsx`'s ~34-entry array (the prototype was not in the repo at session start).
-- **Single-post prompt:** `lib/transits/buildDraftPrompt.ts` ships with a sensible Phase 1 prompt that captures Gabs's brand voice and the four pillars/formats. TODO at the top: replace with the prototype's `buildPrompt()` text verbatim once supplied. Function signature stays stable, so the API route + Copy Prompt button keep working.
-- **Personal hits:** the placeholder transits include illustrative personal hits against Gabs's natal Sun (Pisces 15°), Moon (Sag 15°), Ascendant (Taurus 15°). All hardcoded — Phase 2 swaps in real birth data + Swiss Ephemeris.
-- **Phase 2 work** (FastAPI Lambda Swiss Ephemeris endpoint, live personal-hit calculation, Vercel cron, natal-chart settings UI, edit-draft/edit-bundle modals, Calendar/MailerLite push, optional pre-generation cron) — all noted in plan, none built.
+- **Phase 2 work** (FastAPI Lambda Swiss Ephemeris endpoint, live personal-hit calculation, Vercel cron, natal-chart settings UI, edit-draft/edit-bundle modals, Calendar/MailerLite push, optional pre-generation cron) — all noted in the plan file, none built.
+
+## Prototype paste-in pass
+
+After the initial Phase 1 commit, Lewis supplied the full `transit_planner_v2.jsx` content. A second commit ported:
+
+- **All 34 transit entries** verbatim into `lib/transits/transits-data.ts` (May 1 → October 26, 2026). Each entry is tagged `horoscopeable: boolean` per the rule (true for all lunations, ingresses, retrograde stations, and aspects with `intensity: 'major'`; false only for the one mid-intensity aspect, `mercury-square-nodes-may19`). Result: 33 of 34 transits are horoscopeable.
+- **`buildDraftPrompt`** rewritten with the prototype's `buildPrompt()` text verbatim. The prototype emitted a single string (it called Anthropic Messages API directly). Here the same content is split into Bedrock's SYSTEM (voice + rules + pillar + format + language — stable per-call instructions) and USER (transit context + angle + "Output ONLY..." instruction). Concatenating SYSTEM + USER yields a prompt functionally equivalent to the prototype's original output, which is what the Copy Prompt button does.
+- **`PersonalHit` type reshaped** to match the prototype's flat `{ aspect, planet, natal, meaning }` shape. The earlier Phase 1 type used a more structured `{ natalPoint, natalSign, natalDegree, aspect, orb, reading }` form that didn't match the prototype's free-form natal strings (e.g. `"Pisces 15°"`). `DetailDrawer.tsx` render updated to match.
+- **Pillar definitions** in `buildDraftPrompt.ts` now name actual services with real €prices (Cosmic Quick Hit €25, Blend Reading €65, Stellar Reading €120, Cosmic Alliance €180, Star-Crossed €95) per the prototype's CONVERT pillar instruction.
 
 ## Files modified
 
@@ -261,7 +267,6 @@ Until both are run: `/admin/transits` loads, Timeline + Calendar work, Bedrock G
 
 ## Outstanding TODOs
 
-1. Paste the verbatim ~34-entry transit array from `transit_planner_v2.jsx` into `lib/transits/transits-data.ts`, replacing the 3 placeholders. Set `horoscopeable: true` per the rules in the file's header comment.
-2. Replace `lib/transits/buildDraftPrompt.ts` body with the prototype's `buildPrompt()` text verbatim if it differs meaningfully from the Phase 1 prompt shipped here.
-3. Run `supabase/transit_drafts.sql` and `supabase/transit_horoscopes.sql` in Supabase SQL editor.
-4. Smoke-test E2E in dev / Vercel preview, including a real Bedrock horoscope generation to capture latency + JSON-validation reliability data for Phase 2 planning.
+1. Run `supabase/transit_drafts.sql` and `supabase/transit_horoscopes.sql` in Supabase SQL editor.
+2. Smoke-test E2E in dev / Vercel preview: filter → click transit (Timeline + Calendar) → drawer → draft → save → reload; switch to Calendar → click day → popover → drawer; click "Generate sign-by-sign read" on a major transit → verify all 24 reads come back, language toggle works → save bundle. Capture latency + JSON-validation reliability data for Phase 2 planning.
+3. (Phase 2) Wire real birth data into `lib/transits/natal-chart.ts` and start replacing the hardcoded personal hits with live Swiss Ephemeris calculations.

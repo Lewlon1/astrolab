@@ -109,11 +109,11 @@ export default function DetailDrawer({
                         ✦ {hit.aspect}
                       </span>
                       <span className="text-xs text-[#6b6560]">
-                        natal {hit.natalPoint} · {hit.natalDegree}° {hit.natalSign} · orb {hit.orb}°
+                        natal {hit.planet} · {hit.natal}
                       </span>
                     </div>
                     <p className="text-sm text-[#1a1a18] leading-relaxed">
-                      {hit.reading}
+                      {hit.meaning}
                     </p>
                   </div>
                 ))}

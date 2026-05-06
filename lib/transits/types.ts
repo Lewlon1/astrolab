@@ -39,12 +39,10 @@ export const SIGNS: Sign[] = [
 ];
 
 export interface PersonalHit {
-  natalPoint: string; // e.g. "Sun", "Moon", "Ascendant"
-  natalSign: Sign;
-  natalDegree: number;
-  aspect: string; // e.g. "conjunction", "square", "trine"
-  orb: number;
-  reading: string;
+  aspect: string;  // e.g. "trine", "opposition", "approaching conjunction"
+  planet: string;  // natal point name: "Sun" | "Moon" | "Ascendant" | etc.
+  natal: string;   // free-form natal position, e.g. "Pisces 15°"
+  meaning: string;
 }
 
 export interface Transit {
