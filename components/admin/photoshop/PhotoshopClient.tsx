@@ -73,6 +73,53 @@ export default function PhotoshopClient() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  const addHistory = (label: string) => {
+    setHistory((h) => [
+      ...h.map((it) => ({ ...it, active: false })),
+      { label, active: true },
+    ]);
+  };
+
+  // Composite all visible layers and download as PNG
+  const exportPng = useCallback(() => {
+    const out = document.createElement("canvas");
+    out.width = DOC_W;
+    out.height = DOC_H;
+    const ctx = out.getContext("2d");
+    if (!ctx) return;
+    // Transparent base — PNG keeps alpha
+    for (const l of layers) {
+      if (!l.visible) continue;
+      const lc = layerCanvasesRef.current.get(l.id);
+      if (!lc) continue;
+      ctx.save();
+      ctx.globalAlpha = l.opacity / 100;
+      ctx.globalCompositeOperation = blendModeToComposite(l.blendMode);
+      ctx.drawImage(lc, 0, 0);
+      ctx.restore();
+    }
+    out.toBlob((blob) => {
+      if (!blob) {
+        setToast("Export failed");
+        return;
+      }
+      const filename = DOC_NAME.replace(/\.psd$/i, "") + ".png";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setToast(`Saved ${filename}`);
+      setHistory((h) => [
+        ...h.map((it) => ({ ...it, active: false })),
+        { label: "Quick Export as PNG", active: true },
+      ]);
+    }, "image/png");
+  }, [layers]);
+
   // Keybindings
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -147,53 +194,6 @@ export default function PhotoshopClient() {
       }
     };
   }, [thumbBust, layers]);
-
-  const addHistory = (label: string) => {
-    setHistory((h) => [
-      ...h.map((it) => ({ ...it, active: false })),
-      { label, active: true },
-    ]);
-  };
-
-  // Composite all visible layers and download as PNG
-  const exportPng = useCallback(() => {
-    const out = document.createElement("canvas");
-    out.width = DOC_W;
-    out.height = DOC_H;
-    const ctx = out.getContext("2d");
-    if (!ctx) return;
-    // Transparent base — PNG keeps alpha
-    for (const l of layers) {
-      if (!l.visible) continue;
-      const lc = layerCanvasesRef.current.get(l.id);
-      if (!lc) continue;
-      ctx.save();
-      ctx.globalAlpha = l.opacity / 100;
-      ctx.globalCompositeOperation = blendModeToComposite(l.blendMode);
-      ctx.drawImage(lc, 0, 0);
-      ctx.restore();
-    }
-    out.toBlob((blob) => {
-      if (!blob) {
-        setToast("Export failed");
-        return;
-      }
-      const filename = DOC_NAME.replace(/\.psd$/i, "") + ".png";
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      setToast(`Saved ${filename}`);
-      setHistory((h) => [
-        ...h.map((it) => ({ ...it, active: false })),
-        { label: "Quick Export as PNG", active: true },
-      ]);
-    }, "image/png");
-  }, [layers]);
 
   const handleAddLayer = () => {
     const id = `l-${Date.now().toString(36)}`;
