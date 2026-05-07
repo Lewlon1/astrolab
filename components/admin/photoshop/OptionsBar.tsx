@@ -261,7 +261,6 @@ function PctField({
 function SelectField({
   label,
   value,
-  options,
   width,
 }: {
   label: string;

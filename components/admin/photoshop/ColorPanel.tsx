@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 const SWATCHES = [
   // Astropsyche-themed palette
@@ -16,15 +16,9 @@ const SWATCHES = [
 
 export default function ColorPanel({
   fg,
-  bg,
-  onPickFg,
-  onPickBg,
   onSwatch,
 }: {
   fg: string;
-  bg: string;
-  onPickFg: () => void;
-  onPickBg: () => void;
   onSwatch: (hex: string) => void;
 }) {
   const fgInputRef = useRef<HTMLInputElement>(null);

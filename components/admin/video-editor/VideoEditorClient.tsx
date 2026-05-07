@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { Clip, EditorState, MediaItem, Tool, Track } from "./types";
+import type { Clip, EditorState, MediaItem, Tool } from "./types";
 import { DEFAULT_FPS } from "./types";
 import { MOCK_MEDIA, DEFAULT_TRACKS, SEED_CLIPS } from "./mockMedia";
 import { PX_PER_FRAME_BASE, clamp } from "./utils";
@@ -430,7 +430,6 @@ export default function VideoEditorClient() {
               }
               activeClip={activeClip}
               activeMedia={programMedia}
-              totalDurationFrames={totalDurationFrames}
             />
           </div>
           {/* Bottom: bin + toolbar + timeline */}

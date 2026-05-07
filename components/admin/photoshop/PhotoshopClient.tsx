@@ -285,7 +285,6 @@ export default function PhotoshopClient() {
           activeLayerId={activeLayerId}
           layerCanvases={layerCanvasesRef.current}
           fg={fg}
-          bg={bg}
           tool={tool}
           brush={{
             size: brushSize,
@@ -310,13 +309,7 @@ export default function PhotoshopClient() {
           }}
         >
           <div style={{ flex: "0 0 auto" }}>
-            <ColorPanel
-              fg={fg}
-              bg={bg}
-              onPickFg={handlePickFg}
-              onPickBg={handlePickBg}
-              onSwatch={(hex) => setFg(hex)}
-            />
+            <ColorPanel fg={fg} onSwatch={(hex) => setFg(hex)} />
           </div>
           <div style={{ flex: "1 1 50%", minHeight: 0, borderTop: "1px solid var(--ps-border)" }}>
             <LayersPanel

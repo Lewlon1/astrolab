@@ -18,7 +18,6 @@ export default function Canvas({
   activeLayerId,
   layerCanvases,
   fg,
-  bg,
   tool,
   brush,
   fontSize,
@@ -34,7 +33,6 @@ export default function Canvas({
   activeLayerId: string;
   layerCanvases: Map<string, HTMLCanvasElement>;
   fg: string;
-  bg: string;
   tool: PsTool;
   brush: BrushOpts;
   fontSize: number;
@@ -335,7 +333,7 @@ export default function Canvas({
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = () => {
     if (tool === "hand") {
       panRef.current = null;
       return;

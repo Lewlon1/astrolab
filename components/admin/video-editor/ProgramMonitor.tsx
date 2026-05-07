@@ -12,7 +12,6 @@ export default function ProgramMonitor({
   onStep,
   activeClip,
   activeMedia,
-  totalDurationFrames,
 }: {
   playheadFrames: number;
   isPlaying: boolean;
@@ -20,7 +19,6 @@ export default function ProgramMonitor({
   onStep: (delta: number) => void;
   activeClip: Clip | null;
   activeMedia: MediaItem | null;
-  totalDurationFrames: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
