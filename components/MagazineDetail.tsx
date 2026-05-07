@@ -1,12 +1,10 @@
 import LangText from "@/components/LangText";
 import Loupe from "@/components/Loupe";
-import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 
 const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
 
 type Props = {
   magazineCalendlyUrl?: string | null;
-  editorialDate?: EditorialDate;
 };
 
 const FEATURES: Array<{
@@ -48,7 +46,6 @@ const FEATURES: Array<{
 
 export default function MagazineDetail({
   magazineCalendlyUrl,
-  editorialDate,
 }: Props) {
   const bookHref = magazineCalendlyUrl ?? FALLBACK_CALENDLY;
 

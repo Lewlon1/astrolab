@@ -64,10 +64,7 @@ export default async function HomePage() {
       <JungRibbon />
       <Founder editorialDate={editorialDate} />
       <TarotDeck services={services ?? []} />
-      <MagazineDetail
-        magazineCalendlyUrl={magazineCalendly}
-        editorialDate={editorialDate}
-      />
+      <MagazineDetail magazineCalendlyUrl={magazineCalendly} />
       <Testimonials testimonials={testimonials ?? []} />
       <LeadCaptureSection />
       <BlogPreview posts={posts ?? []} />
