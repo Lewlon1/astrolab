@@ -2,25 +2,17 @@ import Link from "next/link";
 import type { BlogPost } from "@/types";
 import LangText from "@/components/LangText";
 
-const PILLAR_CLASS: Record<string, string> = {
-  Decode: "tag-decode",
-  Reframe: "tag-reframe",
-  Navigate: "tag-navigate",
-  Align: "tag-align",
+const PILLAR_LABEL: Record<string, { en: string; es: string }> = {
+  Decode: { en: "Decode", es: "Decodifica" },
+  Reframe: { en: "Reframe", es: "Reinterpreta" },
+  Navigate: { en: "Navigate", es: "Navega" },
+  Align: { en: "Align", es: "Alinea" },
 };
 
-const PILLAR_GRADIENT: Record<string, string> = {
-  Decode: "linear-gradient(135deg, rgba(212,112,74,0.15), rgba(196,80,48,0.1))",
-  Reframe: "linear-gradient(135deg, rgba(122,155,106,0.15), rgba(74,107,58,0.1))",
-  Navigate:
-    "linear-gradient(135deg, rgba(232,168,56,0.15), rgba(139,74,42,0.1))",
-  Align: "linear-gradient(135deg, rgba(191,168,138,0.15), rgba(139,115,85,0.1))",
-};
-
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, lang: "en" | "es"): string {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
+  return d.toLocaleDateString(lang === "en" ? "en-GB" : "es-ES", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -35,63 +27,193 @@ export default function BlogPreview({ posts }: Props) {
   if (!posts || posts.length === 0) return null;
 
   return (
-    <section className="blog-section" id="blog">
-      <div style={{ textAlign: "center" }}>
-        <p className="section-eyebrow" style={{ color: "var(--gold)" }}>
-          Blog
-        </p>
-        <h2 className="section-title" style={{ color: "white" }}>
+    <section
+      id="blog"
+      className="px-6 md:px-14 py-20 md:py-[120px]"
+      style={{ borderBottom: "1px solid var(--ed-rule)" }}
+    >
+      <div className="max-w-[1280px] mx-auto">
+        {/* Section marker */}
+        <div className="flex items-center gap-4 mb-10 md:mb-14">
+          <span
+            className="font-dm-mono"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              color: "var(--ed-text-mute)",
+            }}
+          >
+            Pp. 56
+          </span>
+          <span
+            className="flex-1"
+            style={{ height: 1, background: "var(--ed-rule)" }}
+          />
+          <span
+            className="font-dm-mono uppercase"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.24em",
+              color: "var(--ed-rust)",
+            }}
+          >
+            <LangText
+              en="Recent Entries"
+              es="Entradas Recientes"
+            />
+          </span>
+        </div>
+        <h2
+          className="font-fraunces m-0 mb-12 md:mb-14"
+          style={{
+            fontSize: "clamp(40px, 6vw, 72px)",
+            fontWeight: 300,
+            color: "var(--ed-ink)",
+            letterSpacing: "-0.03em",
+          }}
+        >
           <LangText
-            en="From the cosmic journal"
-            es="Del diario cósmico"
+            en={
+              <>
+                From the{" "}
+                <em
+                  style={{ fontStyle: "italic", color: "var(--ed-rust)" }}
+                >
+                  journal.
+                </em>
+              </>
+            }
+            es={
+              <>
+                Del{" "}
+                <em
+                  style={{ fontStyle: "italic", color: "var(--ed-rust)" }}
+                >
+                  diario.
+                </em>
+              </>
+            }
           />
         </h2>
-      </div>
 
-      <div className="blog-grid">
-        {posts.map((post) => {
-          const pillar = post.pillar ?? "Navigate";
-          const tagClass = PILLAR_CLASS[pillar] ?? "tag-navigate";
-          const gradient =
-            PILLAR_GRADIENT[pillar] ?? PILLAR_GRADIENT.Navigate;
-          const thumbStyle = post.featured_image_url
-            ? {
-                backgroundImage: `url(${post.featured_image_url})`,
-              }
-            : { background: gradient };
-
-          return (
-            <Link
-              key={post.id}
-              href={`/blog/${post.slug}`}
-              className="blog-card"
-            >
-              <div className="blog-thumb" style={thumbStyle} />
-              <div className="blog-content">
-                <div className="blog-meta">
-                  <span className={`blog-tag ${tagClass}`}>{pillar}</span>
-                  <span className="blog-date">
-                    {formatDate(post.published_at)}
-                    {post.reading_time_min
-                      ? ` · ${post.reading_time_min} min read`
-                      : ""}
-                  </span>
+        <div
+          className="grid grid-cols-1 md:grid-cols-3"
+          style={{ borderTop: "1px solid var(--ed-ink)" }}
+        >
+          {posts.map((post, i) => {
+            const pillar = post.pillar ?? "Navigate";
+            const label =
+              PILLAR_LABEL[pillar] ?? { en: pillar, es: pillar };
+            return (
+              <Link
+                key={post.id}
+                href={`/blog/${post.slug}`}
+                className="block group"
+                style={{
+                  padding: "32px 28px 32px 0",
+                  borderRight:
+                    i < posts.length - 1
+                      ? "1px solid var(--ed-rule)"
+                      : "none",
+                  paddingLeft: i > 0 ? 28 : 0,
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <div
+                  className="font-dm-mono uppercase mb-4"
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: "0.22em",
+                    color: "var(--ed-rust)",
+                  }}
+                >
+                  <LangText en={label.en} es={label.es} />
                 </div>
-                <h3 className="blog-title">{post.title}</h3>
+                <h4
+                  className="font-fraunces m-0 mb-4 group-hover:opacity-70 transition-opacity"
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 400,
+                    color: "var(--ed-ink)",
+                    lineHeight: 1.15,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {post.title}
+                </h4>
                 {post.excerpt ? (
-                  <p className="blog-excerpt">{post.excerpt}</p>
+                  <p
+                    className="font-spectral m-0 mb-5"
+                    style={{
+                      fontSize: 15,
+                      color: "var(--ed-ink-soft)",
+                      lineHeight: 1.65,
+                    }}
+                  >
+                    {post.excerpt}
+                  </p>
                 ) : null}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+                <div
+                  className="font-dm-mono uppercase"
+                  style={{
+                    fontSize: 10,
+                    color: "var(--ed-text-mute)",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  <DateLine
+                    iso={post.published_at}
+                    readingMin={post.reading_time_min}
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
 
-      <div className="blog-more">
-        <Link href="/blog">
-          <LangText en="Read more →" es="Leer más →" />
-        </Link>
+        <div className="mt-12 text-center">
+          <Link
+            href="/blog"
+            className="font-dm-mono uppercase"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              color: "var(--ed-rust)",
+              textDecoration: "none",
+              borderBottom: "1px solid transparent",
+            }}
+          >
+            <LangText en="Read more →" es="Leer más →" />
+          </Link>
+        </div>
       </div>
     </section>
+  );
+}
+
+function DateLine({
+  iso,
+  readingMin,
+}: {
+  iso: string | null;
+  readingMin: number | null;
+}) {
+  // Render twice (once per language) inside LangText so the formatting matches the toggle.
+  return (
+    <LangText
+      en={
+        <>
+          {formatDate(iso, "en").toUpperCase()}
+          {readingMin ? ` · ${readingMin} MIN READ` : ""}
+        </>
+      }
+      es={
+        <>
+          {formatDate(iso, "es").toUpperCase()}
+          {readingMin ? ` · ${readingMin} MIN DE LECTURA` : ""}
+        </>
+      }
+    />
   );
 }

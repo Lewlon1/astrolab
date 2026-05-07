@@ -1,203 +1,250 @@
 import LangText from "@/components/LangText";
-import Reveal from "@/components/Reveal";
+import Loupe from "@/components/Loupe";
+import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 
 const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
 
 type Props = {
   magazineCalendlyUrl?: string | null;
+  editorialDate?: EditorialDate;
 };
 
-export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
+const FEATURES: Array<{
+  num: string;
+  headEn: string;
+  headEs: string;
+  descEn: string;
+  descEs: string;
+}> = [
+  {
+    num: "I.",
+    headEn: "Top 5 Destinations",
+    headEs: "Top 5 Destinos",
+    descEn: "Cities on your strongest planetary lines.",
+    descEs: "Ciudades en tus líneas planetarias más fuertes.",
+  },
+  {
+    num: "II.",
+    headEn: "Curated Activities",
+    headEs: "Actividades Curadas",
+    descEn: "Experiences matched to your chart.",
+    descEs: "Experiencias por tu carta natal.",
+  },
+  {
+    num: "III.",
+    headEn: "Transit Timing",
+    headEs: "Timing de Tránsitos",
+    descEn: "Optimal months for each destination.",
+    descEs: "Meses óptimos para cada destino.",
+  },
+  {
+    num: "IV.",
+    headEn: "Soul Rituals",
+    headEs: "Rituales del Alma",
+    descEn: "Prompts and intentions for each place.",
+    descEs: "Intenciones y prácticas para cada lugar.",
+  },
+];
+
+export default function MagazineDetail({
+  magazineCalendlyUrl,
+  editorialDate,
+}: Props) {
   const bookHref = magazineCalendlyUrl ?? FALLBACK_CALENDLY;
 
   return (
-    <section className="magazine-section" id="magazine">
-      <div className="mag-layout">
-        <Reveal>
-          <div className="mag-visual">
-            <div className="mag-cover">
-              <div className="mag-badge">
-                <span>
-                  <LangText
-                    en={
-                      <>
-                        New
-                        <br />
-                        Product
-                      </>
-                    }
-                    es={
-                      <>
-                        Nuevo
-                        <br />
-                        Producto
-                      </>
-                    }
-                  />
-                </span>
-              </div>
-              <div>
-                <p className="mag-label">The Astro Psyche Lab</p>
-              </div>
-              <div className="mag-title-block">
-                <h3>
-                  <LangText
-                    en={
-                      <>
-                        Soul Guided
-                        <br />
-                        <em>Travel Magazine</em>
-                      </>
-                    }
-                    es={
-                      <>
-                        Revista de Viaje
-                        <br />
-                        <em>Guiada por el Alma</em>
-                      </>
-                    }
-                  />
-                </h3>
-                <p>
-                  <LangText
-                    en="Where you go changes what unfolds for you. A personalised magazine based on your chart, transits, and astrocartography lines."
-                    es="A donde vas cambia lo que se despliega para ti. Una revista personalizada basada en tu carta, tránsitos y líneas astrocartográficas."
-                  />
-                </p>
-              </div>
-              <div className="mag-features-list">
-                <span>
-                  <LangText
-                    en="Top 5 destinations for your chart"
-                    es="Top 5 destinos para tu carta"
-                  />
-                </span>
-                <span>
-                  <LangText
-                    en="Activities aligned to your transits"
-                    es="Actividades por tus tránsitos"
-                  />
-                </span>
-                <span>
-                  <LangText
-                    en="Best timing for each trip"
-                    es="Mejor momento para cada viaje"
-                  />
-                </span>
-                <span>
-                  <LangText
-                    en="Soul-purpose travel rituals"
-                    es="Rituales de viaje con propósito"
-                  />
-                </span>
-              </div>
-            </div>
-          </div>
-        </Reveal>
+    <section
+      id="magazine"
+      className="px-6 md:px-14 py-20 md:py-[120px]"
+      style={{ borderBottom: "1px solid var(--ed-rule)" }}
+    >
+      <div className="max-w-[1280px] mx-auto">
+        {/* Section marker */}
+        <div className="flex items-center gap-4 mb-10 md:mb-14">
+          <span
+            className="font-dm-mono"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              color: "var(--ed-text-mute)",
+            }}
+          >
+            Pp. 28
+          </span>
+          <span
+            className="flex-1"
+            style={{ height: 1, background: "var(--ed-rule)" }}
+          />
+          <span
+            className="font-dm-mono uppercase"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.24em",
+              color: "var(--ed-rust)",
+            }}
+          >
+            <LangText
+              en="New · Digital Issue"
+              es="Nuevo · Edición Digital"
+            />
+          </span>
+        </div>
 
-        <Reveal delay={1}>
-          <div className="mag-text">
-            <p className="section-eyebrow">
-              <LangText en="Digital Product" es="Producto Digital" />
-            </p>
-            <h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 items-start">
+          {/* LEFT: text */}
+          <div className="pt-2 md:pt-5 order-2 md:order-1">
+            <h2
+              className="font-fraunces m-0 mb-8"
+              style={{
+                fontSize: "clamp(40px, 7vw, 88px)",
+                fontWeight: 300,
+                color: "var(--ed-ink)",
+                lineHeight: 0.95,
+                letterSpacing: "-0.03em",
+              }}
+            >
               <LangText
                 en={
                   <>
-                    Your personalised{" "}
-                    <em>soul guided travel magazine</em>
+                    Travel,
+                    <br />
+                    <em
+                      style={{
+                        fontStyle: "italic",
+                        color: "var(--ed-sky)",
+                      }}
+                    >
+                      charted.
+                    </em>
                   </>
                 }
                 es={
                   <>
-                    Tu revista personalizada de{" "}
-                    <em>viaje guiada por el alma</em>
+                    Viajes,
+                    <br />
+                    <em
+                      style={{
+                        fontStyle: "italic",
+                        color: "var(--ed-sky)",
+                      }}
+                    >
+                      trazados.
+                    </em>
                   </>
                 }
               />
-            </h3>
-            <p>
+            </h2>
+            <p
+              className="font-spectral m-0 mb-7"
+              style={{
+                fontSize: 18,
+                color: "var(--ed-ink-soft)",
+                lineHeight: 1.7,
+              }}
+            >
               <LangText
-                en="Not a generic horoscope guide. This is a bespoke digital magazine built entirely around your natal chart and current transits — revealing where in the world your energy is strongest right now, and what to do when you get there."
-                es="No es una guía genérica. Es una revista digital hecha a medida con tu carta natal y tránsitos — revelando dónde en el mundo tu energía es más fuerte y qué hacer cuando llegues."
+                en="Not a horoscope guide. A bespoke digital magazine built around your natal chart and current transits — revealing where in the world your energy is strongest right now, and what to do when you arrive."
+                es="No es una guía genérica. Una revista digital hecha a medida con tu carta natal y tus tránsitos actuales — revelando dónde en el mundo tu energía es más fuerte ahora, y qué hacer cuando llegues."
               />
             </p>
 
-            <div className="mag-includes">
-              <div className="mag-inc">
-                <h5>
-                  <LangText en="Top 5 Destinations" es="Top 5 Destinos" />
-                </h5>
-                <p>
-                  <LangText
-                    en="Cities on your strongest planetary lines — Venus for love, Jupiter for expansion, Sun for vitality."
-                    es="Ciudades en tus líneas planetarias — Venus para amor, Júpiter para expansión, Sol para vitalidad."
-                  />
-                </p>
-              </div>
-              <div className="mag-inc">
-                <h5>
-                  <LangText
-                    en="Curated Activities"
-                    es="Actividades Curadas"
-                  />
-                </h5>
-                <p>
-                  <LangText
-                    en="Experiences matched to your chart — retreats, cultural sites, nature spots, creative spaces."
-                    es="Experiencias por tu carta — retiros, sitios culturales, naturaleza, espacios creativos."
-                  />
-                </p>
-              </div>
-              <div className="mag-inc">
-                <h5>
-                  <LangText en="Transit Timing" es="Timing de Tránsitos" />
-                </h5>
-                <p>
-                  <LangText
-                    en="Which months are optimal for each destination based on your current transits."
-                    es="Qué meses son óptimos para cada destino según tus tránsitos actuales."
-                  />
-                </p>
-              </div>
-              <div className="mag-inc">
-                <h5>
-                  <LangText en="Soul Rituals" es="Rituales del Alma" />
-                </h5>
-                <p>
-                  <LangText
-                    en="Journaling prompts, meditation, and intention-setting tied to each location."
-                    es="Escritura, meditación e intenciones ligadas a cada lugar."
-                  />
-                </p>
-              </div>
+            <div style={{ borderTop: "1px solid var(--ed-ink)" }}>
+              {FEATURES.map((f, i) => (
+                <div
+                  key={f.num}
+                  className="grid grid-cols-[40px_1fr] gap-5 py-5"
+                  style={{
+                    borderBottom:
+                      i < FEATURES.length - 1
+                        ? "1px solid var(--ed-rule)"
+                        : "none",
+                  }}
+                >
+                  <span
+                    className="font-fraunces"
+                    style={{
+                      fontStyle: "italic",
+                      fontSize: 22,
+                      color: "var(--ed-sky)",
+                      fontWeight: 400,
+                    }}
+                  >
+                    {f.num}
+                  </span>
+                  <div>
+                    <div
+                      className="font-fraunces mb-1"
+                      style={{
+                        fontSize: 19,
+                        color: "var(--ed-ink)",
+                      }}
+                    >
+                      <LangText en={f.headEn} es={f.headEs} />
+                    </div>
+                    <div
+                      className="font-spectral"
+                      style={{
+                        fontSize: 14.5,
+                        color: "var(--ed-text-mute)",
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      <LangText en={f.descEn} es={f.descEs} />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div className="mag-price-row">
-              <span className="price">€75</span>
-              <span className="note">
+            <div className="mt-9 flex items-baseline gap-6 flex-wrap">
+              <span
+                className="font-fraunces"
+                style={{
+                  fontSize: 48,
+                  color: "var(--ed-ink)",
+                  fontWeight: 400,
+                }}
+              >
+                €75
+              </span>
+              <span
+                className="font-spectral"
+                style={{
+                  fontSize: 12,
+                  color: "var(--ed-text-mute)",
+                  letterSpacing: "0.08em",
+                }}
+              >
                 <LangText
-                  en="Digital PDF · delivered within 5 days"
+                  en="Digital PDF · 5-day delivery"
                   es="PDF digital · entrega en 5 días"
                 />
               </span>
             </div>
-
-            <div style={{ marginTop: "1.5rem" }}>
-              <a
-                href={bookHref}
-                className="btn-primary"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <LangText
-                  en="Order Your Magazine"
-                  es="Pide Tu Revista"
-                />
-              </a>
-            </div>
+            <a
+              href={bookHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block font-dm-mono uppercase mt-6"
+              style={{
+                background: "var(--ed-ink)",
+                color: "var(--ed-paper)",
+                padding: "16px 32px",
+                fontSize: 11,
+                letterSpacing: "0.22em",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              <LangText en="Order Your Issue →" es="Pide Tu Edición →" />
+            </a>
           </div>
-        </Reveal>
+
+          {/* RIGHT: loupe */}
+          <div className="relative order-1 md:order-2 flex flex-col items-center justify-center">
+            <Loupe />
+          </div>
+        </div>
       </div>
     </section>
   );

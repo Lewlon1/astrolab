@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /* ========================================================================
-   SUNSET PALETTE — Astro Psyche Lab V1
+   SUNSET PALETTE — Astro Psyche Lab V1 (kept for /admin, /services, /blog)
    ======================================================================== */
 :root {
   --cream: #FFF8F2;
@@ -29,6 +29,116 @@
   --text-light: #9A9A9A;
   --card-cream: #F5EDD4;
   --card-border: #B8A070;
+
+  /* ========================================================================
+     EDITORIAL COSMIC PALETTE — public homepage redesign (Direction C)
+     ======================================================================== */
+  --ed-paper: #F4EFE6;
+  --ed-paper-deep: #E8E0D2;
+  --ed-ink: #1A1814;
+  --ed-ink-soft: #3A352D;
+  --ed-rust: #A84A2C;
+  --ed-rust-deep: #7F3425;
+  --ed-ochre: #C8954A;
+  --ed-sage: #5C6B4E;
+  --ed-sky: #3F5560;
+  --ed-rose: #B86A6A;
+  --ed-text-mute: #6B6358;
+  --ed-text-light: #A39A8B;
+  --ed-rule: rgba(26, 24, 20, 0.125);
+}
+
+/* ========================================================================
+   EDITORIAL UTILITIES — only used on the public homepage / public pages
+   wrapped by the (public) route group. Admin and other routes are unaffected.
+   ======================================================================== */
+.editorial-page {
+  background: var(--ed-paper);
+  color: var(--ed-ink);
+  font-family: var(--font-spectral), Georgia, serif;
+}
+
+.editorial-page h1,
+.editorial-page h2,
+.editorial-page h3,
+.editorial-page h4 {
+  color: var(--ed-ink);
+}
+
+.editorial-page ::selection {
+  background-color: var(--ed-rust);
+  color: var(--ed-paper);
+}
+
+.ed-perspective {
+  perspective: 1800px;
+}
+.ed-3d {
+  transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.ed-backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.ed-dropcap::first-letter {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-style: italic;
+  font-size: 56px;
+  float: left;
+  line-height: 0.9;
+  margin: 6px 10px 0 0;
+  color: var(--ed-rust);
+  font-weight: 400;
+}
+
+/* Editorial newsletter form: re-style the existing LeadCaptureForm
+   inputs/buttons when wrapped in .ed-newsletter (no new component needed). */
+.ed-newsletter form {
+  flex-direction: row;
+  gap: 0;
+  max-width: 100%;
+  margin: 0;
+}
+.ed-newsletter input[type="email"] {
+  flex: 1;
+  padding: 16px 20px;
+  border: 1px solid var(--ed-ochre);
+  background: transparent;
+  color: var(--ed-paper);
+  font-family: var(--font-spectral), serif;
+  font-size: 14px;
+  border-radius: 0;
+  border-right: none;
+}
+.ed-newsletter input[type="email"]::placeholder {
+  color: rgba(244, 239, 230, 0.5);
+}
+.ed-newsletter input[type="email"]:focus {
+  border-color: var(--ed-ochre);
+  outline: none;
+}
+.ed-newsletter button[type="submit"] {
+  background: var(--ed-ochre);
+  color: var(--ed-ink);
+  border: none;
+  padding: 16px 24px;
+  font-family: var(--font-dm-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  border-radius: 0;
+}
+.ed-newsletter button[type="submit"]:hover {
+  background: var(--ed-ochre);
+  opacity: 0.92;
+}
+.ed-newsletter p {
+  font-family: var(--font-spectral), serif;
+  color: var(--ed-ochre);
 }
 
 @layer base {
