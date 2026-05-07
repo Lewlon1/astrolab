@@ -49,23 +49,44 @@ export default function CalendlyBooking({
       />
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {services.map((service, i) => (
-          <button
-            key={service.id}
-            onClick={() => setActiveIndex(i)}
-            className={`text-sm px-4 py-2 rounded-full border transition-colors ${
-              i === activeIndex
-                ? "bg-gold text-midnight border-gold"
-                : "border-cream/20 text-cream/60 hover:border-cream/40"
-            }`}
-          >
-            {service.name}
-            {service.price_label && (
-              <span className="ml-1.5 opacity-60">· {service.price_label}</span>
-            )}
-          </button>
-        ))}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "0.5rem",
+          marginBottom: "2rem",
+        }}
+      >
+        {services.map((service, i) => {
+          const isActive = i === activeIndex;
+          return (
+            <button
+              key={service.id}
+              onClick={() => setActiveIndex(i)}
+              style={{
+                fontSize: "0.85rem",
+                padding: "0.5rem 1.1rem",
+                borderRadius: "50px",
+                border: "1px solid",
+                background: isActive ? "var(--deep-brown)" : "transparent",
+                color: isActive ? "white" : "var(--text-muted)",
+                borderColor: isActive
+                  ? "var(--deep-brown)"
+                  : "rgba(184,160,112,0.4)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                transition: "all 0.2s",
+              }}
+            >
+              {service.name}
+              {service.price_label && (
+                <span style={{ marginLeft: "0.4rem", opacity: 0.7 }}>
+                  · {service.price_label}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Calendly embed or fallback */}
@@ -75,14 +96,25 @@ export default function CalendlyBooking({
           style={{ minWidth: "320px", minHeight: "700px" }}
         />
       ) : (
-        <div className="text-center py-24 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[14px]">
-          <p className="text-cream/50 mb-4">
+        <div
+          style={{
+            textAlign: "center",
+            padding: "4rem 2rem",
+            background: "white",
+            border: "1px solid rgba(184,160,112,0.3)",
+            borderRadius: "16px",
+          }}
+        >
+          <p
+            style={{
+              color: "var(--text-muted)",
+              marginBottom: "1rem",
+              fontWeight: 300,
+            }}
+          >
             Online booking isn&apos;t available for this service yet.
           </p>
-          <a
-            href={`mailto:${BRAND.site.email}`}
-            className="inline-flex items-center justify-center text-sm font-medium rounded-[22px] px-6 py-2.5 bg-gold text-midnight hover:bg-gold/90 transition-colors"
-          >
+          <a href={`mailto:${BRAND.site.email}`} className="btn-primary">
             Contact me to book
           </a>
         </div>

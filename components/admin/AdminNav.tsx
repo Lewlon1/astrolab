@@ -13,6 +13,7 @@ const navLinks = [
   { label: "Repurpose", href: "/admin/repurpose" },
   { label: "Engagement", href: "/admin/engagement" },
   { label: "Inspiration", href: "/admin/inspiration" },
+  { label: "Transits", href: "/admin/transits" },
   { label: "Video Editor", href: "/admin/video-editor" },
   { label: "Photoshop", href: "/admin/photoshop" },
 ];

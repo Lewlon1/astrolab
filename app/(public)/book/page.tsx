@@ -25,15 +25,22 @@ export default async function BookPage() {
     <>
       <PageHero
         title="Book a session"
-        subtitle="Choose a service and pick a time that works for you"
+        subtitle="Choose a service and pick a time that works for you."
         breadcrumb={[{ label: "Book", href: "/book" }]}
       />
 
-      <section className="max-w-3xl mx-auto px-6 pb-24">
+      <section
+        style={{
+          maxWidth: "900px",
+          margin: "0 auto",
+          padding: "3rem 1.5rem 6rem",
+          background: "var(--cream)",
+        }}
+      >
         {services && services.length > 0 ? (
           <CalendlyBooking services={services} />
         ) : (
-          <p className="text-cream/50 text-sm">
+          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
             No bookable services available right now.
           </p>
         )}

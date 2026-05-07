@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PageHero from "@/components/PageHero";
 import ServiceCard from "@/components/ServiceCard";
-import SectionHeading from "@/components/SectionHeading";
-import LeadCaptureForm from "@/components/LeadCaptureForm";
+import LeadCaptureSection from "@/components/LeadCaptureSection";
 import FAQ from "@/components/FAQ";
 import { serviceJsonLd } from "@/lib/jsonld";
 import type { Service } from "@/types";
@@ -30,7 +29,7 @@ const faqItems = [
     question:
       "What's the difference between Stellar Insights and Cosmic Alliance?",
     answer:
-      "Stellar is a full chart reading. Cosmic Alliance adds astrocartography and is more comprehensive.",
+      "Stellar Insights is a deep-dive into your patterns and purpose. Cosmic Alliance adds astrocartography and is the full integration roadmap.",
   },
 ];
 
@@ -61,10 +60,23 @@ export default async function ServicesPage() {
         breadcrumb={[{ label: "Services", href: "/services" }]}
       />
 
-      {/* ─── Services grid ─── */}
+      {/* Services grid */}
       {services && services.length > 0 && (
-        <section className="max-w-5xl mx-auto px-6 pb-24">
-          <div className="grid md:grid-cols-2 gap-6">
+        <section
+          style={{
+            maxWidth: "1050px",
+            margin: "0 auto",
+            padding: "4rem 1.5rem",
+            background: "var(--cream)",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gap: "1.5rem",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            }}
+          >
             {services.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}
@@ -72,29 +84,21 @@ export default async function ServicesPage() {
         </section>
       )}
 
-      {/* ─── Lead capture ─── */}
-      <section id="lead-capture" className="py-24 px-6">
-        <div className="max-w-2xl mx-auto text-center bg-gold/[0.03] border border-gold/10 rounded-[14px] p-12">
-          <h2 className="font-heading text-3xl md:text-4xl font-light mb-4">
-            Want your free Love &amp; Career Code?
-          </h2>
-          <p className="text-cream/50 mb-8 max-w-md mx-auto text-sm">
-            Drop your email and I&apos;ll send you a personalised voice note
-            decoding your Venus, Saturn &amp; Midheaven — your love language and
-            career wiring, in under two minutes.
-          </p>
-          <LeadCaptureForm />
-        </div>
-      </section>
+      <LeadCaptureSection />
 
-      {/* ─── FAQ ─── */}
-      <section className="max-w-3xl mx-auto px-6 pb-24">
-        <SectionHeading
-          label="FAQ"
-          title="Common questions"
-          align="center"
-        />
-        <div className="mt-12">
+      {/* FAQ */}
+      <section
+        style={{
+          maxWidth: "760px",
+          margin: "0 auto",
+          padding: "4rem 1.5rem 6rem",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p className="section-eyebrow">FAQ</p>
+          <h2 className="section-title">Common questions</h2>
+        </div>
+        <div style={{ marginTop: "2.5rem" }}>
           <FAQ items={faqItems} />
         </div>
       </section>

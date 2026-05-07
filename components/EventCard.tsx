@@ -2,11 +2,11 @@ import Link from "next/link";
 import { eventJsonLd } from "@/lib/jsonld";
 import { EventCardProps } from "@/types";
 
-const EVENT_TYPE_STYLES: Record<string, string> = {
-  workshop: "bg-ocean/10 text-ocean",
-  cosmic_tasters: "bg-coral/10 text-coral",
-  collab: "bg-sage/10 text-sage",
-  popup: "bg-gold/10 text-gold",
+const EVENT_TYPE_STYLES: Record<string, { bg: string; color: string }> = {
+  workshop: { bg: "rgba(212,112,74,0.2)", color: "var(--coral)" },
+  cosmic_tasters: { bg: "rgba(232,168,56,0.25)", color: "var(--deep-brown)" },
+  collab: { bg: "rgba(122,155,106,0.25)", color: "var(--forest)" },
+  popup: { bg: "rgba(184,160,112,0.25)", color: "var(--sage)" },
 };
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -18,8 +18,11 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 
 export default function EventCard({ event }: EventCardProps) {
   const typeStyle = event.event_type
-    ? EVENT_TYPE_STYLES[event.event_type] ?? "bg-white/5 text-cream/50"
-    : "bg-white/5 text-cream/50";
+    ? EVENT_TYPE_STYLES[event.event_type] ?? {
+        bg: "var(--cream)",
+        color: "var(--text-muted)",
+      }
+    : { bg: "var(--cream)", color: "var(--text-muted)" };
 
   const typeLabel = event.event_type
     ? EVENT_TYPE_LABELS[event.event_type] ?? event.event_type
@@ -37,7 +40,17 @@ export default function EventCard({ event }: EventCardProps) {
     : null;
 
   return (
-    <div className="bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-6 flex flex-col">
+    <div
+      style={{
+        background: "white",
+        border: "1px solid rgba(184,160,112,0.3)",
+        borderRadius: "16px",
+        padding: "2rem 1.75rem",
+        display: "flex",
+        flexDirection: "column",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
+      }}
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -47,35 +60,96 @@ export default function EventCard({ event }: EventCardProps) {
 
       {typeLabel && (
         <span
-          className={`self-start text-xs uppercase tracking-wider px-2.5 py-0.5 rounded-full ${typeStyle}`}
+          style={{
+            alignSelf: "flex-start",
+            fontSize: "0.65rem",
+            fontWeight: 600,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            padding: "0.25rem 0.75rem",
+            borderRadius: "50px",
+            background: typeStyle.bg,
+            color: typeStyle.color,
+          }}
         >
           {typeLabel}
         </span>
       )}
 
-      <h3 className="font-heading text-xl mt-4">{event.title}</h3>
+      <h3
+        style={{
+          fontFamily: "var(--font-cormorant), serif",
+          fontSize: "1.5rem",
+          fontWeight: 400,
+          color: "var(--deep-brown)",
+          marginTop: typeLabel ? "1rem" : 0,
+        }}
+      >
+        {event.title}
+      </h3>
 
       {formattedDate && (
-        <p className="text-cream/50 text-sm mt-2">{formattedDate}</p>
+        <p
+          style={{
+            color: "var(--text-muted)",
+            fontSize: "0.85rem",
+            marginTop: "0.5rem",
+          }}
+        >
+          {formattedDate}
+        </p>
       )}
 
       {event.location && (
-        <p className="text-cream/40 text-sm mt-1">{event.location}</p>
+        <p
+          style={{
+            color: "var(--text-light)",
+            fontSize: "0.8rem",
+            marginTop: "0.25rem",
+          }}
+        >
+          {event.location}
+        </p>
       )}
 
       {event.price_label && (
-        <p className="text-cream text-lg mt-3">{event.price_label}</p>
+        <p
+          style={{
+            fontFamily: "var(--font-syne), sans-serif",
+            fontWeight: 700,
+            fontSize: "1.15rem",
+            color: "var(--coral)",
+            marginTop: "0.75rem",
+          }}
+        >
+          {event.price_label}
+        </p>
       )}
 
       {event.description && (
-        <p className="text-sm text-cream/50 mt-2 line-clamp-3 flex-1">
+        <p
+          style={{
+            fontSize: "0.9rem",
+            color: "var(--text-muted)",
+            marginTop: "0.75rem",
+            flex: 1,
+            lineHeight: 1.7,
+            fontWeight: 300,
+          }}
+        >
           {event.description}
         </p>
       )}
 
       <Link
         href={event.eventbrite_url || `/events/${event.slug}`}
-        className="mt-6 inline-flex items-center justify-center text-sm font-medium rounded-[22px] px-5 py-2.5 border border-cream/20 text-cream hover:border-cream/40 transition-colors"
+        className={event.price === 0 ? "btn-secondary" : "btn-primary"}
+        style={{
+          marginTop: "1.5rem",
+          textAlign: "center",
+          fontSize: "0.85rem",
+          padding: "0.75rem 1.5rem",
+        }}
       >
         {event.price === 0 ? "Register free" : "Get tickets"}
       </Link>

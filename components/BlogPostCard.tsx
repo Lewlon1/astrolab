@@ -1,17 +1,29 @@
 import Link from "next/link";
 import { BlogPostCardProps } from "@/types";
 
-const PILLAR_STYLES: Record<string, string> = {
-  Decode: "bg-ocean/10 text-ocean",
-  Reframe: "bg-coral/10 text-coral",
-  Navigate: "bg-sage/10 text-sage",
-  Align: "bg-gold/10 text-gold",
+const PILLAR_STYLES: Record<string, { bg: string; color: string }> = {
+  Decode: { bg: "rgba(212,112,74,0.15)", color: "var(--coral)" },
+  Reframe: { bg: "rgba(122,155,106,0.2)", color: "var(--forest)" },
+  Navigate: { bg: "rgba(232,168,56,0.2)", color: "var(--deep-brown)" },
+  Align: { bg: "rgba(184,160,112,0.2)", color: "var(--sage)" },
+};
+
+const PILLAR_GRADIENT: Record<string, string> = {
+  Decode: "linear-gradient(135deg, var(--coral-pale), var(--rust-pale))",
+  Reframe: "linear-gradient(135deg, var(--forest-pale), var(--sage-pale))",
+  Navigate: "linear-gradient(135deg, var(--gold-pale), var(--cream))",
+  Align: "linear-gradient(135deg, var(--sage-pale), var(--cream))",
 };
 
 export default function BlogPostCard({ post }: BlogPostCardProps) {
-  const pillarStyle = post.pillar
-    ? PILLAR_STYLES[post.pillar] ?? "bg-white/5 text-cream/50"
-    : "bg-white/5 text-cream/50";
+  const pillar = post.pillar;
+  const pillarStyle = pillar
+    ? PILLAR_STYLES[pillar] ?? { bg: "var(--cream)", color: "var(--text-muted)" }
+    : { bg: "var(--cream)", color: "var(--text-muted)" };
+
+  const gradient = pillar
+    ? PILLAR_GRADIENT[pillar] ?? PILLAR_GRADIENT.Navigate
+    : PILLAR_GRADIENT.Navigate;
 
   const formattedDate = post.published_at
     ? new Intl.DateTimeFormat("en-GB", {
@@ -21,39 +33,100 @@ export default function BlogPostCard({ post }: BlogPostCardProps) {
       }).format(new Date(post.published_at))
     : null;
 
+  const thumbStyle = post.featured_image_url
+    ? {
+        backgroundImage: `url(${post.featured_image_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : { background: gradient };
+
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[14px] overflow-hidden flex flex-col md:flex-row"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "220px 1fr",
+        background: "white",
+        border: "1px solid rgba(184, 160, 112, 0.3)",
+        borderRadius: "16px",
+        overflow: "hidden",
+        textDecoration: "none",
+        color: "inherit",
+        transition: "all 0.3s",
+        boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
+      }}
+      className="blog-post-card"
     >
-      {/* Image placeholder */}
-      <div className="md:w-1/3 h-48 md:h-auto bg-gradient-to-br from-deep/30 to-ocean/20 flex-shrink-0" />
-
-      {/* Content */}
-      <div className="md:w-2/3 p-6">
-        <div className="flex items-center gap-3">
-          {post.pillar && (
+      <div
+        style={{
+          minHeight: "150px",
+          ...thumbStyle,
+        }}
+      />
+      <div
+        style={{
+          padding: "1.5rem 2rem",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            marginBottom: "0.5rem",
+            flexWrap: "wrap",
+          }}
+        >
+          {pillar && (
             <span
-              className={`text-xs uppercase tracking-wider px-2.5 py-0.5 rounded-full ${pillarStyle}`}
+              style={{
+                fontSize: "0.6rem",
+                fontWeight: 600,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                padding: "0.2rem 0.7rem",
+                borderRadius: "4px",
+                background: pillarStyle.bg,
+                color: pillarStyle.color,
+              }}
             >
-              {post.pillar}
+              {pillar}
+            </span>
+          )}
+          {formattedDate && (
+            <span style={{ fontSize: "0.7rem", color: "var(--text-light)" }}>
+              {formattedDate}
+              {post.reading_time_min
+                ? ` · ${post.reading_time_min} min read`
+                : ""}
             </span>
           )}
         </div>
-
-        <div className="flex gap-3 text-xs text-cream/40 mt-2">
-          {formattedDate && <span>{formattedDate}</span>}
-          {post.reading_time_min && (
-            <span>{post.reading_time_min} min read</span>
-          )}
-        </div>
-
-        <h3 className="font-heading text-xl mt-2 group-hover:text-gold/90 transition-colors">
+        <h3
+          style={{
+            fontFamily: "var(--font-cormorant), serif",
+            fontSize: "1.3rem",
+            fontWeight: 400,
+            color: "var(--deep-brown)",
+            lineHeight: 1.25,
+            marginBottom: "0.4rem",
+          }}
+        >
           {post.title}
         </h3>
-
         {post.excerpt && (
-          <p className="text-sm text-cream/50 mt-2 line-clamp-2">
+          <p
+            style={{
+              fontSize: "0.85rem",
+              color: "var(--text-muted)",
+              lineHeight: 1.6,
+              fontWeight: 300,
+            }}
+          >
             {post.excerpt}
           </p>
         )}
