@@ -82,6 +82,7 @@ export default function MenuBar({
         </span>
         <button
           onClick={onExport}
+          title="Quick Export as PNG (Cmd/Ctrl+S)"
           className="ml-2 px-3 py-0.5 rounded-sm"
           style={{
             background: "var(--ps-accent-blue)",
@@ -89,7 +90,7 @@ export default function MenuBar({
             fontWeight: 500,
           }}
         >
-          Share
+          Save PNG
         </button>
       </div>
     </div>

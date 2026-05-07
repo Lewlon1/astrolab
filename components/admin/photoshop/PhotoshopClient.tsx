@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Layer, PsTool, BlendMode } from "./types";
 import MenuBar from "./MenuBar";
 import OptionsBar from "./OptionsBar";
@@ -126,11 +126,14 @@ export default function PhotoshopClient() {
       } else if ((e.metaKey || e.ctrlKey) && k === "0") {
         e.preventDefault();
         setZoom(0.5);
+      } else if ((e.metaKey || e.ctrlKey) && k === "s") {
+        e.preventDefault();
+        exportPng();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [fg, bg]);
+  }, [fg, bg, exportPng]);
 
   // Layer thumbnail data URLs (regen on bust)
   const thumbnailGetter = useMemo(() => {
@@ -151,6 +154,46 @@ export default function PhotoshopClient() {
       { label, active: true },
     ]);
   };
+
+  // Composite all visible layers and download as PNG
+  const exportPng = useCallback(() => {
+    const out = document.createElement("canvas");
+    out.width = DOC_W;
+    out.height = DOC_H;
+    const ctx = out.getContext("2d");
+    if (!ctx) return;
+    // Transparent base — PNG keeps alpha
+    for (const l of layers) {
+      if (!l.visible) continue;
+      const lc = layerCanvasesRef.current.get(l.id);
+      if (!lc) continue;
+      ctx.save();
+      ctx.globalAlpha = l.opacity / 100;
+      ctx.globalCompositeOperation = blendModeToComposite(l.blendMode);
+      ctx.drawImage(lc, 0, 0);
+      ctx.restore();
+    }
+    out.toBlob((blob) => {
+      if (!blob) {
+        setToast("Export failed");
+        return;
+      }
+      const filename = DOC_NAME.replace(/\.psd$/i, "") + ".png";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setToast(`Saved ${filename}`);
+      setHistory((h) => [
+        ...h.map((it) => ({ ...it, active: false })),
+        { label: "Quick Export as PNG", active: true },
+      ]);
+    }, "image/png");
+  }, [layers]);
 
   const handleAddLayer = () => {
     const id = `l-${Date.now().toString(36)}`;
@@ -241,7 +284,7 @@ export default function PhotoshopClient() {
       className="h-full w-full flex flex-col"
       style={{ background: "var(--ps-bg)" }}
     >
-      <MenuBar docName={DOC_NAME} onExport={() => setToast("Demo only — export not wired up.")} />
+      <MenuBar docName={DOC_NAME} onExport={exportPng} />
       <OptionsBar
         tool={tool}
         brushSize={brushSize}
@@ -377,4 +420,21 @@ export default function PhotoshopClient() {
 
 function normalizeHex(hex: string): string {
   return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : "#000000";
+}
+
+function blendModeToComposite(mode: BlendMode): GlobalCompositeOperation {
+  switch (mode) {
+    case "multiply":
+      return "multiply";
+    case "screen":
+      return "screen";
+    case "overlay":
+      return "overlay";
+    case "soft-light":
+      return "soft-light";
+    case "color-dodge":
+      return "color-dodge";
+    default:
+      return "source-over";
+  }
 }
