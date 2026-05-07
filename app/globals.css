@@ -104,3 +104,300 @@
     border-color: rgba(255, 255, 255, 0.1);
   }
 }
+
+/* Premiere Pro-style dark workspace */
+.premiere-dark {
+  --pp-bg: #1e1e1e;
+  --pp-panel: #2d2d2d;
+  --pp-panel-hover: #353535;
+  --pp-toolbar: #3a3a3a;
+  --pp-active: #4a4a4a;
+  --pp-border: #161616;
+  --pp-border-soft: #3a3a3a;
+  --pp-text: #d4d4d4;
+  --pp-text-dim: #888888;
+  --pp-text-bright: #f0f0f0;
+  --pp-accent-blue: #5a7fa8;
+  --pp-accent-blue-bright: #7aa3d4;
+  --pp-accent-orange: #f17e2c;
+  --pp-accent-red: #e54848;
+  --pp-clip-video: #3a6b7d;
+  --pp-clip-video-light: #4d8a9e;
+  --pp-clip-audio: #4d7a3a;
+  --pp-clip-audio-light: #6ba34d;
+
+  background-color: var(--pp-bg);
+  color: var(--pp-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.premiere-dark *,
+.premiere-dark *::before,
+.premiere-dark *::after {
+  box-sizing: border-box;
+}
+
+.premiere-dark button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.premiere-dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.premiere-dark ::-webkit-scrollbar-track {
+  background: var(--pp-bg);
+}
+
+.premiere-dark ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border: 2px solid var(--pp-bg);
+  border-radius: 5px;
+}
+
+.premiere-dark ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
+
+.premiere-dark ::-webkit-scrollbar-corner {
+  background: var(--pp-bg);
+}
+
+.premiere-dark .pp-panel {
+  background-color: var(--pp-panel);
+  border: 1px solid var(--pp-border);
+}
+
+.premiere-dark .pp-panel-tab {
+  background-color: var(--pp-toolbar);
+  color: var(--pp-text-dim);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-right: 1px solid var(--pp-border);
+}
+
+.premiere-dark .pp-panel-tab.is-active {
+  background-color: var(--pp-panel);
+  color: var(--pp-text-bright);
+}
+
+.premiere-dark .pp-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--pp-text);
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 2px;
+  transition: background-color 80ms ease;
+}
+
+.premiere-dark .pp-btn:hover {
+  background-color: var(--pp-panel-hover);
+}
+
+.premiere-dark .pp-btn.is-active {
+  background-color: var(--pp-active);
+  color: var(--pp-text-bright);
+}
+
+.premiere-dark .pp-tool-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--pp-text);
+  cursor: pointer;
+  border-radius: 2px;
+  position: relative;
+}
+
+.premiere-dark .pp-tool-btn:hover {
+  background-color: var(--pp-panel-hover);
+}
+
+.premiere-dark .pp-tool-btn.is-active {
+  background-color: var(--pp-active);
+  color: var(--pp-accent-blue-bright);
+}
+
+.premiere-dark .pp-tool-btn.is-active::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 1px;
+  height: 1px;
+  background: var(--pp-accent-blue-bright);
+}
+
+@keyframes ppMeter {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(0.85); }
+}
+
+.premiere-dark .pp-meter-bar {
+  transform-origin: bottom;
+  animation: ppMeter 600ms ease-in-out infinite;
+}
+
+/* Photoshop-style dark workspace */
+.photoshop-dark {
+  --ps-bg: #1e1e1e;
+  --ps-panel: #323232;
+  --ps-panel-soft: #2a2a2a;
+  --ps-panel-hover: #3a3a3a;
+  --ps-toolbar: #393939;
+  --ps-active: #4a4a4a;
+  --ps-border: #1a1a1a;
+  --ps-border-soft: #424242;
+  --ps-text: #cfcfcf;
+  --ps-text-dim: #848484;
+  --ps-text-bright: #f0f0f0;
+  --ps-accent-blue: #2680eb;
+  --ps-accent-blue-bright: #4a9aff;
+  --ps-canvas-bg: #545454;
+
+  background-color: var(--ps-bg);
+  color: var(--ps-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.photoshop-dark *,
+.photoshop-dark *::before,
+.photoshop-dark *::after {
+  box-sizing: border-box;
+}
+
+.photoshop-dark button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.photoshop-dark ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.photoshop-dark ::-webkit-scrollbar-track {
+  background: var(--ps-bg);
+}
+
+.photoshop-dark ::-webkit-scrollbar-thumb {
+  background: #535353;
+  border: 3px solid var(--ps-bg);
+  border-radius: 6px;
+}
+
+.photoshop-dark ::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a;
+}
+
+.photoshop-dark .ps-tool-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ps-text);
+  cursor: pointer;
+  border-radius: 2px;
+  position: relative;
+}
+
+.photoshop-dark .ps-tool-btn:hover {
+  background-color: var(--ps-panel-hover);
+}
+
+.photoshop-dark .ps-tool-btn.is-active {
+  background-color: var(--ps-active);
+  border-color: var(--ps-border-soft);
+  color: var(--ps-text-bright);
+}
+
+.photoshop-dark .ps-tool-btn.is-active::after {
+  content: "";
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 4px 4px;
+  border-color: transparent transparent var(--ps-text-bright) transparent;
+}
+
+.photoshop-dark .ps-btn {
+  background: var(--ps-panel-soft);
+  border: 1px solid var(--ps-border-soft);
+  color: var(--ps-text);
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.photoshop-dark .ps-btn:hover {
+  background: var(--ps-panel-hover);
+}
+
+.photoshop-dark .ps-input {
+  background: var(--ps-bg);
+  border: 1px solid var(--ps-border-soft);
+  color: var(--ps-text);
+  padding: 2px 6px;
+  border-radius: 2px;
+  outline: none;
+}
+
+.photoshop-dark .ps-input:focus {
+  border-color: var(--ps-accent-blue);
+}
+
+.photoshop-dark .ps-tab {
+  padding: 4px 10px;
+  background: var(--ps-panel-soft);
+  color: var(--ps-text-dim);
+  border-right: 1px solid var(--ps-border);
+  border-bottom: 1px solid var(--ps-border);
+  cursor: pointer;
+}
+
+.photoshop-dark .ps-tab.is-active {
+  background: var(--ps-panel);
+  color: var(--ps-text-bright);
+  border-bottom-color: var(--ps-panel);
+}
+
+.photoshop-dark .ps-checker {
+  background-image:
+    linear-gradient(45deg, #c8c8c8 25%, transparent 25%),
+    linear-gradient(-45deg, #c8c8c8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #c8c8c8 75%),
+    linear-gradient(-45deg, transparent 75%, #c8c8c8 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-color: #ffffff;
+}
