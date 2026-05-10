@@ -327,8 +327,6 @@ export default function TarotDeck({ services }: Props) {
             const svc = services.find((s) => s.slug === card.slug);
             const name = svc?.name ?? card.fallbackName;
             const price = svc?.price ?? card.fallbackPrice;
-            const calendly =
-              svc?.calendly_url ?? card.calendly ?? FALLBACK_CALENDLY;
             const isFlipped = activeCard === i;
 
             return (
@@ -338,7 +336,6 @@ export default function TarotDeck({ services }: Props) {
                 index={i}
                 name={name}
                 price={price}
-                calendly={calendly}
                 duration={card.fallbackDuration[lang]}
                 isFlipped={isFlipped}
                 lang={lang}
@@ -380,7 +377,6 @@ type CardSlotProps = {
   index: number;
   name: string;
   price: number | null;
-  calendly: string;
   duration: string;
   isFlipped: boolean;
   lang: "en" | "es";
@@ -393,7 +389,6 @@ function CardSlot({
   index,
   name,
   price,
-  calendly,
   duration,
   isFlipped,
   lang,
