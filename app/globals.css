@@ -75,8 +75,6 @@
 }
 .ed-3d {
   transform-style: preserve-3d;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 .ed-backface-hidden {
   -webkit-backface-visibility: hidden;
