@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import LangText from "@/components/LangText";
 
-// TODO: replace with Spanish translation from Lewis
 const BODY_S1_EN =
   "A space created for the astro-curious, the career-driven, and those devoted to personal growth and deeper self-understanding.";
 const BODY_S2_EN =
@@ -16,24 +15,24 @@ const BODY_S2_ES = BODY_S2_EN;
 const BODY_S3_ES = BODY_S3_EN;
 
 export default function WelcomeLetter() {
-  const [unsealed, setUnsealed] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
-      setUnsealed(true);
+      setOpen(true);
       return;
     }
-    const t = window.setTimeout(() => setUnsealed(true), 300);
+    const t = window.setTimeout(() => setOpen(true), 300);
     return () => window.clearTimeout(t);
   }, []);
 
   const fadeUp = (delayMs: number) => ({
-    opacity: unsealed ? 1 : 0,
-    transform: unsealed ? "translateY(0)" : "translateY(8px)",
-    transition: `opacity 700ms ease ${delayMs}ms, transform 700ms ease ${delayMs}ms`,
+    opacity: open ? 1 : 0,
+    transform: open ? "translateY(0)" : "translateY(6px)",
+    transition: `opacity 420ms ease ${delayMs}ms, transform 420ms ease ${delayMs}ms`,
   });
 
   return (
@@ -42,7 +41,7 @@ export default function WelcomeLetter() {
       style={{
         maxWidth: 460,
         transform: "rotate(-0.5deg)",
-        perspective: 1200,
+        perspective: 1400,
       }}
     >
       {/* dateline */}
@@ -74,7 +73,7 @@ export default function WelcomeLetter() {
           transformStyle: "preserve-3d",
         }}
       >
-        {/* sealed flap — covers paper until unsealed */}
+        {/* sealed flap — opens quickly */}
         <div
           aria-hidden="true"
           className="absolute inset-0"
@@ -82,20 +81,20 @@ export default function WelcomeLetter() {
             background:
               "linear-gradient(180deg, var(--ed-paper) 0%, var(--ed-paper-deep) 100%)",
             boxShadow:
-              "0 8px 24px -8px rgba(58,42,28,.35), inset 0 -1px 0 rgba(58,42,28,.08)",
+              "0 8px 24px -8px rgba(58,42,28,.35), inset 0 -1px 0 rgba(58,42,28,.10)",
             transformOrigin: "top center",
-            transform: unsealed
-              ? "rotateX(-178deg) translateY(-12px)"
-              : "rotateX(0deg) translateY(0)",
-            opacity: unsealed ? 0 : 1,
+            transform: open
+              ? "rotateX(-178deg) translateY(-8px)"
+              : "rotateX(0deg)",
+            opacity: open ? 0 : 1,
             transition:
-              "transform 1100ms cubic-bezier(.6,.05,.2,1) 500ms, opacity 500ms ease 1300ms",
+              "transform 520ms cubic-bezier(.5,.05,.2,1) 120ms, opacity 220ms ease 540ms",
             backfaceVisibility: "hidden",
             zIndex: 2,
-            pointerEvents: unsealed ? "none" : "auto",
+            pointerEvents: open ? "none" : "auto",
           }}
         >
-          {/* fold line near the bottom of the flap, suggesting it's a flap */}
+          {/* fold hint near bottom of flap */}
           <div
             style={{
               position: "absolute",
@@ -120,12 +119,12 @@ export default function WelcomeLetter() {
                 "radial-gradient(circle at 32% 30%, #c45a3a 0%, #8a3a22 55%, #4a1d10 100%)",
               boxShadow:
                 "inset 0 -5px 10px rgba(0,0,0,.45), inset 0 2px 4px rgba(255,200,170,.25), 0 4px 10px rgba(58,42,28,.35)",
-              transform: unsealed
-                ? "translate(-50%, -140%) rotate(-28deg) scale(.85)"
+              transform: open
+                ? "translate(-50%, -130%) rotate(-22deg) scale(.85)"
                 : "translate(-50%, -50%) rotate(0deg) scale(1)",
-              opacity: unsealed ? 0 : 1,
+              opacity: open ? 0 : 1,
               transition:
-                "transform 700ms cubic-bezier(.6,.05,.2,1) 100ms, opacity 500ms ease 350ms",
+                "transform 380ms cubic-bezier(.6,.05,.2,1), opacity 240ms ease 180ms",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -161,13 +160,10 @@ export default function WelcomeLetter() {
               lineHeight: 1,
               marginBottom: 18,
               letterSpacing: "-0.01em",
-              ...fadeUp(1300),
+              ...fadeUp(640),
             }}
           >
-            <LangText
-              en="Welcome to the Lab."
-              es="Bienvenida al Lab."
-            />
+            <LangText en="Welcome to the Lab." es="Bienvenida al Lab." />
           </h3>
           <p
             className="font-spectral m-0"
@@ -178,13 +174,13 @@ export default function WelcomeLetter() {
               fontWeight: 400,
             }}
           >
-            <span style={{ display: "inline-block", ...fadeUp(1700) }}>
+            <span style={{ display: "inline-block", ...fadeUp(780) }}>
               <LangText en={BODY_S1_EN} es={BODY_S1_ES} />{" "}
             </span>
-            <span style={{ display: "inline-block", ...fadeUp(1950) }}>
+            <span style={{ display: "inline-block", ...fadeUp(900) }}>
               <LangText en={BODY_S2_EN} es={BODY_S2_ES} />{" "}
             </span>
-            <span style={{ display: "inline-block", ...fadeUp(2200) }}>
+            <span style={{ display: "inline-block", ...fadeUp(1020) }}>
               <LangText en={BODY_S3_EN} es={BODY_S3_ES} />
             </span>
           </p>
@@ -194,7 +190,7 @@ export default function WelcomeLetter() {
               fontStyle: "italic",
               fontSize: 18,
               color: "var(--ed-ink-soft)",
-              ...fadeUp(2500),
+              ...fadeUp(1160),
             }}
           >
             — <LangText en="Gabriela" es="Gabriela" />

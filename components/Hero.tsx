@@ -2,6 +2,7 @@
 
 import LangText from "@/components/LangText";
 import WelcomeLetter from "@/components/WelcomeLetter";
+import LevitatingStrip from "@/components/LevitatingStrip";
 import DeckPeek from "@/components/DeckPeek";
 import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 
@@ -70,8 +71,13 @@ export default function Hero({ editorialDate }: Props) {
         </div>
 
         {/* 2. Welcome Letter (magazine headline) */}
-        <div className="mb-16 md:mb-24">
+        <div className="mb-8 md:mb-10">
           <WelcomeLetter />
+        </div>
+
+        {/* 2b. Levitating celestial strip — drifts L→R under the letter */}
+        <div className="mb-12 md:mb-20">
+          <LevitatingStrip />
         </div>
 
         {/* 3. Big Jung pull-quote */}
