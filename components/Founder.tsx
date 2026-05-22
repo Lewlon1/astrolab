@@ -50,16 +50,17 @@ export default function Founder({ editorialDate }: Props) {
           {/* Photo + caption */}
           <div className="relative">
             <Image
-              src="/images/astro_profile.jpg"
+              src="/images/gabriela_door.jpg"
               alt="Gabriela — Founder of The Astro Psyche Lab"
               width={600}
-              height={750}
+              height={900}
               priority
               style={{
                 width: "100%",
                 height: "auto",
                 aspectRatio: "4 / 5",
                 objectFit: "cover",
+                objectPosition: "center 35%",
                 filter: "grayscale(0.1) contrast(1.05)",
                 display: "block",
               }}

@@ -392,6 +392,36 @@
   0%, 100% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(30px, -20px) scale(1.05); }
 }
+
+/* Levitating strip — celestial items drift L→R while bobbing */
+@keyframes levitate {
+  0%   { transform: translate(-10px, 4px) rotate(-1deg); }
+  50%  { transform: translate(10px, -8px) rotate(1deg); }
+  100% { transform: translate(-10px, 4px) rotate(-1deg); }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50%      { opacity: 0.30; transform: scale(0.72); }
+}
+@keyframes sunSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.lev-item {
+  animation: levitate 6.5s ease-in-out infinite;
+  will-change: transform;
+}
+.lev-twinkle {
+  animation: twinkle 2.4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+.lev-sun-rays {
+  animation: sunSpin 38s linear infinite;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lev-item, .lev-twinkle, .lev-sun-rays { animation: none !important; }
+}
 .hero-content {
   position: relative;
   z-index: 2;
