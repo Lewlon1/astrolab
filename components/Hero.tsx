@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import LangText from "@/components/LangText";
-import WelcomeLetter from "@/components/WelcomeLetter";
+import WelcomeLetterModal from "@/components/WelcomeLetterModal";
 import LevitatingStrip from "@/components/LevitatingStrip";
 import DeckPeek from "@/components/DeckPeek";
 import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
@@ -52,6 +53,30 @@ export default function Hero({ editorialDate }: Props) {
   const coverEn = `Cover Story · Issue ${ed.issueNum}`;
   const coverEs = `Portada · Número ${ed.issueNum}`;
 
+  const [letterOpen, setLetterOpen] = useState(false);
+
+  // On first mount: open the welcome letter unless the user has already dismissed it.
+  useEffect(() => {
+    try {
+      const dismissed = window.localStorage.getItem("apl.welcome.dismissed");
+      if (dismissed !== "true") setLetterOpen(true);
+    } catch {
+      // localStorage unavailable (private mode, etc.) — fall back to auto-open
+      setLetterOpen(true);
+    }
+  }, []);
+
+  const handleEnter = () => {
+    setLetterOpen(false);
+    try {
+      window.localStorage.setItem("apl.welcome.dismissed", "true");
+    } catch {
+      // noop
+    }
+  };
+
+  const handleReopen = () => setLetterOpen(true);
+
   return (
     <section
       className="px-6 md:px-14 pt-12 md:pt-20 pb-16 md:pb-24"
@@ -70,9 +95,27 @@ export default function Hero({ editorialDate }: Props) {
           <LangText en={coverEn} es={coverEs} />
         </div>
 
-        {/* 2. Welcome Letter (magazine headline) */}
-        <div className="mb-8 md:mb-10">
-          <WelcomeLetter />
+        {/* 2. Re-open Letter trigger (modal handles the letter itself) */}
+        <div className="mb-8 md:mb-10 flex justify-center">
+          <button
+            type="button"
+            onClick={handleReopen}
+            className="font-dm-mono uppercase"
+            style={{
+              background: "transparent",
+              border: "1px solid var(--ed-rule)",
+              padding: "10px 18px",
+              fontSize: 10,
+              letterSpacing: "0.24em",
+              color: "var(--ed-ink-soft)",
+              cursor: "pointer",
+            }}
+          >
+            <LangText
+              en="Re-open the letter →"
+              es="Reabrir la carta →"
+            />
+          </button>
         </div>
 
         {/* 2b. Levitating celestial strip — drifts L→R under the letter */}
@@ -254,6 +297,8 @@ export default function Hero({ editorialDate }: Props) {
           ))}
         </div>
       </div>
+
+      <WelcomeLetterModal isOpen={letterOpen} onEnter={handleEnter} />
     </section>
   );
 }

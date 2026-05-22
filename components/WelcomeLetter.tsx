@@ -14,7 +14,9 @@ const BODY_S1_ES = BODY_S1_EN;
 const BODY_S2_ES = BODY_S2_EN;
 const BODY_S3_ES = BODY_S3_EN;
 
-export default function WelcomeLetter() {
+type Props = { onEnter?: () => void };
+
+export default function WelcomeLetter({ onEnter }: Props = {}) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -150,21 +152,45 @@ export default function WelcomeLetter() {
 
         {/* letter content (under the flap) */}
         <div style={{ position: "relative", zIndex: 1 }}>
-          <h3
-            className="font-fraunces m-0"
-            style={{
-              fontStyle: "italic",
-              fontSize: 30,
-              fontWeight: 400,
-              color: "var(--ed-rust)",
-              lineHeight: 1,
-              marginBottom: 18,
-              letterSpacing: "-0.01em",
-              ...fadeUp(640),
-            }}
+          <div
+            className="flex items-baseline justify-between gap-4"
+            style={{ marginBottom: 18 }}
           >
-            <LangText en="Welcome to the Lab." es="Bienvenida al Lab." />
-          </h3>
+            <h3
+              className="font-fraunces m-0"
+              style={{
+                fontStyle: "italic",
+                fontSize: 30,
+                fontWeight: 400,
+                color: "var(--ed-rust)",
+                lineHeight: 1,
+                letterSpacing: "-0.01em",
+                ...fadeUp(640),
+              }}
+            >
+              <LangText en="Welcome to the Lab." es="Bienvenida al Lab." />
+            </h3>
+            {onEnter && (
+              <button
+                type="button"
+                onClick={onEnter}
+                className="font-dm-mono uppercase shrink-0"
+                style={{
+                  background: "var(--ed-ink)",
+                  color: "var(--ed-paper)",
+                  padding: "10px 18px",
+                  fontSize: 10,
+                  letterSpacing: "0.24em",
+                  fontWeight: 500,
+                  border: "none",
+                  cursor: "pointer",
+                  ...fadeUp(640),
+                }}
+              >
+                <LangText en="Enter →" es="Entrar →" />
+              </button>
+            )}
+          </div>
           <p
             className="font-spectral m-0"
             style={{
