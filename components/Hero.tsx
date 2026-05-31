@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import LangText from "@/components/LangText";
+import { useLang } from "@/context/LangContext";
+import EnvelopePenArt from "@/components/EnvelopePenArt";
 import WelcomeLetterModal from "@/components/WelcomeLetterModal";
 import LevitatingStrip from "@/components/LevitatingStrip";
 import DeckPeek from "@/components/DeckPeek";
@@ -53,7 +55,10 @@ export default function Hero({ editorialDate }: Props) {
   const coverEn = `Cover Story · Issue ${ed.issueNum}`;
   const coverEs = `Portada · Número ${ed.issueNum}`;
 
+  const { lang } = useLang();
   const [letterOpen, setLetterOpen] = useState(false);
+  // When opened from the envelope mock-up, the letter unfolds on its own.
+  const [autoUnfold, setAutoUnfold] = useState(false);
 
   // On first mount: open the welcome letter unless the user has already dismissed it.
   useEffect(() => {
@@ -68,6 +73,7 @@ export default function Hero({ editorialDate }: Props) {
 
   const handleEnter = () => {
     setLetterOpen(false);
+    setAutoUnfold(false);
     try {
       window.localStorage.setItem("apl.welcome.dismissed", "true");
     } catch {
@@ -75,7 +81,10 @@ export default function Hero({ editorialDate }: Props) {
     }
   };
 
-  const handleReopen = () => setLetterOpen(true);
+  const handleReopen = () => {
+    setAutoUnfold(true);
+    setLetterOpen(true);
+  };
 
   return (
     <section
@@ -95,28 +104,109 @@ export default function Hero({ editorialDate }: Props) {
           <LangText en={coverEn} es={coverEs} />
         </div>
 
-        {/* 2. Re-open Letter trigger (modal handles the letter itself) */}
+        {/* 2. Unopened-letter mock-up — click to unfold the note (modal) */}
         <div className="mb-8 md:mb-10 flex justify-center">
           <button
             type="button"
             onClick={handleReopen}
-            className="font-dm-mono uppercase"
+            aria-label={
+              lang === "en"
+                ? "A note from the Founder to you — open it"
+                : "Una nota de la fundadora para ti — ábrela"
+            }
+            className="apl-envelope group flex flex-col items-center"
             style={{
               background: "transparent",
-              border: "1px solid var(--ed-rule)",
-              padding: "10px 18px",
-              fontSize: 10,
-              letterSpacing: "0.24em",
-              color: "var(--ed-ink-soft)",
+              border: "none",
+              padding: "8px 12px",
               cursor: "pointer",
             }}
           >
-            <LangText
-              en="Re-open the letter →"
-              es="Reabrir la carta →"
-            />
+            {/* abstract envelope + pen illustration */}
+            <span
+              aria-hidden="true"
+              className="apl-envelope-art block"
+              style={{ lineHeight: 0 }}
+            >
+              <EnvelopePenArt width={172} />
+            </span>
+
+            {/* caption */}
+            <span
+              className="font-fraunces"
+              style={{
+                marginTop: 14,
+                fontSize: "clamp(20px, 2.4vw, 26px)",
+                fontWeight: 400,
+                color: "var(--ed-ink)",
+                lineHeight: 1.15,
+                maxWidth: 280,
+              }}
+            >
+              {lang === "en" ? (
+                <>
+                  A{" "}
+                  <em style={{ fontStyle: "italic", color: "var(--ed-rust)" }}>
+                    note
+                  </em>{" "}
+                  from the Founder to you
+                </>
+              ) : (
+                <>
+                  Una{" "}
+                  <em style={{ fontStyle: "italic", color: "var(--ed-rust)" }}>
+                    nota
+                  </em>{" "}
+                  de la fundadora para ti
+                </>
+              )}
+            </span>
+
+            {/* pill CTA */}
+            <span
+              className="apl-envelope-pill font-dm-mono uppercase"
+              style={{
+                marginTop: 14,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(63,85,96,.12)",
+                border: "1px solid rgba(63,85,96,.3)",
+                color: "var(--ed-sky)",
+                borderRadius: 999,
+                padding: "8px 18px",
+                fontSize: 10,
+                letterSpacing: "0.24em",
+                fontWeight: 500,
+              }}
+            >
+              <LangText en="Open the letter →" es="Abrir la carta →" />
+            </span>
           </button>
         </div>
+
+        <style>{`
+          .apl-envelope-art {
+            transform: rotate(-2deg);
+            transition: transform 360ms cubic-bezier(.5,.05,.2,1);
+          }
+          .apl-envelope:hover .apl-envelope-art,
+          .apl-envelope:focus-visible .apl-envelope-art {
+            transform: rotate(-2deg) translateY(-5px) scale(1.03);
+          }
+          .apl-envelope-pill {
+            transition: background 240ms ease, color 240ms ease, border-color 240ms ease;
+          }
+          .apl-envelope:hover .apl-envelope-pill,
+          .apl-envelope:focus-visible .apl-envelope-pill {
+            background: var(--ed-sky);
+            color: var(--ed-paper);
+            border-color: var(--ed-sky);
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .apl-envelope-art { transition: none; }
+          }
+        `}</style>
 
         {/* 2b. Levitating celestial strip — drifts L→R under the letter */}
         <div className="mb-12 md:mb-20">
@@ -298,7 +388,11 @@ export default function Hero({ editorialDate }: Props) {
         </div>
       </div>
 
-      <WelcomeLetterModal isOpen={letterOpen} onEnter={handleEnter} />
+      <WelcomeLetterModal
+        isOpen={letterOpen}
+        autoUnfold={autoUnfold}
+        onEnter={handleEnter}
+      />
     </section>
   );
 }

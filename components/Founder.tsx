@@ -272,41 +272,6 @@ export default function Founder({ editorialDate }: Props) {
                 es="Bilingüe EN/ES · Remoto + Presencial"
               />
             </div>
-
-            {/* Jung quote — under the stats */}
-            <div
-              className="mt-7 pt-6"
-              style={{ borderTop: "1px solid var(--ed-rule)" }}
-            >
-              <p
-                className="font-fraunces m-0"
-                style={{
-                  fontStyle: "italic",
-                  fontWeight: 400,
-                  fontSize: 18,
-                  lineHeight: 1.45,
-                  color: "var(--ed-ink-soft)",
-                  letterSpacing: "-0.005em",
-                }}
-              >
-                <span style={{ color: "var(--ed-rust)" }}>&ldquo;</span>
-                <LangText
-                  en="Who looks outside, dreams; who looks inside, awakes."
-                  es="Quien mira afuera, sueña; quien mira adentro, despierta."
-                />
-                <span style={{ color: "var(--ed-rust)" }}>&rdquo;</span>
-              </p>
-              <div
-                className="font-dm-mono uppercase mt-3"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: "0.22em",
-                  color: "var(--ed-text-mute)",
-                }}
-              >
-                — C.G. Jung
-              </div>
-            </div>
           </div>
         </div>
       </div>

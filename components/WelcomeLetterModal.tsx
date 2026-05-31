@@ -7,9 +7,15 @@ import WelcomeLetter from "@/components/WelcomeLetter";
 type Props = {
   isOpen: boolean;
   onEnter: () => void;
+  /** When true, the note unfolds on its own (opened from the envelope mock-up). */
+  autoUnfold?: boolean;
 };
 
-export default function WelcomeLetterModal({ isOpen, onEnter }: Props) {
+export default function WelcomeLetterModal({
+  isOpen,
+  onEnter,
+  autoUnfold = false,
+}: Props) {
   const { lang, setLang } = useLang();
 
   // Body scroll lock + ESC close
@@ -41,20 +47,16 @@ export default function WelcomeLetterModal({ isOpen, onEnter }: Props) {
       onClick={(e) => {
         if (e.target === e.currentTarget) onEnter();
       }}
-      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto px-4 py-10"
+      className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto px-3 py-4"
       style={{
-        background: "rgba(42, 33, 27, 0.7)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
+        background: "rgba(42, 33, 27, 0.62)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
         animation: "welcome-fade-in .4s ease",
       }}
     >
       <style>{`
         @keyframes welcome-fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes welcome-slide-up {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
-        }
       `}</style>
 
       {/* in-modal language toggle (top right of viewport) */}
@@ -113,14 +115,8 @@ export default function WelcomeLetterModal({ isOpen, onEnter }: Props) {
         </button>
       </div>
 
-      <div
-        className="relative w-full"
-        style={{
-          maxWidth: 540,
-          animation: "welcome-slide-up .5s cubic-bezier(.2,.7,.3,1)",
-        }}
-      >
-        <WelcomeLetter onEnter={onEnter} />
+      <div className="relative flex w-full items-center justify-center">
+        <WelcomeLetter onEnter={onEnter} autoUnfold={autoUnfold} />
       </div>
     </div>
   );
