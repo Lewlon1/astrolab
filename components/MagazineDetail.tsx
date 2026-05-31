@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import LangText from "@/components/LangText";
-import Loupe from "@/components/Loupe";
+import MagazinePreviewModal from "@/components/MagazinePreviewModal";
+import { useLang } from "@/context/LangContext";
 
 const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
+const COVER_IMG =
+  "https://images.unsplash.com/photo-1469028614971-4fd767d45eb3?fm=jpg&q=80&w=1400&auto=format&fit=crop";
 
 type Props = {
   magazineCalendlyUrl?: string | null;
@@ -44,10 +50,121 @@ const FEATURES: Array<{
   },
 ];
 
-export default function MagazineDetail({
-  magazineCalendlyUrl,
-}: Props) {
+function MagazineCoverTeaser({
+  onClick,
+  lang,
+}: {
+  onClick: () => void;
+  lang: "en" | "es";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={
+        lang === "en"
+          ? "Preview the Soul Guided Travel magazine"
+          : "Vista previa de la revista Viaje Guiado del Alma"
+      }
+      className="group relative block w-full max-w-[420px] overflow-hidden cursor-pointer"
+      style={{
+        aspectRatio: "4 / 5",
+        border: "1.5px solid var(--ed-rust)",
+        boxShadow: "0 24px 64px -28px rgba(140, 62, 38, 0.55)",
+        background: "var(--ed-paper)",
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={COVER_IMG}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        style={{ filter: "saturate(1.05) contrast(1.02)" }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(184,88,56,0.10) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 55%, rgba(26,24,20,0.78) 100%)",
+        }}
+      />
+      <div
+        className="absolute font-dm-mono uppercase"
+        style={{
+          top: 22,
+          left: 22,
+          right: 110,
+          fontSize: 9,
+          letterSpacing: "0.32em",
+          color: "rgba(244, 239, 230, 0.92)",
+        }}
+      >
+        {lang === "en"
+          ? "Vol. I · Spring/Summer · MMXXVI"
+          : "Vol. I · Primavera/Verano · MMXXVI"}
+      </div>
+      <div
+        className="absolute font-dm-mono uppercase flex items-center gap-2"
+        style={{
+          top: 18,
+          right: 18,
+          fontSize: 9,
+          letterSpacing: "0.28em",
+          color: "var(--ed-paper)",
+          background: "var(--ed-rust)",
+          padding: "6px 12px",
+        }}
+      >
+        {lang === "en" ? "Preview" : "Vista Previa"} →
+      </div>
+      <div className="absolute" style={{ left: 22, right: 22, bottom: 24 }}>
+        <div
+          className="font-fraunces"
+          style={{
+            fontStyle: "italic",
+            fontSize: "clamp(34px, 4.5vw, 52px)",
+            lineHeight: 0.95,
+            color: "var(--ed-paper)",
+            letterSpacing: "-0.02em",
+            marginBottom: 8,
+          }}
+        >
+          {lang === "en" ? (
+            <>
+              Soul Guided
+              <br />
+              Travel.
+            </>
+          ) : (
+            <>
+              Viaje Guiado
+              <br />
+              del Alma.
+            </>
+          )}
+        </div>
+        <div
+          className="font-dm-mono uppercase"
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.32em",
+            color: "rgba(244, 239, 230, 0.82)",
+          }}
+        >
+          {lang === "en"
+            ? "An Astrocartographic Almanac"
+            : "Un Almanaque Astrocartográfico"}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
   const bookHref = magazineCalendlyUrl ?? FALLBACK_CALENDLY;
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { lang } = useLang();
 
   return (
     <section
@@ -218,31 +335,62 @@ export default function MagazineDetail({
                 />
               </span>
             </div>
-            <a
-              href={bookHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block font-dm-mono uppercase mt-6"
-              style={{
-                background: "var(--ed-ink)",
-                color: "var(--ed-paper)",
-                padding: "16px 32px",
-                fontSize: 11,
-                letterSpacing: "0.22em",
-                fontWeight: 500,
-                textDecoration: "none",
-              }}
-            >
-              <LangText en="Order Your Issue →" es="Pide Tu Edición →" />
-            </a>
+            <div className="flex flex-wrap gap-3 items-center">
+              <a
+                href={bookHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block font-dm-mono uppercase mt-6"
+                style={{
+                  background: "var(--ed-ink)",
+                  color: "var(--ed-paper)",
+                  padding: "16px 32px",
+                  fontSize: 11,
+                  letterSpacing: "0.22em",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+              >
+                <LangText en="Order Your Issue →" es="Pide Tu Edición →" />
+              </a>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="inline-block font-dm-mono uppercase mt-6"
+                style={{
+                  background: "var(--ed-paper)",
+                  color: "var(--ed-ink)",
+                  border: "1px solid var(--ed-ink)",
+                  padding: "15px 32px",
+                  fontSize: 11,
+                  letterSpacing: "0.22em",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                <LangText
+                  en="Preview the full edition →"
+                  es="Vista previa de la edición completa →"
+                />
+              </button>
+            </div>
           </div>
 
-          {/* RIGHT: loupe */}
+          {/* RIGHT: clickable magazine cover teaser (replaces Loupe) */}
           <div className="relative order-1 md:order-2 flex flex-col items-center justify-center">
-            <Loupe />
+            <MagazineCoverTeaser
+              onClick={() => setPreviewOpen(true)}
+              lang={lang}
+            />
           </div>
         </div>
       </div>
+
+      <MagazinePreviewModal
+        isOpen={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        calendlyUrl={bookHref}
+      />
     </section>
   );
 }

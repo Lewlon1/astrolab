@@ -50,16 +50,17 @@ export default function Founder({ editorialDate }: Props) {
           {/* Photo + caption */}
           <div className="relative">
             <Image
-              src="/images/Website_profile.png"
+              src="/images/gabriela_door.jpg"
               alt="Gabriela — Founder of The Astro Psyche Lab"
               width={600}
-              height={750}
+              height={900}
               priority
               style={{
                 width: "100%",
                 height: "auto",
                 aspectRatio: "4 / 5",
                 objectFit: "cover",
+                objectPosition: "center 35%",
                 filter: "grayscale(0.1) contrast(1.05)",
                 display: "block",
               }}
@@ -73,6 +74,39 @@ export default function Founder({ editorialDate }: Props) {
               }}
             >
               <LangText en={figureEn} es={figureEs} />
+            </div>
+
+            {/* Big Three callout — sits under the photo */}
+            <div
+              className="mt-6 p-6"
+              style={{
+                background: "var(--ed-paper-deep)",
+                borderLeft: "3px solid var(--ed-rust)",
+              }}
+            >
+              <div
+                className="font-dm-mono uppercase mb-2"
+                style={{
+                  fontSize: 10,
+                  letterSpacing: "0.22em",
+                  color: "var(--ed-text-mute)",
+                }}
+              >
+                <LangText en="The Big Three" es="Los Tres Grandes" />
+              </div>
+              <div
+                className="font-fraunces"
+                style={{
+                  fontStyle: "italic",
+                  fontSize: 18,
+                  color: "var(--ed-ink)",
+                }}
+              >
+                <LangText
+                  en="☉ Pisces Sun · ☽ Sagittarius Moon · ↑ Taurus Rising"
+                  es="☉ Sol en Piscis · ☽ Luna en Sagitario · ↑ Ascendente en Tauro"
+                />
+              </div>
             </div>
           </div>
 
@@ -136,7 +170,7 @@ export default function Founder({ editorialDate }: Props) {
             <p
               className="font-spectral m-0 mb-4 ed-dropcap"
               style={{
-                fontSize: 18,
+                fontSize: 17,
                 color: "var(--ed-ink-soft)",
                 lineHeight: 1.7,
                 fontWeight: 400,
@@ -166,9 +200,9 @@ export default function Founder({ editorialDate }: Props) {
             <p
               className="font-spectral m-0 mb-9"
               style={{
-                fontSize: 16,
+                fontSize: 17,
                 color: "var(--ed-ink-soft)",
-                lineHeight: 1.75,
+                lineHeight: 1.7,
                 fontWeight: 400,
               }}
             >
@@ -180,7 +214,7 @@ export default function Founder({ editorialDate }: Props) {
 
             {/* Stats */}
             <div
-              className="grid grid-cols-3 pt-7"
+              className="grid grid-cols-1 pt-7"
               style={{ borderTop: "1px solid var(--ed-ink)" }}
             >
               {[
@@ -188,16 +222,6 @@ export default function Founder({ editorialDate }: Props) {
                   num: "10+",
                   labelEn: "Years\nin Psychology",
                   labelEs: "Años en\nPsicología",
-                },
-                {
-                  num: "EN/ES",
-                  labelEn: "Bilingual\nSessions",
-                  labelEs: "Sesiones\nBilingües",
-                },
-                {
-                  num: "EU·PR",
-                  labelEn: "Remote\n+ In Person",
-                  labelEs: "Remoto\n+ Presencial",
                 },
               ].map((d, i) => (
                 <div
@@ -235,37 +259,18 @@ export default function Founder({ editorialDate }: Props) {
               ))}
             </div>
 
-            {/* Big Three callout */}
             <div
-              className="mt-9 p-6"
+              className="font-dm-mono uppercase mt-4"
               style={{
-                background: "var(--ed-paper-deep)",
-                borderLeft: "3px solid var(--ed-rust)",
+                fontSize: 10,
+                letterSpacing: "0.2em",
+                color: "var(--ed-text-mute)",
               }}
             >
-              <div
-                className="font-dm-mono uppercase mb-2"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: "0.22em",
-                  color: "var(--ed-text-mute)",
-                }}
-              >
-                <LangText en="The Big Three" es="Los Tres Grandes" />
-              </div>
-              <div
-                className="font-fraunces"
-                style={{
-                  fontStyle: "italic",
-                  fontSize: 18,
-                  color: "var(--ed-ink)",
-                }}
-              >
-                <LangText
-                  en="☉ Pisces Sun · ☽ Sagittarius Moon · ↑ Taurus Rising"
-                  es="☉ Sol en Piscis · ☽ Luna en Sagitario · ↑ Ascendente en Tauro"
-                />
-              </div>
+              <LangText
+                en="Bilingual EN/ES · Remote + In Person"
+                es="Bilingüe EN/ES · Remoto + Presencial"
+              />
             </div>
           </div>
         </div>

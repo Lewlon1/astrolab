@@ -7,6 +7,7 @@ import {
   Instrument_Serif,
   Spectral,
   DM_Mono,
+  Caveat,
 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import ManyChatScript from "@/components/ManyChatScript";
@@ -66,6 +67,13 @@ const dmMono = DM_Mono({
   display: "swap",
 });
 
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-caveat",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     default: "The Astro Psyche Lab | Astrology Meets Psychology",
@@ -92,7 +100,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${outfit.variable} ${syne.variable} ${fraunces.variable} ${instrumentSerif.variable} ${spectral.variable} ${dmMono.variable}`}
+      className={`${cormorant.variable} ${outfit.variable} ${syne.variable} ${fraunces.variable} ${instrumentSerif.variable} ${spectral.variable} ${dmMono.variable} ${caveat.variable}`}
     >
       <body className="antialiased font-body">
         {children}

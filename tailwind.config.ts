@@ -65,6 +65,7 @@ const config: Config = {
         instrument: ["var(--font-instrument)", "Georgia", "serif"],
         spectral: ["var(--font-spectral)", "Georgia", "serif"],
         "dm-mono": ["var(--font-dm-mono)", "ui-monospace", "monospace"],
+        caveat: ["var(--font-caveat)", "Bradley Hand", "cursive"],
       },
     },
   },
