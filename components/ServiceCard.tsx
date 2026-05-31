@@ -98,6 +98,8 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             ? "/#lead-capture"
             : service.calendly_url || `/services/${service.slug}`
         }
+        data-analytics={isLeadMagnet ? "cta_lead_magnet" : "cta_book_card"}
+        data-service-slug={service.slug}
         className={isFree ? "btn-secondary" : "btn-primary"}
         style={{
           marginTop: "1.5rem",

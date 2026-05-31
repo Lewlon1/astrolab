@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLang } from "@/context/LangContext";
 import LangText from "@/components/LangText";
+import { track } from "@/lib/analytics/track";
 import type { Service } from "@/types";
 
 const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
@@ -339,7 +340,15 @@ export default function TarotDeck({ services }: Props) {
                 duration={card.fallbackDuration[lang]}
                 isFlipped={isFlipped}
                 lang={lang}
-                onToggle={() => setActiveCard(isFlipped ? null : i)}
+                onToggle={() => {
+                  const next = isFlipped ? null : i;
+                  setActiveCard(next);
+                  if (next !== null) {
+                    track("interaction", "tarot_card_flip", {
+                      card_slug: card.slug,
+                    });
+                  }
+                }}
                 desktopLift={LIFT[i]}
               />
             );
@@ -555,6 +564,8 @@ function CardSlot({
             </div>
             <a
               href="#tarot-detail"
+              data-analytics="cta_tarot_start_here"
+              data-service-slug={card.slug}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -755,6 +766,9 @@ function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
           href={calendly}
           target="_blank"
           rel="noopener noreferrer"
+          data-analytics="cta_book_card"
+          data-analytics-conversion="calendly_click"
+          data-service-slug={card.slug}
           className="inline-block font-dm-mono uppercase mt-7"
           style={{
             background: "var(--ed-ink)",

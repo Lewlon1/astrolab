@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { getSessionKey, getAttribution } from "@/lib/analytics/session";
+import { track } from "@/lib/analytics/track";
 
 export default function LeadCaptureForm() {
   const [email, setEmail] = useState("");
@@ -12,15 +14,28 @@ export default function LeadCaptureForm() {
     setStatus("loading");
     setErrorMessage("");
 
+    // Attribution so the admin can see who signed up + where they came from.
+    const attribution = getAttribution();
+
     try {
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "website_form" }),
+        body: JSON.stringify({
+          email,
+          source: "website_form",
+          session_key: getSessionKey(),
+          referrer: attribution.referrer,
+          utm_source: attribution.utm_source,
+          utm_medium: attribution.utm_medium,
+          utm_campaign: attribution.utm_campaign,
+          landing_path: attribution.landing_path,
+        }),
       });
 
       if (res.ok) {
         setStatus("success");
+        track("conversion", "newsletter_signup", { source: "website_form" });
       } else {
         const data = await res.json();
         setErrorMessage(data.error || "Something went wrong");

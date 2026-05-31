@@ -4,6 +4,7 @@ import { useState } from "react";
 import LangText from "@/components/LangText";
 import MagazinePreviewModal from "@/components/MagazinePreviewModal";
 import { useLang } from "@/context/LangContext";
+import { track } from "@/lib/analytics/track";
 
 const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
 const COVER_IMG =
@@ -165,6 +166,11 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
   const bookHref = magazineCalendlyUrl ?? FALLBACK_CALENDLY;
   const [previewOpen, setPreviewOpen] = useState(false);
   const { lang } = useLang();
+
+  const openPreview = () => {
+    setPreviewOpen(true);
+    track("interaction", "magazine_preview_open");
+  };
 
   return (
     <section
@@ -340,6 +346,9 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
                 href={bookHref}
                 target="_blank"
                 rel="noopener noreferrer"
+                data-analytics="cta_order_magazine"
+                data-analytics-conversion="calendly_click"
+                data-service-slug="soul-guided-travel-magazine"
                 className="inline-block font-dm-mono uppercase mt-6"
                 style={{
                   background: "var(--ed-ink)",
@@ -355,7 +364,7 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
               </a>
               <button
                 type="button"
-                onClick={() => setPreviewOpen(true)}
+                onClick={openPreview}
                 className="inline-block font-dm-mono uppercase mt-6"
                 style={{
                   background: "var(--ed-paper)",
@@ -378,10 +387,7 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
 
           {/* RIGHT: clickable magazine cover teaser (replaces Loupe) */}
           <div className="relative order-1 md:order-2 flex flex-col items-center justify-center">
-            <MagazineCoverTeaser
-              onClick={() => setPreviewOpen(true)}
-              lang={lang}
-            />
+            <MagazineCoverTeaser onClick={openPreview} lang={lang} />
           </div>
         </div>
       </div>

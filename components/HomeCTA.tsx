@@ -63,6 +63,8 @@ export default function HomeCTA() {
         href={CALENDLY}
         target="_blank"
         rel="noopener noreferrer"
+        data-analytics="cta_book_home"
+        data-analytics-conversion="calendly_click"
         className="inline-block font-dm-mono uppercase"
         style={{
           background: "var(--ed-ink)",

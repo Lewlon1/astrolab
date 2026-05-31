@@ -7,6 +7,7 @@ import EnvelopePenArt from "@/components/EnvelopePenArt";
 import WelcomeLetterModal from "@/components/WelcomeLetterModal";
 import LevitatingStrip from "@/components/LevitatingStrip";
 import DeckPeek from "@/components/DeckPeek";
+import { track } from "@/lib/analytics/track";
 import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 
 type Props = {
@@ -84,6 +85,7 @@ export default function Hero({ editorialDate }: Props) {
   const handleReopen = () => {
     setAutoUnfold(true);
     setLetterOpen(true);
+    track("interaction", "welcome_letter_open");
   };
 
   return (
@@ -254,6 +256,7 @@ export default function Hero({ editorialDate }: Props) {
           <div className="flex flex-wrap justify-center gap-3.5">
             <a
               href="#tarot"
+              data-analytics="cta_draw_card"
               className="font-dm-mono uppercase"
               style={{
                 background: "var(--ed-ink)",
@@ -269,6 +272,7 @@ export default function Hero({ editorialDate }: Props) {
             </a>
             <a
               href="#founder"
+              data-analytics="cta_meet_gabriela"
               className="font-dm-mono uppercase"
               style={{
                 background: "transparent",
