@@ -33,8 +33,17 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
 
   // Mount-once: session bootstrap, foreground-duration accumulator, scroll depth,
   // delegated click tracking, and unload/visibility flushing. This provider lives
-  // in the persistent public layout, so it is NOT remounted on route changes —
-  // session_end therefore fires only on real page exit.
+  // in the persistent public layout, so it is NOT remounted while browsing the
+  // public site — but it DOES unmount when leaving it (e.g. into /admin).
+  //
+  // session_end carries the visit duration + max scroll, so it must fire on every
+  // way a visit can end, not just a hard tab close. `pagehide` covers full-page
+  // navigations/closes, but it does NOT fire for SPA route changes that unmount
+  // this provider, nor when a tab is merely backgrounded (mobile app-switch, or
+  // opening the dashboard in a new tab). We therefore also end the session on
+  // `visibilitychange → hidden` (the one terminal signal that's reliable on
+  // mobile) and on unmount. An `ended` guard keeps it to a single session_end so
+  // the dashboard's average-duration math isn't skewed by duplicates.
   useEffect(() => {
     ensureSessionStarted();
 
@@ -66,8 +75,10 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === "visible") {
         if (!visibleSince) visibleSince = Date.now();
       } else {
-        accumulate();
-        flush();
+        // Hidden is the last reliably-observable state on mobile and the only
+        // signal we get when the visit ends via a new-tab / app-switch, so
+        // finalise the session here rather than waiting for pagehide.
+        endSession();
       }
     };
 
@@ -109,6 +120,9 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     document.addEventListener("click", onClick, true);
 
     return () => {
+      // Leaving the public layout (e.g. navigating into /admin) unmounts this
+      // provider without a pagehide — end the session so the duration is banked.
+      endSession();
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("pagehide", endSession);
