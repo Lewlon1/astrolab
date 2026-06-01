@@ -1,7 +1,5 @@
 import LangText from "@/components/LangText";
 
-const CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
-
 export default function HomeCTA() {
   return (
     <section
@@ -60,9 +58,8 @@ export default function HomeCTA() {
         />
       </p>
       <a
-        href={CALENDLY}
-        target="_blank"
-        rel="noopener noreferrer"
+        href="#tarot"
+        data-analytics="cta_book_home"
         className="inline-block font-dm-mono uppercase"
         style={{
           background: "var(--ed-ink)",

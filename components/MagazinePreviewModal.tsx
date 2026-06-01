@@ -37,7 +37,7 @@ type Lang = "en" | "es";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  calendlyUrl: string;
+  orderUrl: string;
 };
 
 /* ---------- bilingual helper ---------- */
@@ -59,7 +59,7 @@ function T({
 export default function MagazinePreviewModal({
   isOpen,
   onClose,
-  calendlyUrl,
+  orderUrl,
 }: Props) {
   const { lang: globalLang } = useLang();
   const [lang, setLang] = useState<Lang>(globalLang);
@@ -148,7 +148,7 @@ export default function MagazinePreviewModal({
           <Atlas lang={lang} />
           <Destinations lang={lang} />
           <PullQuote lang={lang} />
-          <Closing lang={lang} calendlyUrl={calendlyUrl} />
+          <Closing lang={lang} orderUrl={orderUrl} />
           <Footer />
         </div>
       </div>
@@ -1993,10 +1993,10 @@ function PullQuote({ lang }: { lang: Lang }) {
    ============================================================ */
 function Closing({
   lang,
-  calendlyUrl,
+  orderUrl,
 }: {
   lang: Lang;
-  calendlyUrl: string;
+  orderUrl: string;
 }) {
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-[80px] items-center px-6 md:px-12 py-20 md:py-24">
@@ -2109,9 +2109,12 @@ function Closing({
           </div>
         </div>
         <a
-          href={calendlyUrl}
+          href={orderUrl}
           target="_blank"
           rel="noopener noreferrer"
+          data-analytics="cta_order_magazine"
+          data-analytics-conversion="booking_click"
+          data-service-slug="soul-guided-travel-magazine"
           className="font-syne inline-block"
           style={{
             background: "var(--ed-rust)",

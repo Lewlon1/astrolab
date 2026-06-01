@@ -4,9 +4,10 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLang } from "@/context/LangContext";
 import LangText from "@/components/LangText";
+import BookAction from "@/components/booking/BookAction";
+import { bookingForSlug } from "@/lib/booking";
+import { track } from "@/lib/analytics/track";
 import type { Service } from "@/types";
-
-const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
 
 type Bilingual = { en: string; es: string };
 
@@ -25,7 +26,6 @@ type CardCopy = {
   closing: Bilingual;
   bullets?: { intro?: Bilingual; items: Bilingual[] };
   spreadRole: Bilingual;
-  calendly?: string;
 };
 
 const CARDS: CardCopy[] = [
@@ -58,7 +58,6 @@ const CARDS: CardCopy[] = [
       es: "Considéralo tu primer paso en el Lab — un pequeño salto de fe hacia un autoconocimiento más profundo.",
     },
     spreadRole: { en: "Past", es: "Pasado" },
-    calendly: "https://calendly.com/astropsychelab/express-astro-insight",
   },
   {
     slug: "astro-psyche-blend",
@@ -89,7 +88,6 @@ const CARDS: CardCopy[] = [
       es: "Un primer paso cálido al Lab: revelador, asentador y profundamente personal.",
     },
     spreadRole: { en: "Approach", es: "Enfoque" },
-    calendly: "https://calendly.com/astropsychelab/60",
   },
   {
     slug: "stellar-insights",
@@ -120,7 +118,6 @@ const CARDS: CardCopy[] = [
       es: "Para quienes están listas para ir más allá de “¿quién soy?” y entrar en “¿en quién me estoy convirtiendo?”",
     },
     spreadRole: { en: "Present", es: "Presente" },
-    calendly: "https://calendly.com/astropsychelab/stellar-insights",
   },
   {
     slug: "cosmic-alliance",
@@ -168,7 +165,6 @@ const CARDS: CardCopy[] = [
       es: "Una experiencia inmersiva y por capas para quienes están listas para entender el amor, la intimidad y la pareja más allá de la química.",
     },
     spreadRole: { en: "Path", es: "Camino" },
-    calendly: "https://calendly.com/astropsychelab/cosmic-alliance-advance",
   },
   {
     slug: "soul-guided-travel-magazine",
@@ -339,7 +335,15 @@ export default function TarotDeck({ services }: Props) {
                 duration={card.fallbackDuration[lang]}
                 isFlipped={isFlipped}
                 lang={lang}
-                onToggle={() => setActiveCard(isFlipped ? null : i)}
+                onToggle={() => {
+                  const next = isFlipped ? null : i;
+                  setActiveCard(next);
+                  if (next !== null) {
+                    track("interaction", "tarot_card_flip", {
+                      card_slug: card.slug,
+                    });
+                  }
+                }}
                 desktopLift={LIFT[i]}
               />
             );
@@ -555,6 +559,8 @@ function CardSlot({
             </div>
             <a
               href="#tarot-detail"
+              data-analytics="cta_tarot_start_here"
+              data-service-slug={card.slug}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -603,7 +609,7 @@ type ServiceDetailProps = {
 function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
   const name = service?.name ?? card.fallbackName;
   const price = service?.price ?? card.fallbackPrice;
-  const calendly = service?.calendly_url ?? card.calendly ?? FALLBACK_CALENDLY;
+  const bookingTarget = bookingForSlug(card.slug);
   const duration = card.fallbackDuration[lang];
 
   return (
@@ -751,23 +757,27 @@ function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
           {card.closing[lang]}
         </p>
 
-        <a
-          href={calendly}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block font-dm-mono uppercase mt-7"
-          style={{
-            background: "var(--ed-ink)",
-            color: "var(--ed-paper)",
-            padding: "14px 28px",
-            fontSize: 11,
-            letterSpacing: "0.22em",
-            fontWeight: 500,
-            textDecoration: "none",
-          }}
-        >
-          {lang === "en" ? "Book Now" : "Reservar Ahora"} →
-        </a>
+        {bookingTarget && (
+          <BookAction
+            target={bookingTarget}
+            label={`${lang === "en" ? "Book Now" : "Reservar Ahora"} →`}
+            analyticsName="cta_book_card"
+            conversionName="booking_click"
+            serviceSlug={card.slug}
+            className="inline-block font-dm-mono uppercase mt-7"
+            style={{
+              background: "var(--ed-ink)",
+              color: "var(--ed-paper)",
+              padding: "14px 28px",
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              fontWeight: 500,
+              textDecoration: "none",
+              cursor: "pointer",
+              border: "none",
+            }}
+          />
+        )}
       </div>
     </div>
   );

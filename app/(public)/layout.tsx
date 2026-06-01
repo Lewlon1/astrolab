@@ -1,6 +1,8 @@
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { LangProvider } from "@/context/LangContext";
+import { AnalyticsProvider } from "@/context/AnalyticsContext";
+import BookingConversionListener from "@/components/analytics/BookingConversionListener";
 import { getEditorialDate } from "@/lib/editorialDate";
 
 export default function PublicLayout({
@@ -12,11 +14,14 @@ export default function PublicLayout({
 
   return (
     <LangProvider>
-      <div className="editorial-page min-h-screen">
-        <SiteHeader editorialDate={editorialDate} />
-        <main>{children}</main>
-        <SiteFooter editorialDate={editorialDate} />
-      </div>
+      <AnalyticsProvider>
+        <div className="editorial-page min-h-screen">
+          <SiteHeader editorialDate={editorialDate} />
+          <main>{children}</main>
+          <SiteFooter editorialDate={editorialDate} />
+        </div>
+        <BookingConversionListener />
+      </AnalyticsProvider>
     </LangProvider>
   );
 }
