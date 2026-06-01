@@ -84,7 +84,10 @@ export default function TrackSection({
     io.observe(el);
 
     const onVisibility = () => {
-      if (document.visibilityState === "hidden") pause();
+      // A hide can turn into a close we never hear about (mobile/new-tab), so
+      // bank this visit's dwell now instead of only pausing. Re-entry resumes a
+      // fresh visit; section_dwell is summed per visit server-side.
+      if (document.visibilityState === "hidden") emit();
       else resume();
     };
     document.addEventListener("visibilitychange", onVisibility);
