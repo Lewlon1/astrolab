@@ -4,15 +4,16 @@ import { useState } from "react";
 import LangText from "@/components/LangText";
 import MagazinePreviewModal from "@/components/MagazinePreviewModal";
 import { useLang } from "@/context/LangContext";
+import BookAction from "@/components/booking/BookAction";
+import { SERVICES } from "@/lib/booking";
 import { track } from "@/lib/analytics/track";
 
-const FALLBACK_CALENDLY = "https://calendly.com/astropsychelabadmi/30min";
 const COVER_IMG =
   "https://images.unsplash.com/photo-1469028614971-4fd767d45eb3?fm=jpg&q=80&w=1400&auto=format&fit=crop";
 
-type Props = {
-  magazineCalendlyUrl?: string | null;
-};
+// The travel magazine is an async deliverable → Stripe Payment Link.
+const TRAVEL = SERVICES.travel.booking;
+const TRAVEL_URL = TRAVEL.kind === "stripe" ? TRAVEL.url : "";
 
 const FEATURES: Array<{
   num: string;
@@ -162,8 +163,7 @@ function MagazineCoverTeaser({
   );
 }
 
-export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
-  const bookHref = magazineCalendlyUrl ?? FALLBACK_CALENDLY;
+export default function MagazineDetail() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const { lang } = useLang();
 
@@ -342,13 +342,12 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
               </span>
             </div>
             <div className="flex flex-wrap gap-3 items-center">
-              <a
-                href={bookHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-analytics="cta_order_magazine"
-                data-analytics-conversion="calendly_click"
-                data-service-slug="soul-guided-travel-magazine"
+              <BookAction
+                target={TRAVEL}
+                label={<LangText en="Order Your Issue →" es="Pide Tu Edición →" />}
+                analyticsName="cta_order_magazine"
+                conversionName="booking_click"
+                serviceSlug="soul-guided-travel-magazine"
                 className="inline-block font-dm-mono uppercase mt-6"
                 style={{
                   background: "var(--ed-ink)",
@@ -359,9 +358,7 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
                   fontWeight: 500,
                   textDecoration: "none",
                 }}
-              >
-                <LangText en="Order Your Issue →" es="Pide Tu Edición →" />
-              </a>
+              />
               <button
                 type="button"
                 onClick={openPreview}
@@ -395,7 +392,7 @@ export default function MagazineDetail({ magazineCalendlyUrl }: Props) {
       <MagazinePreviewModal
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        calendlyUrl={bookHref}
+        orderUrl={TRAVEL_URL}
       />
     </section>
   );

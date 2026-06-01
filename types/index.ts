@@ -222,7 +222,7 @@ export type SectionName =
 
 export type ConversionName =
   | "newsletter_signup"
-  | "calendly_click"
+  | "booking_click"
   | "booking_confirmed"
   | "manychat_open";
 

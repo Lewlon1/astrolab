@@ -2,7 +2,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { LangProvider } from "@/context/LangContext";
 import { AnalyticsProvider } from "@/context/AnalyticsContext";
-import CalendlyConversionListener from "@/components/analytics/CalendlyConversionListener";
+import BookingConversionListener from "@/components/analytics/BookingConversionListener";
 import { getEditorialDate } from "@/lib/editorialDate";
 
 export default function PublicLayout({
@@ -20,7 +20,7 @@ export default function PublicLayout({
           <main>{children}</main>
           <SiteFooter editorialDate={editorialDate} />
         </div>
-        <CalendlyConversionListener />
+        <BookingConversionListener />
       </AnalyticsProvider>
     </LangProvider>
   );

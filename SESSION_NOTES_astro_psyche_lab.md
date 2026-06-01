@@ -270,3 +270,44 @@ Until both are run: `/admin/transits` loads, Timeline + Calendar work, Bedrock G
 1. Run `supabase/transit_drafts.sql` and `supabase/transit_horoscopes.sql` in Supabase SQL editor.
 2. Smoke-test E2E in dev / Vercel preview: filter → click transit (Timeline + Calendar) → drawer → draft → save → reload; switch to Calendar → click day → popover → drawer; click "Generate sign-by-sign read" on a major transit → verify all 24 reads come back, language toggle works → save bundle. Capture latency + JSON-validation reliability data for Phase 2 planning.
 3. (Phase 2) Wire real birth data into `lib/transits/natal-chart.ts` and start replacing the hardcoded personal hits with live Swiss Ephemeris calculations.
+
+---
+
+## 2026-06-01 — Cal.com + Stripe booking (replaced Calendly)
+
+**What changed**
+- Mixed booking: 3 Cal popups (Blend/Stellar/Alliance) via `@calcom/embed-react` + 2 Stripe Payment Links (Quick Hit/Travel). Single `SERVICES` config in `lib/booking.ts`; `BookAction` dispatches by `kind` (cal → popup button, stripe → new-tab link).
+- Payment handled inside Cal (Stripe app) / Stripe links. Site handles no money. **No Supabase changes.**
+
+**Confirmed config**
+- Cal username: `theastropsychelab`
+- Cal events: `astro-psyche-blend` (45m/€65), `stellar-insights` (60m/€120), `cosmic-alliance` (90m/€180)
+- Stripe links: Quick Hit €25 (…wI01), Travel €75 (…wI02)
+- Stripe app on Cal events: **UNVERIFIED (human pre-flight)** | GCal connected: **UNVERIFIED** | test booking verified: **UNVERIFIED**
+
+**Product decisions (asked, not in brief)**
+- Homepage final CTA ("Book Your Session") → **scrolls to #tarot** (pick a reading), no longer a generic Calendly link.
+- `/book` page → **grid of all 5 services** (Cal popups + Stripe), rendered from `SERVICES` (dropped the Supabase fetch; page is now static).
+
+**Actual files touched**
+- create: `lib/booking.ts`, `components/booking/CalBookButton.tsx`, `components/booking/BookAction.tsx`, `components/booking/BookingGrid.tsx`, `components/analytics/BookingConversionListener.tsx`
+- modify: `components/TarotDeck.tsx` (v4 cards live — detail "Book Now" → `BookAction` by slug; removed per-card `calendly` fields), `components/MagazineDetail.tsx` (Order → Stripe travel; dropped `magazineCalendlyUrl` prop), `components/MagazinePreviewModal.tsx` (`calendlyUrl` prop → `orderUrl`, Stripe), `components/HomeCTA.tsx`, `app/(public)/book/page.tsx`, `components/ServiceCard.tsx` (mapped slugs → `BookAction`, else `/services/[slug]`), `app/(public)/page.tsx`, `app/(public)/layout.tsx`, `types/index.ts` (`calendly_click` → `booking_click`), `supabase/migrations/010_analytics_rpcs.sql` (funnel event name), `.env.local` (+`NEXT_PUBLIC_CAL_USERNAME`), `package.json` + lockfile (+`@calcom/embed-react`)
+- delete: `components/CalendlyBooking.tsx`, `components/analytics/CalendlyConversionListener.tsx`
+- **NOT touched:** `components/admin/ServiceEditForm.tsx` + `Service.calendly_url` (admin off-limits; DB column kept, just unused by public booking). No `react-calendly` dep and no `NEXT_PUBLIC_CALENDLY_*` vars ever existed.
+
+**Lessons / gotchas**
+- `@calcom/embed-react` **1.5.3**: uses the modern `cssVarsPerTheme` UI shape, and its `Record<Theme,…>` type requires **both `light` AND `dark`** keys (tsc errors with only `light`). Confirmed bookings captured via `cal("on", { action: "bookingSuccessful" })` — Cal does NOT use Calendly's `event_scheduled` postMessage.
+- This same session had just shipped a first-party analytics layer that tracked a `calendly_click` conversion + a Calendly `event_scheduled` listener. Renamed the conversion to tool-agnostic `booking_click` (type union + funnel RPC + CTA `data-*`) and repointed the confirmed-booking listener to Cal's event, so the analytics funnel keeps working.
+- `BookAction`/`CalBookButton` were widened beyond the brief (`label: ReactNode`, plus `style` and analytics `data-*` passthrough) to preserve each CTA's existing copy/inline styling and keep conversion tracking intact. Cal button gets `border:none; cursor:pointer` so the `<button>` looks identical to the old `<a>`.
+- The "Supabase" MCP in this environment points at unrelated projects (CFO Prod/Staging), not astrolab — confirmed no DB work was needed or done.
+
+**Verification**
+- ✅ `tsc --noEmit` clean · ✅ `next lint` clean (only pre-existing photoshop/video-editor warnings) · ✅ `next build` clean (`/book` now static)
+- ✅ dev smoke: `/` and `/book` → 200; homepage active card → `data-cal-link="theastropsychelab/stellar-insights"` + Stripe travel link; `/book` → all 3 Cal links + both Stripe links; **0** `calendly.com` on public pages; no console errors
+- ⏳ Human pre-flight (NOT done here — needs Cal/Stripe dashboards): Stripe app + payment required on the 3 Cal events; GCal connected; birth-data booking questions (Alliance/synastry needs TWO people); Stripe links' birth-data fields + after-payment redirect + receipts; delete/hide old `cosmic-quick-hit` & `soul-guided-travel-magazine` Cal event types; verify public links in incognito.
+- ⏳ Vercel: add `NEXT_PUBLIC_CAL_USERNAME=theastropsychelab` (Production + Preview); verify on a preview deploy before promoting.
+
+**Still open**
+- Star-Crossed (€95) — create Cal event + add `starCrossed` to `SERVICES` when ready.
+- Cosmic Check-In (€45/mo) — recurring Stripe Payment Link + `checkIn` entry.
+- Cal.com branding removal (Teams plan); Phase 2: Cal/Stripe webhooks → Supabase booking log.

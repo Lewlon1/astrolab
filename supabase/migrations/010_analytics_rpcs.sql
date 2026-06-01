@@ -99,7 +99,7 @@ AS $$
     'cta_click', (SELECT count(DISTINCT session_key) FROM ev
                    WHERE event_type = 'click' AND (event_name LIKE 'cta_book%' OR event_name LIKE 'cta_order%')),
     'lead',      (SELECT count(DISTINCT session_key) FROM ev
-                   WHERE event_type = 'conversion' AND event_name IN ('newsletter_signup','calendly_click')),
+                   WHERE event_type = 'conversion' AND event_name IN ('newsletter_signup','booking_click')),
     'booking',   (SELECT count(DISTINCT session_key) FROM ev
                    WHERE event_type = 'conversion' AND event_name = 'booking_confirmed')
   );

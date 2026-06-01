@@ -52,8 +52,9 @@ const RANGES: { key: string; label: string }[] = [
 const CLICK_LABELS: Record<string, string> = {
   cta_draw_card: "Hero · Draw a Card",
   cta_meet_gabriela: "Hero · Meet Gabriela",
-  cta_book_home: "Final CTA · Book session",
+  cta_book_home: "Final CTA · Choose a reading",
   cta_book_card: "Service · Book Now",
+  cta_book_page: "Book page · Book",
   cta_tarot_start_here: "Tarot · Start Here",
   cta_order_magazine: "Magazine · Order issue",
   cta_lead_magnet: "Service · Lead magnet",

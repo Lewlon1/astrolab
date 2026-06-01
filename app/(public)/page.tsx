@@ -48,10 +48,6 @@ export default async function HomePage() {
         .returns<BlogPost[]>(),
     ]);
 
-  const magazineCalendly =
-    services?.find((s) => s.slug === "soul-guided-travel-magazine")
-      ?.calendly_url ?? null;
-
   return (
     <>
       <script
@@ -74,7 +70,7 @@ export default async function HomePage() {
         <TarotDeck services={services ?? []} />
       </TrackSection>
       <TrackSection name="magazine" index={4}>
-        <MagazineDetail magazineCalendlyUrl={magazineCalendly} />
+        <MagazineDetail />
       </TrackSection>
       <TrackSection name="testimonials" index={5}>
         <Testimonials testimonials={testimonials ?? []} />

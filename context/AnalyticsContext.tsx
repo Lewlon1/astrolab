@@ -96,7 +96,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
 
       track("click", name, props);
 
-      // Some CTAs are also conversions (e.g. a Calendly handoff link).
+      // Some CTAs are also conversions (e.g. a booking handoff link).
       if (el.dataset.analyticsConversion) {
         track("conversion", el.dataset.analyticsConversion, props);
       }

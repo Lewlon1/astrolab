@@ -1,10 +1,19 @@
 import Link from "next/link";
 import { ServiceCardProps } from "@/types";
+import BookAction from "@/components/booking/BookAction";
+import { bookingForSlug } from "@/lib/booking";
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const isMostPopular = service.tag === "Most popular";
   const isLeadMagnet = service.tag === "Lead magnet";
   const isFree = service.price === 0;
+  const bookingTarget = isLeadMagnet ? null : bookingForSlug(service.slug);
+  const ctaStyle = {
+    marginTop: "1.5rem",
+    textAlign: "center" as const,
+    fontSize: "0.85rem",
+    padding: "0.75rem 1.5rem",
+  };
 
   return (
     <div
@@ -92,24 +101,27 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         {service.short_description}
       </p>
 
-      <Link
-        href={
-          isLeadMagnet
-            ? "/#lead-capture"
-            : service.calendly_url || `/services/${service.slug}`
-        }
-        data-analytics={isLeadMagnet ? "cta_lead_magnet" : "cta_book_card"}
-        data-service-slug={service.slug}
-        className={isFree ? "btn-secondary" : "btn-primary"}
-        style={{
-          marginTop: "1.5rem",
-          textAlign: "center",
-          fontSize: "0.85rem",
-          padding: "0.75rem 1.5rem",
-        }}
-      >
-        {isFree ? "Get yours free" : "Book session"}
-      </Link>
+      {bookingTarget ? (
+        <BookAction
+          target={bookingTarget}
+          label="Book session"
+          analyticsName="cta_book_card"
+          conversionName="booking_click"
+          serviceSlug={service.slug}
+          className="btn-primary"
+          style={{ ...ctaStyle, border: "none", cursor: "pointer" }}
+        />
+      ) : (
+        <Link
+          href={isLeadMagnet ? "/#lead-capture" : `/services/${service.slug}`}
+          data-analytics={isLeadMagnet ? "cta_lead_magnet" : "cta_book_card"}
+          data-service-slug={service.slug}
+          className={isFree ? "btn-secondary" : "btn-primary"}
+          style={ctaStyle}
+        >
+          {isFree ? "Get yours free" : "Book session"}
+        </Link>
+      )}
     </div>
   );
 }
