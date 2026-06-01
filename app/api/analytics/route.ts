@@ -72,25 +72,32 @@ export async function POST(request: Request) {
 
   const supabase = await createClient();
 
-  // 1. First-touch session row. ON CONFLICT DO NOTHING (ignoreDuplicates) means
-  //    the row is immutable to anonymous clients — no UPDATE privilege needed.
-  const sessionRow: Record<string, unknown> = {
-    session_key,
-    device,
-    is_bot: device === "bot",
-    country: country && country.length > 0 ? country : null,
+  // 1. First-touch session row, written through a SECURITY DEFINER function that
+  //    does INSERT ... ON CONFLICT DO NOTHING (see migration 011). A PostgREST
+  //    .upsert() here takes an ON CONFLICT DO UPDATE path under RLS, whose
+  //    WITH CHECK is admin-only, so anonymous sessions were silently rejected.
+  //    The function keeps the row immutable to anon — no UPDATE policy needed.
+  const sessionParams: Record<string, unknown> = {
+    p_session_key: session_key,
+    p_device: device,
+    p_is_bot: device === "bot",
+    p_country: country && country.length > 0 ? country : null,
   };
   const attribution = body.attribution;
   if (attribution && typeof attribution === "object") {
     const a = attribution as Record<string, unknown>;
     for (const k of ATTR_KEYS) {
       const val = str(a[k], 1024);
-      if (val) sessionRow[k] = val;
+      if (val) sessionParams[`p_${k}`] = val;
     }
   }
-  await supabase
-    .from("analytics_sessions")
-    .upsert(sessionRow, { onConflict: "session_key", ignoreDuplicates: true });
+  const { error: sessionError } = await supabase.rpc(
+    "analytics_touch_session",
+    sessionParams
+  );
+  if (sessionError) {
+    console.error("[analytics] session write failed:", sessionError.message);
+  }
 
   // 2. Validate + normalise events, then bulk insert.
   const rows = events
@@ -109,7 +116,12 @@ export async function POST(request: Request) {
     }));
 
   if (rows.length > 0) {
-    await supabase.from("analytics_events").insert(rows);
+    const { error: eventsError } = await supabase
+      .from("analytics_events")
+      .insert(rows);
+    if (eventsError) {
+      console.error("[analytics] events write failed:", eventsError.message);
+    }
   }
 
   return noContent();
