@@ -11,6 +11,8 @@ import {
 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import ManyChatScript from "@/components/ManyChatScript";
+import MetaPixel from "@/components/MetaPixel";
+import { ConsentProvider } from "@/context/ConsentContext";
 import "./globals.css";
 
 const cormorant = Cormorant_Garamond({
@@ -103,8 +105,11 @@ export default function RootLayout({
       className={`${cormorant.variable} ${outfit.variable} ${syne.variable} ${fraunces.variable} ${instrumentSerif.variable} ${spectral.variable} ${dmMono.variable} ${caveat.variable}`}
     >
       <body className="antialiased font-body">
-        {children}
-        <ManyChatScript />
+        <ConsentProvider>
+          <MetaPixel />
+          {children}
+          <ManyChatScript />
+        </ConsentProvider>
         <Analytics />
       </body>
     </html>
