@@ -6,6 +6,27 @@ import { usePathname } from "next/navigation";
 import LangText from "@/components/LangText";
 import { useLang } from "@/context/LangContext";
 import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
+import { BRAND } from "@/lib/constants";
+
+function InstagramIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
 
 type NavLink = {
   href: string;
@@ -121,6 +142,16 @@ export default function SiteHeader({ editorialDate }: Props) {
               ES
             </button>
           </div>
+          <a
+            href={BRAND.site.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center hover:opacity-70 transition-opacity"
+            style={{ color: "var(--ed-ink-soft)" }}
+            aria-label="Instagram"
+          >
+            <InstagramIcon size={17} />
+          </a>
           <Link
             href={BOOK_LINK.href}
             className="font-medium font-dm-mono uppercase"
@@ -209,6 +240,16 @@ export default function SiteHeader({ editorialDate }: Props) {
               ES
             </button>
           </div>
+          <a
+            href={BRAND.site.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center hover:opacity-70 transition-opacity"
+            style={{ color: "var(--ed-ink-soft)" }}
+            aria-label="Instagram"
+          >
+            <InstagramIcon size={18} />
+          </a>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="flex flex-col gap-1.5 p-2"
