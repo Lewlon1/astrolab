@@ -1,5 +1,6 @@
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { LangProvider } from "@/context/LangContext";
 import { AnalyticsProvider } from "@/context/AnalyticsContext";
 import BookingConversionListener from "@/components/analytics/BookingConversionListener";
@@ -21,6 +22,7 @@ export default function PublicLayout({
           <SiteFooter editorialDate={editorialDate} />
         </div>
         <BookingConversionListener />
+        <CookieConsentBanner />
       </AnalyticsProvider>
     </LangProvider>
   );

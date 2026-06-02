@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Hero from "@/components/Hero";
+import ContentsIndex from "@/components/ContentsIndex";
 import JungRibbon from "@/components/JungRibbon";
 import Founder from "@/components/Founder";
 import TarotDeck from "@/components/TarotDeck";
@@ -60,28 +61,31 @@ export default async function HomePage() {
       <TrackSection name="hero" index={0}>
         <Hero editorialDate={editorialDate} />
       </TrackSection>
-      <TrackSection name="jung" index={1}>
-        <JungRibbon />
-      </TrackSection>
-      <TrackSection name="founder" index={2}>
-        <Founder editorialDate={editorialDate} />
-      </TrackSection>
-      <TrackSection name="tarot" index={3}>
+      <TrackSection name="tarot" index={1}>
         <TarotDeck services={services ?? []} />
       </TrackSection>
-      <TrackSection name="magazine" index={4}>
+      <TrackSection name="jung" index={2}>
+        <JungRibbon />
+      </TrackSection>
+      <TrackSection name="founder" index={3}>
+        <Founder editorialDate={editorialDate} />
+      </TrackSection>
+      <TrackSection name="contents" index={4}>
+        <ContentsIndex />
+      </TrackSection>
+      <TrackSection name="magazine" index={5}>
         <MagazineDetail />
       </TrackSection>
-      <TrackSection name="testimonials" index={5}>
+      <TrackSection name="testimonials" index={6}>
         <Testimonials testimonials={testimonials ?? []} />
       </TrackSection>
-      <TrackSection name="lead_capture" index={6}>
+      <TrackSection name="lead_capture" index={7}>
         <LeadCaptureSection />
       </TrackSection>
-      <TrackSection name="blog" index={7}>
+      <TrackSection name="blog" index={8}>
         <BlogPreview posts={posts ?? []} />
       </TrackSection>
-      <TrackSection name="home_cta" index={8}>
+      <TrackSection name="home_cta" index={9}>
         <HomeCTA />
       </TrackSection>
     </>

@@ -311,3 +311,100 @@ Until both are run: `/admin/transits` loads, Timeline + Calendar work, Bedrock G
 - Star-Crossed (€95) — create Cal event + add `starCrossed` to `SERVICES` when ready.
 - Cosmic Check-In (€45/mo) — recurring Stripe Payment Link + `checkIn` entry.
 - Cal.com branding removal (Teams plan); Phase 2: Cal/Stripe webhooks → Supabase booking log.
+
+---
+
+# Meta Pixel install (site-wide base + PageView, Lead on newsletter)
+
+**Session date:** 2026-06-01
+**Status:** Built + verified locally (dev). Pending: add env var to Vercel; add consent gate before scaling EU spend.
+
+## What changed
+- **`.env.local`** — added `NEXT_PUBLIC_META_PIXEL_ID=991625123349743` (live "Astropsyche Lab" dataset; client-exposed, not a secret). **Must also be added to Vercel** (Production + Preview + Development) — not done from here.
+- **`lib/fbpixel.ts`** (new) — typed `pageview()` / `track()` helpers that no-op if the env var is missing or `fbq` hasn't loaded (SSR/preview-safe). Exposes `FB_PIXEL_ID`.
+- **`components/MetaPixel.tsx`** (new) — `"use client"`. Loads the standard base snippet via `next/script` (`strategy="afterInteractive"`), fires the first `PageView` in the init snippet, and re-fires `PageView` on App Router SPA navigations via a `usePathname`/`useSearchParams` effect guarded by a `useRef` (skips the first run → no double-count). `useSearchParams` sits inside a `<Suspense>` boundary (required for the static build). Includes the `<noscript>` fallback. Returns `null` when `FB_PIXEL_ID` is unset.
+- **`app/layout.tsx`** — mounted `<MetaPixel />` as the first child of `<body>`, above `{children}` (alongside the existing `ManyChatScript` + Vercel `Analytics`).
+- **`components/LeadCaptureForm.tsx`** — fires Meta `Lead` on the existing successful newsletter submit (`res.ok`). The internal first-party `track` name collides with the pixel helper, so the pixel one is imported aliased: `import { track as fbTrack } from "@/lib/fbpixel"`; fires `fbTrack("Lead", { content_name: "newsletter_signup" })` right after the existing `track("conversion","newsletter_signup")`.
+
+## Decisions / deviations
+- **Conversion chosen = newsletter signup** (`LeadCaptureForm`), the only true form-submit "Lead" on the landing page. Booking CTAs open Cal.com/Stripe and are `Schedule`/`InitiateCheckout` — deferred to Phase 2.
+- **No pre-existing pixel** (no fbq/GTM/gtag/Vercel marketing integration) → added exactly one.
+- **No cookie-consent banner exists.** Shipped the pixel ungated for testing; **immediate follow-up before scaling EU ad spend** = add a marketing-cookie consent gate and only render `<MetaPixel />` after acceptance (business is in Spain / EU traffic → GDPR/ePrivacy).
+
+## Verification (local dev, Pixel network beacons + console)
+- ✅ `fbq` loads on every page (real `fbevents.js` v2.9.330); pixel script present.
+- ✅ `ev=PageView` → exactly **one** beacon per load; **one** per SPA route change (`/` → `/blog` → `/`), `useRef` guard suppresses the initial-load duplicate.
+- ✅ `ev=Lead` (`cd[content_name]=newsletter_signup`, 200) fires once on newsletter submit (tested with a stubbed `/api/leads` 200 so no real lead row was created).
+- ✅ No console errors / hydration warnings. `tsc --noEmit` clean.
+- ✅ With `NEXT_PUBLIC_META_PIXEL_ID` unset, `MetaPixel` renders nothing and nothing throws.
+- ℹ️ Observed `POST https://capig.datah04.com/events → 404` — a **Meta-side** Conversions API Gateway attempt configured on the dataset (`cdl=API_unavailable`), not from this code. Relevant to the Phase 2 CAPI work; harmless to the browser pixel.
+
+## Still open
+- Add `NEXT_PUBLIC_META_PIXEL_ID` to Vercel (all envs); verify on a preview deploy with Meta Pixel Helper + Events Manager → Test Events.
+- Consent gate (above) before scaling spend.
+- Phase 2: Conversions API (server-side), plus `ViewContent` / `InitiateCheckout` / `Purchase`/`Schedule` events.
+
+---
+
+# Cookie consent banner (gates Meta Pixel + ManyChat + CAPI)
+
+**Session date:** 2026-06-01
+**Status:** Built + verified locally (dev). Pixel ID already added to Vercel by owner this session.
+
+## Decision
+Simple **Accept / Reject** banner (equal weight) — GDPR/ePrivacy-valid prior-consent model. Marketing scripts load **only after Accept**. Choice persisted in `localStorage` (`apl.consent.marketing.v1` = `granted|denied`) and changeable/withdrawable anytime via a **Cookie Settings** link in the footer. Vercel Analytics is cookieless → left always-on.
+
+## What changed
+- **`context/ConsentContext.tsx`** (new) — `ConsentProvider` + `useConsent()` hook (`consent`, `marketingAllowed`, `bannerVisible`, `accept`, `reject`, `openSettings`). SSR-safe (starts `unset`/banner-hidden, hydrates from localStorage in an effect → no hydration mismatch). `reject()` also calls `window.fbq?.("consent","revoke")` to stop a pixel that already loaded earlier in the session (withdrawal). Also exports `hasMarketingConsent()` non-React reader for future server-bound CAPI checks.
+- **`components/CookieConsentBanner.tsx`** (new) — bilingual (EN/ES via `LangText`) fixed bottom banner, editorial styling, equal-weight Reject (outline) / Accept (solid) + link to `/privacy`. Renders only when `bannerVisible`.
+- **`components/CookieSettingsButton.tsx`** (new) — bilingual footer button → `openSettings()` re-opens the banner (withdraw must be as easy as give).
+- **`components/MetaPixel.tsx`** — now gated: `if (!FB_PIXEL_ID || !marketingAllowed) return null`. Pixel + base PageView only mount after consent.
+- **`components/ManyChatScript.tsx`** — gated the same way (third-party widget that can set cookies).
+- **`app/layout.tsx`** — wrapped `<MetaPixel/> {children} <ManyChatScript/>` in `<ConsentProvider>` (Vercel `<Analytics/>` left outside, always-on).
+- **`app/(public)/layout.tsx`** — renders `<CookieConsentBanner/>` inside `LangProvider` (bilingual; only on public routes — admin has no LangProvider and doesn't need tracking).
+- **`components/SiteFooter.tsx`** — added `<CookieSettingsButton/>` under the copyright line.
+- **`app/(public)/privacy/page.tsx`** (new) — plain-language, bilingual cookie/privacy notice with a table (Vercel Analytics / Meta Pixel / ManyChat), a Cookie Settings button, and a "review with your legal/GDPR advisor" note. Linked from the banner. **Not a full legal policy** — a factual starting point.
+
+## Conversions API
+No first-party server-side CAPI exists in the codebase (still Phase 2). The only CAPI path today is Meta's **CAPI Gateway** (`capig.datah04.com`) which is *fed by the browser pixel* — so gating the pixel automatically gates it. Verified: before consent there are **zero** facebook/capig requests; after Accept, `capig.datah04.com/events` fires. When real server-side CAPI is added, have the client pass `hasMarketingConsent()` to the API route and only forward on `true`.
+
+## Verification (local dev)
+- ✅ Fresh visitor: banner shown, `fbq` undefined, no `meta-pixel` script, no facebook/manychat/capig requests.
+- ✅ Accept: banner hides, `localStorage=granted`, `fbevents.js` loads, `ev=PageView` (200), ManyChat script requested, `capig.datah04.com/events` fires.
+- ✅ Reject (via footer Cookie Settings → Reject): `localStorage=denied`, `fbq('consent','revoke')` called, banner hides; reload → still no pixel.
+- ✅ Choice persists across reloads (no re-prompt once decided).
+- ✅ `/privacy` renders EN/ES; `tsc --noEmit` clean; `next lint` clean for new files; no console errors or hydration warnings.
+
+## Notes / follow-ups
+- **Stacking:** welcome-letter modal is `z-[1000]`, banner is `z-[100]` → on a true first visit the welcome letter shows first, then the banner is actionable after dismissing it. Pixel never fires pre-consent regardless. Trivial to flip if the banner should sit on top.
+- `/privacy` copy should be reviewed/expanded by the owner's legal/GDPR advisor before scaling ad spend.
+
+---
+
+# CAPI Gateway: email Advanced Matching on Lead
+
+**Session date:** 2026-06-01
+**Status:** Built + verified locally. Owner set up the Conversions API **Gateway** in Events Manager (the `capig.datah04.com` endpoint the pixel already forwards to).
+
+## Context
+Owner enabled CAPI via the **Conversions API Gateway** path (not manual/code). The Gateway auto-mirrors browser pixel events server-side and dedupes by reusing the pixel's event ID — so no server code is needed in the app. Consent already covers it (gateway is fed by the consent-gated browser pixel; verified zero capig traffic before Accept). The one worthwhile code-side win was raising **Event Match Quality** by attaching the visitor's email to the Lead.
+
+## What changed
+- **`lib/fbpixel.ts`** — added `trackLead(email?)`. It normalises the email (`trim().toLowerCase()`) and calls `fbq("init", PIXEL_ID, { em })` to add Advanced Matching, then `fbq("track","Lead",{content_name:"newsletter_signup"})`. The Pixel SHA-256 hashes the email client-side (raw email never leaves the browser); the Gateway forwards the hash server-side. No-ops if fbq is absent (pre-consent).
+- **`components/LeadCaptureForm.tsx`** — swapped `fbTrack("Lead", …)` for `trackLead(email)` on successful submit.
+
+## Verification (local dev)
+- Submitted the newsletter with `GabsTest@Example.com` (after Accept, with `/api/leads` stubbed → no real row).
+- Lead beacon to `facebook.com/tr` carried `ud[em]=7fca3dc9…41d1a` — confirmed equal to `sha256("gabstest@example.com")` (normalized lowercase), NOT the raw mixed-case → normalization + hashing correct, raw email not sent.
+- `capig.datah04.com/events` POST fired alongside the Lead → Gateway receives the hashed email server-side.
+- No duplicate PageView from the re-init; `tsc` clean; no console errors.
+
+## For the owner to verify in Events Manager (Gateway health)
+- Data Sources → dataset `991625123349743` → Overview: PageView/Lead rows should show **both Browser + Server** connection methods, marked **Deduplicated**.
+- Test Events: accept cookies on the live site, submit the newsletter → Lead should appear via Browser + Server; Lead's Event Match Quality should rise now that email is included.
+- Watch for double-counting (2× per action) over the first day — shouldn't happen (gateway reuses event ID), but it's the red flag.
+- Confirm ownership/trust of `capig.datah04.com` (non-Meta managed gateway domain).
+
+## Phase 2 (still open)
+- True first-party server-side CAPI from `/api/leads` (token + hashed email + shared `event_id`) if you ever drop the managed gateway — `hasMarketingConsent()` already exists to gate it.
+- `ViewContent` / `InitiateCheckout` / `Schedule` events.

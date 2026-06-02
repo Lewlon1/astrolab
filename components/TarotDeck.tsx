@@ -221,7 +221,8 @@ type Props = {
 
 export default function TarotDeck({ services }: Props) {
   const { lang } = useLang();
-  const [activeCard, setActiveCard] = useState<number | null>(2); // middle = "The Star" default-flipped per prototype
+  const [activeCard, setActiveCard] = useState<number | null>(null); // no card flipped by default — all show the tarot face
+  const [detailCard, setDetailCard] = useState<number>(0); // detail panel defaults to "Cosmic Quick Hit"
 
   return (
     <section
@@ -339,6 +340,7 @@ export default function TarotDeck({ services }: Props) {
                   const next = isFlipped ? null : i;
                   setActiveCard(next);
                   if (next !== null) {
+                    setDetailCard(i);
                     track("interaction", "tarot_card_flip", {
                       card_slug: card.slug,
                     });
@@ -351,24 +353,22 @@ export default function TarotDeck({ services }: Props) {
         </div>
 
         {/* Detail panel */}
-        {activeCard !== null && (
-          <div
-            id="tarot-detail"
-            className="mt-12 md:mt-16 px-6 md:px-14 py-10 md:py-12 max-w-[1100px] mx-auto scroll-mt-24"
-            style={{
-              background: "var(--ed-paper)",
-              border: "1px solid var(--ed-ink)",
-            }}
-          >
-            <ServiceDetail
-              card={CARDS[activeCard]}
-              service={services.find(
-                (s) => s.slug === CARDS[activeCard].slug,
-              )}
-              lang={lang}
-            />
-          </div>
-        )}
+        <div
+          id="tarot-detail"
+          className="mt-12 md:mt-16 px-6 md:px-14 py-10 md:py-12 max-w-[1100px] mx-auto scroll-mt-24"
+          style={{
+            background: "var(--ed-paper)",
+            border: "1px solid var(--ed-ink)",
+          }}
+        >
+          <ServiceDetail
+            card={CARDS[detailCard]}
+            service={services.find(
+              (s) => s.slug === CARDS[detailCard].slug,
+            )}
+            lang={lang}
+          />
+        </div>
       </div>
     </section>
   );
@@ -757,27 +757,59 @@ function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
           {card.closing[lang]}
         </p>
 
-        {bookingTarget && (
-          <BookAction
-            target={bookingTarget}
-            label={`${lang === "en" ? "Book Now" : "Reservar Ahora"} →`}
-            analyticsName="cta_book_card"
-            conversionName="booking_click"
-            serviceSlug={card.slug}
-            className="inline-block font-dm-mono uppercase mt-7"
-            style={{
-              background: "var(--ed-ink)",
-              color: "var(--ed-paper)",
-              padding: "14px 28px",
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              fontWeight: 500,
-              textDecoration: "none",
-              cursor: "pointer",
-              border: "none",
-            }}
-          />
-        )}
+        <div className="flex flex-wrap items-center gap-3 mt-7">
+          {bookingTarget && (
+            <BookAction
+              target={bookingTarget}
+              label={`${lang === "en" ? "Book Now" : "Reservar Ahora"} →`}
+              analyticsName="cta_book_card"
+              conversionName="booking_click"
+              serviceSlug={card.slug}
+              className="inline-block font-dm-mono uppercase"
+              style={{
+                background: "var(--ed-ink)",
+                color: "var(--ed-paper)",
+                padding: "14px 28px",
+                fontSize: 11,
+                letterSpacing: "0.22em",
+                fontWeight: 500,
+                textDecoration: "none",
+                cursor: "pointer",
+                border: "none",
+              }}
+            />
+          )}
+          {card.slug === "soul-guided-travel-magazine" && (
+            <a
+              href="#magazine"
+              data-analytics="cta_tarot_preview"
+              data-service-slug={card.slug}
+              onClick={(e) => {
+                e.preventDefault();
+                track("interaction", "tarot_magazine_preview", {
+                  card_slug: card.slug,
+                });
+                document
+                  .getElementById("magazine")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="inline-block font-dm-mono uppercase"
+              style={{
+                background: "transparent",
+                color: "var(--ed-ink)",
+                padding: "14px 28px",
+                fontSize: 11,
+                letterSpacing: "0.22em",
+                fontWeight: 500,
+                textDecoration: "none",
+                cursor: "pointer",
+                border: "1px solid var(--ed-ink)",
+              }}
+            >
+              {lang === "en" ? "Preview" : "Vista Previa"} →
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
