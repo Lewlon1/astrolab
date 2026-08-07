@@ -104,10 +104,6 @@ export interface SectionHeadingProps {
   align?: "left" | "center";
 }
 
-export interface ServiceCardProps {
-  service: Service;
-}
-
 export interface TestimonialCardProps {
   testimonial: Testimonial;
 }
