@@ -25,6 +25,7 @@ const SECTION_LABELS: Record<string, string> = {
   founder: "Founder",
   tarot: "Services · Tarot",
   magazine: "Travel magazine",
+  services_index: "Services · Catalog",
   testimonials: "Testimonials",
   lead_capture: "Newsletter",
   blog: "Blog",
