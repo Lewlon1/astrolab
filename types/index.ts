@@ -87,6 +87,18 @@ export interface Lead {
   utm_medium?: string | null;
   utm_campaign?: string | null;
   landing_path?: string | null;
+  // Lead Queue columns (sql/lead-queue-daily-actions.sql) — optional so rows
+  // read before that SQL is applied stay type-safe.
+  ig_handle?: string | null;
+  language?: string | null;
+  mailerlite_id?: string | null;
+  manychat_id?: string | null;
+  tags?: string[] | null;
+  unsubscribed?: boolean | null;
+  subscribed_at?: string | null;
+  last_activity_at?: string | null;
+  last_actioned_at?: string | null;
+  last_synced_at?: string | null;
 }
 
 // Component prop types
@@ -147,6 +159,163 @@ export interface EngagementAccount {
   why_engage: string | null;
   is_active: boolean;
   created_at: string;
+  // Added by sql/lead-queue-daily-actions.sql for Tier 3 rotation.
+  last_engaged_at?: string | null;
+  category?: string | null;
+  notes?: string | null;
+}
+
+// ============================================
+// Lead Queue + Daily Actions (admin tool #5)
+// ============================================
+
+export type LeadEventType =
+  | "subscribed"
+  | "opened"
+  | "clicked"
+  | "pricing_click"
+  | "booking"
+  | "unsubscribed"
+  | "story_reply"
+  | "code_delivered"
+  | "csv_import"
+  | "actioned"
+  | "note";
+
+export interface LeadEvent {
+  id: string;
+  lead_id: string | null;
+  type: LeadEventType | string;
+  detail: Record<string, unknown>;
+  source: string | null;
+  occurred_at: string;
+  created_at: string;
+  dedupe_key?: string | null;
+}
+
+export interface ScoringWeight {
+  key: string;
+  value: number;
+  label: string;
+  description: string | null;
+  sort_order: number;
+  updated_at: string;
+}
+
+/** Weights keyed for O(1) lookup, as the scoring engine consumes them. */
+export type ScoringWeights = Record<string, number>;
+
+/** One contributing term in a lead's score, kept so the UI can explain it. */
+export interface ScoreFactor {
+  key: string;
+  label: string;
+  points: number;
+}
+
+export interface ScoredLead {
+  lead: Lead;
+  score: number;
+  factors: ScoreFactor[];
+  /** Human-readable "why this lead is here". */
+  reason: string;
+  events: LeadEvent[];
+}
+
+export type ActionTier = 1 | 2 | 3 | 4;
+
+export type ActionType =
+  | "voice_note"
+  | "follow_up"
+  | "booking_nudge"
+  | "story_reply_answer"
+  | "story_ritual"
+  | "batch_prep"
+  | "event_beat"
+  | "testimonial_ask"
+  | "comment_engage"
+  | "story_from_bank"
+  | "save_references"
+  | "update_testimonials";
+
+export interface ActionItem {
+  id: string;
+  lead_id: string | null;
+  target_id: string | null;
+  tier: ActionTier;
+  type: ActionType | string;
+  title: string;
+  reason: string | null;
+  est_minutes: number;
+  link: string | null;
+  status: "pending" | "done" | "skipped" | "expired";
+  generated_for: string;
+  batch: number;
+  dedupe_key: string;
+  completed_at: string | null;
+  created_at: string;
+}
+
+/** An action the engine has ranked but not yet written to the database. */
+export type CandidateAction = Omit<
+  ActionItem,
+  "id" | "status" | "generated_for" | "batch" | "completed_at" | "created_at"
+>;
+
+export interface RitualCalendarItem {
+  id: string;
+  title: string;
+  type: string;
+  reason: string | null;
+  weekday: number | null;
+  on_date: string | null;
+  est_minutes: number;
+  link: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+/**
+ * The honesty banner. `message` states plainly how much real work is left so
+ * the tool never implies there is more high-value work than there is.
+ */
+export interface TankStatus {
+  tier1Remaining: number;
+  tier2Remaining: number;
+  tier3Remaining: number;
+  /** True when tiers 1 and 2 are empty — the signal that stopping is correct. */
+  highValueExhausted: boolean;
+  /** True when the batch was cut short by the 45-minute budget. */
+  timeCapped: boolean;
+  message: string;
+}
+
+export interface ActionBatch {
+  date: string;
+  batch: number;
+  items: ActionItem[];
+  totalMinutes: number;
+  tank: TankStatus;
+  /** Regeneration is only offered once every item in the batch is resolved. */
+  canRegenerate: boolean;
+}
+
+export interface MergeReport {
+  totalRows: number;
+  created: number;
+  mergedByEmail: number;
+  mergedByHandle: number;
+  skipped: { row: number; reason: string }[];
+  /** CSV headers the parser did not recognise, so nothing is silently dropped. */
+  unmappedColumns: string[];
+  mappedColumns: Record<string, string>;
+}
+
+export interface SyncReport {
+  subscribersSeen: number;
+  created: number;
+  updated: number;
+  eventsInserted: number;
+  errors: string[];
 }
 
 // Inspiration generator types

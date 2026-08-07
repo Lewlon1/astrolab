@@ -408,3 +408,125 @@ Owner enabled CAPI via the **Conversions API Gateway** path (not manual/code). T
 ## Phase 2 (still open)
 - True first-party server-side CAPI from `/api/leads` (token + hashed email + shared `event_id`) if you ever drop the managed gateway — `hasMarketingConsent()` already exists to gate it.
 - `ViewContent` / `InitiateCheckout` / `Schedule` events.
+
+---
+
+# Lead Queue + Daily Actions (admin tool #5)
+
+**Session date:** 2026-08-07
+**Status:** Built. Typecheck + `next build` clean, engine logic covered by a 46-assertion harness. **Not yet run against real data** — the SQL has not been applied and MailerLite was unreachable from the build environment.
+
+## Discovery findings (Step 0)
+
+**The v2 prompt's proposed schema substantially duplicated tables that already existed.** Confirmed by reading `supabase/migrations/*.sql` — 012 migrations, all applied.
+
+| Proposed in prompt | Already existed | Decision |
+|---|---|---|
+| `lead_profiles` | `leads` (001) | Extend `leads` |
+| `engagement_targets` | `engagement_accounts` (001, seeded in 008) | Extend `engagement_accounts` |
+| `ritual_calendar` | — | Create (genuinely new) |
+
+`leads.status` already carried the exact conversion ladder the Tier 1 logic needs
+(`new / voice_note_sent / nurturing / booked / converted`), and migration 008 had already
+seeded 10 curated Barcelona accounts — which is what Step 0 item 7 was going to ask Lewis
+to supply. Both re-derived from scratch would have created two lead lists that drift apart,
+with the admin dashboard still reading the old one.
+
+**Three conflicts were escalated and decided by Lewis before any code was written:**
+1. Extend the existing tables rather than adding parallel ones. ✅
+2. Build at `/admin/lead-queue`; leave `/admin/leads` and `/admin/engagement` untouched. ✅
+3. Reuse `MAILERLITE_API_KEY`; do not introduce `MAILERLITE_API_TOKEN`. ✅
+
+**Other discovery notes:**
+- MailerLite was **already integrated** at `app/api/leads/route.ts:50` under `MAILERLITE_API_KEY`.
+  The prompt's proposed `MAILERLITE_API_TOKEN` would have been a second variable holding
+  the same credential.
+- **No service-role key exists** anywhere in the project. All admin writes go through the
+  authenticated user session under the RLS convention from migration 007
+  (`auth.role() = 'authenticated'`). New tables must ship matching policies or the tool
+  silently reads empty — the delivered SQL includes them.
+- `leads.source` had a CHECK constraint that **did not allow `'mailerlite'` or `'csv_import'`**.
+  A sync would have failed on every insert. The SQL widens it. Easy thing to miss.
+- Admin registration is a hardcoded `navLinks` array in `components/admin/AdminNav.tsx`.
+  Auth is handled globally by `middleware.ts` → no per-page guard needed.
+- Styling uses literal hex, not Tailwind tokens: cards are
+  `bg-white border border-[#e8e5df] rounded-xl`, muted text `#6b6560`, faint `#b8b0a4`,
+  primary button `bg-deep`.
+
+## Blockers that could not be cleared in-session
+
+- **MailerLite API is unverified.** `connect.mailerlite.com:443` is blocked by the sandbox
+  network policy (proxy returns 403 to CONNECT). `lib/mailerlite.ts` is written from the
+  published API docs, not an observed payload. Every field access is defensive and
+  normalises to null rather than throwing, but **response shapes must be confirmed on the
+  first real sync** — particularly `meta.next_cursor` paging and the `/activity` payload.
+- **No real ManyChat CSV was provided**, and the brief said not to guess the column set.
+  So the parser does not assume one: `lib/manychatCsv.ts` detects columns by alias, and the
+  merge report lists every header it did **not** recognise so nothing is dropped silently.
+  When a real export lands, add its headers to `FIELD_ALIASES` — do not rewrite the parser.
+- **The referenced spec docs are not in this repo**: `RITUAL_SPEC_weekly_story_reply.md`,
+  the Sunday batch playbook, and "kit patterns 3/4/6". The two seeded `ritual_calendar`
+  rows and their `est_minutes` are provisional, and the kit-pattern references in the Tier 1
+  reason strings are cited from the prompt, not verified against source.
+- **Supabase MCP in this session pointed at a different account** (CFO Staging/Production).
+  Schema was inventoried from migrations in-repo instead. No live introspection was possible.
+
+## Schema decisions vs the proposal
+
+- **`score` is not a column.** Scores are computed live on every request from
+  `leads` + `lead_events` + `lead_scoring_config`. This is what makes acceptance criterion 6
+  hold properly: editing a weight reorders the queue on the next request, with no re-sync
+  *and* no stale cached column to reconcile.
+- **`action_items.dedupe_key` + `UNIQUE (generated_for, dedupe_key)`** does the idempotency
+  work. Lead actions use a stable key (`voice_note:<uuid>`); rituals and engagement are
+  day-scoped (`comment_engage:<uuid>:<date>`). The first request of the day generates batch 1
+  and concurrent refreshes cannot double-insert.
+- **Skip suppression is derived, not stored.** Two skips of the same `dedupe_key` within
+  7 days suppresses it — computed from `action_items` history, so no extra table.
+- Added `action_items.target_id` (not in the proposal) so Tier 3 completions can stamp
+  `engagement_accounts.last_engaged_at` and drive the rotation.
+- Added `lead_events.dedupe_key` so re-syncing MailerLite cannot double-count activity.
+
+## First impressions of the ranking
+
+Cannot be assessed against real data yet — nothing has been synced. What the harness does
+confirm about the engine's shape:
+
+- With 12 conversion-worthy leads, the batch is 10 Tier 1 items, **zero filler**, and the
+  banner reads "2 more conversion actions waiting after this".
+- With one Tier 1 item and two oversized rituals, it returns **3 actions, not 10**, and says
+  "Batch stopped at the 45-minute budget rather than padding it out. 3 actions today, not 10 —
+  there was nothing real left to add."
+- With nothing at all in the system it returns the 3 maintenance items and states plainly
+  that the high-value work is done. Once those are used, it returns **zero** actions with
+  "That is a finished day, not an empty one." The maintenance list is a **finite literal of
+  three** — that is the structural reason the engine cannot manufacture a tenth action.
+
+## What the time-budget guard gets wrong (known)
+
+- **Tier 1 can exceed 45 minutes and the guard allows it.** Read literally — "conversion work
+  is never trimmed for filler" — this is correct, but it means a heavy backlog day can serve
+  10 conversion actions totalling ~50 min while the banner still cites a 45-minute budget.
+  The `timeCapped` flag only fires when tiers 2–4 are cut. If this reads wrong in practice,
+  the fix is a separate Tier 1 cap, not a lower budget.
+- **`est_minutes` are guesses** (voice note 5, story reply 4, comment 3). They are per-action
+  constants in `lib/actionEngine.ts`, not config. If the budget consistently misjudges a real
+  day, these should move into `lead_scoring_config` alongside the weights.
+- **Rituals longer than 45 minutes can never be served** — they fail the budget check on every
+  batch and silently sit in `tier2Remaining` forever. The Sunday batch prep at 20 min is fine;
+  something at 50 min would be invisible. Worth a guard.
+- The budget is per-batch, not per-day: regenerating gives another 45 minutes. That is
+  deliberate (regeneration is opt-in and requires clearing the current batch), but it does
+  mean the 45 is a pacing device, not a daily ceiling.
+
+## Not done / next session
+
+1. **Run `sql/lead-queue-daily-actions.sql`** in the Supabase dashboard. Nothing works until
+   then — the UI degrades to built-in default weights and an empty queue.
+2. **First MailerLite sync** — verify paging and activity shapes against the real API.
+3. **Real ManyChat export** — check the merge report's "columns ignored" list, then extend
+   `FIELD_ALIASES`.
+4. Confirm the `ritual_calendar` seed against the actual ritual spec.
+5. Tier 3 duplicates what `/admin/engagement` already does (daily rotation, done-state in
+   `localStorage`). Once Daily Actions is trusted, that tool is a retirement candidate —
+   the DB-backed rotation here is strictly better than the localStorage one.
