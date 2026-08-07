@@ -15,7 +15,10 @@ export default async function AdminServicesPage() {
 
   return (
     <div className="space-y-8">
-      <AdminPageHeader title="Services" />
+      <AdminPageHeader
+        title="Services"
+        action={{ label: "New service", href: "/admin/services/new" }}
+      />
 
       <div className="bg-white border border-[#e8e5df] rounded-xl overflow-hidden">
         {services && services.length > 0 ? (
@@ -35,6 +38,9 @@ export default async function AdminServicesPage() {
                   Tag
                 </th>
                 <th className="px-6 py-3 text-xs font-medium text-[#6b6560] uppercase tracking-wider">
+                  ES
+                </th>
+                <th className="px-6 py-3 text-xs font-medium text-[#6b6560] uppercase tracking-wider">
                   Active
                 </th>
               </tr>
@@ -48,8 +54,16 @@ export default async function AdminServicesPage() {
                   <td className="px-6 py-4">
                     <Link
                       href={`/admin/services/${service.id}`}
-                      className="text-sm font-medium text-[#1a1a18] hover:underline"
+                      className="inline-flex items-center gap-3 text-sm font-medium text-[#1a1a18] hover:underline"
                     >
+                      {service.image_url && (
+                        // eslint-disable-next-line @next/next/no-img-element -- admin-only thumbnail
+                        <img
+                          src={service.image_url}
+                          alt=""
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      )}
                       {service.name}
                     </Link>
                   </td>
@@ -67,6 +81,9 @@ export default async function AdminServicesPage() {
                     ) : (
                       <span className="text-sm text-[#b8b0a4]">—</span>
                     )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-[#6b6560]">
+                    {service.name_es ? "✓" : "—"}
                   </td>
                   <td className="px-6 py-4">
                     <ToggleActiveButton

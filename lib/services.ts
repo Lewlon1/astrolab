@@ -30,6 +30,14 @@ export interface LocalizedService {
   cta: ServiceCta;
 }
 
+// CTA labels per language. Centralised so the admin preview (which has no
+// LangProvider) and the public pages render identical copy.
+export const SERVICE_CARD_LABELS: Record<Lang, { book: string; free: string }> =
+  {
+    en: { book: "Book session", free: "Get yours free" },
+    es: { book: "Reservar sesión", free: "Consíguelo gratis" },
+  };
+
 export function serviceCta(service: Service): ServiceCta {
   // Keyed off the EN tag column — it's the stable identifier; tag_es is
   // display-only.
