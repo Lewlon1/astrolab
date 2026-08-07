@@ -48,7 +48,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 const BOOK_LINK = {
-  href: "/#book",
+  href: "/book",
   labelEn: "Book a Session",
   labelEs: "Reservar",
 };
@@ -155,6 +155,7 @@ export default function SiteHeader({ editorialDate }: Props) {
           </a>
           <Link
             href={BOOK_LINK.href}
+            data-analytics="cta_book_header"
             className="font-medium font-dm-mono uppercase"
             style={{
               background: "var(--ed-ink)",
@@ -307,6 +308,7 @@ export default function SiteHeader({ editorialDate }: Props) {
             ))}
             <Link
               href={BOOK_LINK.href}
+              data-analytics="cta_book_header"
               onClick={() => setMobileOpen(false)}
               className="font-dm-mono uppercase text-center mt-2"
               style={{

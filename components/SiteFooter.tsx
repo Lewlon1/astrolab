@@ -1,3 +1,5 @@
+import Link from "next/link";
+import LangText from "@/components/LangText";
 import { getEditorialDate, type EditorialDate } from "@/lib/editorialDate";
 import { BRAND } from "@/lib/constants";
 import CookieSettingsButton from "@/components/CookieSettingsButton";
@@ -21,6 +23,23 @@ export default function SiteFooter({ editorialDate }: Props) {
         borderTop: "1px solid var(--ed-ink)",
       }}
     >
+      <div style={{ marginBottom: 18 }}>
+        <Link
+          href="/book"
+          data-analytics="cta_book_footer"
+          className="inline-block font-dm-mono uppercase"
+          style={{
+            color: "var(--ed-ink)",
+            border: "1px solid var(--ed-ink)",
+            padding: "10px 22px",
+            fontSize: 10,
+            letterSpacing: "0.22em",
+            textDecoration: "none",
+          }}
+        >
+          <LangText en="Book a Session" es="Reservar" />
+        </Link>
+      </div>
       <a
         href={BRAND.site.instagram}
         target="_blank"

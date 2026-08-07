@@ -1,3 +1,4 @@
+import Link from "next/link";
 import LangText from "@/components/LangText";
 
 export default function HomeCTA() {
@@ -57,8 +58,8 @@ export default function HomeCTA() {
           es="Reserva una sesión y descubre los patrones, las dinámicas y las direcciones escritas en tu carta."
         />
       </p>
-      <a
-        href="#tarot"
+      <Link
+        href="/book"
         data-analytics="cta_book_home"
         className="inline-block font-dm-mono uppercase"
         style={{
@@ -72,7 +73,7 @@ export default function HomeCTA() {
         }}
       >
         <LangText en="Book Your Session →" es="Reserva Tu Sesión →" />
-      </a>
+      </Link>
     </section>
   );
 }

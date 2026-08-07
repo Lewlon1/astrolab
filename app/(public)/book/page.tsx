@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import PageHero from "@/components/PageHero";
+import LangText from "@/components/LangText";
 import BookingGrid from "@/components/booking/BookingGrid";
 
 export const metadata: Metadata = {
@@ -12,8 +13,13 @@ export default function BookPage() {
   return (
     <>
       <PageHero
-        title="Book a session"
-        subtitle="Choose a reading and book in a few taps — payment is handled securely at checkout."
+        title={<LangText en="Book a session" es="Reserva una sesión" />}
+        subtitle={
+          <LangText
+            en="Choose a reading and book in a few taps — payment is handled securely at checkout."
+            es="Elige una lectura y reserva en unos toques — el pago se gestiona de forma segura al finalizar."
+          />
+        }
         breadcrumb={[{ label: "Book", href: "/book" }]}
       />
 
