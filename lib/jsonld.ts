@@ -28,6 +28,7 @@ export function serviceJsonLd(service: Service) {
     "@type": "Service",
     name: service.name,
     description: service.short_description || service.description || "",
+    ...(service.image_url && { image: service.image_url }),
     provider: {
       "@type": "Organization",
       name: BRAND.site.name,

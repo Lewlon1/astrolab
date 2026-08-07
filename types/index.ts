@@ -10,11 +10,22 @@ export interface Service {
   description: string | null;
   short_description: string | null;
   tag: string | null;
+  /** @deprecated superseded by booking_url (migration 012). */
   calendly_url: string | null;
   sort_order: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  // Added in migration 012 — optional so rows read before the migration
+  // runs (or from an un-migrated database) stay type-safe.
+  booking_url?: string | null;
+  image_url?: string | null;
+  name_es?: string | null;
+  tag_es?: string | null;
+  short_description_es?: string | null;
+  description_es?: string | null;
+  price_label_es?: string | null;
+  duration_es?: string | null;
 }
 
 export interface Testimonial {
@@ -91,10 +102,6 @@ export interface SectionHeadingProps {
   title: string;
   description?: string;
   align?: "left" | "center";
-}
-
-export interface ServiceCardProps {
-  service: Service;
 }
 
 export interface TestimonialCardProps {
@@ -215,6 +222,7 @@ export type SectionName =
   | "founder"
   | "tarot"
   | "magazine"
+  | "services_index"
   | "testimonials"
   | "lead_capture"
   | "blog"

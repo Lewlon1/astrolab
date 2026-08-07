@@ -8,19 +8,12 @@ import MagazineDetail from "@/components/MagazineDetail";
 import Testimonials from "@/components/Testimonials";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
+import ServicesIndex from "@/components/services/ServicesIndex";
 import HomeCTA from "@/components/HomeCTA";
 import TrackSection from "@/components/analytics/TrackSection";
 import { organizationJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
 import type { Service, Testimonial, BlogPost } from "@/types";
-
-const TAROT_SLUGS = [
-  "cosmic-quick-hit",
-  "astro-psyche-blend",
-  "stellar-insights",
-  "cosmic-alliance",
-  "soul-guided-travel-magazine",
-];
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -32,7 +25,7 @@ export default async function HomePage() {
         .from("services")
         .select("*")
         .eq("is_active", true)
-        .in("slug", TAROT_SLUGS)
+        .order("sort_order")
         .returns<Service[]>(),
       supabase
         .from("testimonials")
@@ -76,16 +69,19 @@ export default async function HomePage() {
       <TrackSection name="magazine" index={5}>
         <MagazineDetail />
       </TrackSection>
-      <TrackSection name="testimonials" index={6}>
+      <TrackSection name="services_index" index={6}>
+        <ServicesIndex services={services ?? []} />
+      </TrackSection>
+      <TrackSection name="testimonials" index={7}>
         <Testimonials testimonials={testimonials ?? []} />
       </TrackSection>
-      <TrackSection name="lead_capture" index={7}>
+      <TrackSection name="lead_capture" index={8}>
         <LeadCaptureSection />
       </TrackSection>
-      <TrackSection name="blog" index={8}>
+      <TrackSection name="blog" index={9}>
         <BlogPreview posts={posts ?? []} />
       </TrackSection>
-      <TrackSection name="home_cta" index={9}>
+      <TrackSection name="home_cta" index={10}>
         <HomeCTA />
       </TrackSection>
     </>
