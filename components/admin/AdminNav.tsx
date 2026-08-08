@@ -11,6 +11,7 @@ const navLinks = [
   { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Events", href: "/admin/events" },
   { label: "Leads", href: "/admin/leads" },
+  { label: "Lead Queue", href: "/admin/lead-queue" },
   { label: "Repurpose", href: "/admin/repurpose" },
   { label: "Engagement", href: "/admin/engagement" },
   { label: "Inspiration", href: "/admin/inspiration" },
