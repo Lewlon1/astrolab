@@ -25,7 +25,7 @@ export default function SiteFooter({ editorialDate }: Props) {
     >
       <div style={{ marginBottom: 18 }}>
         <Link
-          href="/book"
+          href="/services"
           data-analytics="cta_book_footer"
           className="inline-block font-dm-mono uppercase"
           style={{

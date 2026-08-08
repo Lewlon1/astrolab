@@ -48,7 +48,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 const BOOK_LINK = {
-  href: "/book",
+  href: "/services",
   labelEn: "Book a Session",
   labelEs: "Reservar",
 };

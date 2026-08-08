@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 // Database row types (matching Supabase schema)
 
 export interface Service {
@@ -94,8 +92,8 @@ export interface Lead {
 // Component prop types
 
 export interface PageHeroProps {
-  title: ReactNode;
-  subtitle?: ReactNode;
+  title: string;
+  subtitle?: string;
   breadcrumb?: { label: string; href: string }[];
 }
 

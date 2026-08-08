@@ -64,15 +64,6 @@ export const SERVICES: Record<string, ServiceMeta> = {
   },
 } as const;
 
-// Order used by the /book showcase grid (mirrors the tarot card order).
-export const SERVICE_ORDER = [
-  "quickHit",
-  "blend",
-  "stellar",
-  "alliance",
-  "travel",
-] as const;
-
 // Maps the existing DB / tarot-card slugs to the SERVICES keys above, so the
 // showcase can resolve a booking target from the slug it already has.
 const SLUG_TO_KEY: Record<string, keyof typeof SERVICES> = {

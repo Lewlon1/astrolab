@@ -59,7 +59,7 @@ export default function HomeCTA() {
         />
       </p>
       <Link
-        href="/book"
+        href="/services"
         data-analytics="cta_book_home"
         className="inline-block font-dm-mono uppercase"
         style={{
