@@ -584,6 +584,55 @@ execution model, and the one that would have caught the helper-table bug the fir
 **Lesson for next time:** when adding a unique index to a table that has existed without one,
 assume duplicates exist. Reading the column list is not the same as reading the constraints.
 
+## ManyChat is a dead end — and a bigger gap it exposed
+
+**ManyChat cannot export contacts to CSV. Not on Free, not on any paid tier.** The session
+prompt assumed "ManyChat CSV upload (Free tier, no API assumed)" and Step 0 said to request
+a real export before writing the parser. That step never got satisfied, and this is why —
+there is no such export.
+
+ManyChat's help doc lists exactly two ways out: the **Google Sheets integration** (~250
+contacts per 100s) and **External Request** (JSON POST to your own server). Both are
+paid-tier. "Export contacts to CSV" is still an open feature request on their community
+board. ManyChat also re-tiered on **2 March 2026** into Free/Essential/Pro/Business, with
+the new Free plan capped at **25 contacts** — which is the plan this account is on. Several
+secondary sources claim API access now sits on a ~$200/mo tier; unverified, their help site
+is egress-blocked from this environment.
+
+**Decision: parked.** At 25 contacts there is no audience worth building a pipeline for.
+The CSV uploader stays — it is a generic alias-detecting merger, not ManyChat-specific, so
+any spreadsheet with an email or handle column still works.
+
+Cost of parking it: `ig_handle` stays null (action cards deep-link to the generic IG inbox
+rather than a DM thread), Instagram-only contacts never enter the queue, and
+`w_manychat_optin` never fires. All minor.
+
+### The real finding: four of seven scoring signals are never written
+
+Checking the ManyChat impact surfaced something larger, and it is a gap in this build rather
+than a ManyChat problem. `EVENT_WEIGHT_KEYS` in `lib/leadScoring.ts` rewards seven event
+types. Only three are ever inserted by any code path — `subscribed`, `opened`, `clicked`,
+all from the MailerLite sync. These four are **never written by anything**:
+
+- `pricing_click` (weight 30 — the highest in the rubric)
+- `story_reply` (25)
+- `code_delivered` (20)
+- `event_attended` (18)
+
+Consequence: three of the five Tier 1 generators are inert. `booking_nudge` needs
+`pricing_click`, `story_reply_answer` needs `story_reply`, and the kit-pattern-4
+`follow_up` needs `code_delivered`. What still fires is `voice_note` (status `new` with any
+score) and the stage-driven `follow_up` (voice note sent 14+ days ago) — both driven by
+stage rather than events. The engine works, it is just running on a fraction of its inputs.
+
+**The cheap fix, not yet built:** `pricing_click` is already being collected. The public
+site records a `booking_click` conversion in `analytics_events` from every service card,
+tarot card, booking grid and the magazine modal, and `leads.session_key` joins a lead to its
+analytics session (migration 009). Deriving `lead_events` rows from `analytics_events` over
+that join would light up the highest-weighted signal in the rubric with no new integration
+and no third-party dependency. That is the highest-value next piece of work on this tool —
+worth more than ManyChat ever was.
+
 ## What the time-budget guard gets wrong (known)
 
 - **Tier 1 can exceed 45 minutes and the guard allows it.** Read literally — "conversion work

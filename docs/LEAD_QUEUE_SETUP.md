@@ -1,14 +1,14 @@
 # Lead Queue + Daily Actions — setup guide
 
 Everything you need to do by hand before `/admin/lead-queue` does anything useful.
-Three tasks, in order. The first is required; tasks 2 and 3 each unlock one of the two
-data sources.
+Two tasks to do, in order, plus one that is parked. Task 0 is required; task 1 unlocks
+the behavioural data the queue ranks on.
 
 | # | Task | Time | Blocks what |
 |---|---|---|---|
 | 0 | Run migration 013 | 2 min | **Everything** |
 | 1 | MailerLite API key | 10 min | Email-side scoring, the Sync button |
-| 2 | ManyChat CSV export | 15 min | Instagram-side leads, handle matching |
+| 2 | Instagram leads | — | **Parked** — ManyChat has no export (see below) |
 
 ---
 
@@ -21,18 +21,38 @@ It can only answer that if it can see behaviour. A name on a list tells you noth
 "Opened three emails, clicked the pricing link four days ago, never booked" tells you
 everything — that person should get a voice note today, not next month.
 
-Gabs's audience lives in two places, and neither talks to the other:
+**MailerLite** is the source that makes this work. It holds the email list and, more
+importantly, knows what people *did* — opens, clicks, unsubscribes. Task 1 pulls that in.
 
-- **MailerLite** holds the email list and knows what people *did* — opens, clicks,
-  unsubscribes. This is the richest behavioural signal available.
-- **ManyChat** holds the Instagram DM audience — people who came through a story
-  reply or a love-code flow. They are often the warmest leads and are usually
-  invisible to email.
+Instagram (ManyChat) was meant to be the second source, but it cannot export contacts at
+all — see Task 2. That is parked, and the cost is smaller than it sounds.
 
-Tasks 1 and 2 pull both into one scored queue, keyed on email, so a person who
-opted in on Instagram *and* subscribed by email is **one lead with one score**, not two
-half-pictures. That merge is the whole point. Without it the Daily Actions engine is
-ranking on stage alone, which is barely better than sorting by date.
+### Which scoring signals are actually live
+
+Worth knowing before you judge the rankings. The scoring engine understands seven
+behavioural signals, but only some are populated by anything today:
+
+| Signal | Weight | Populated by |
+|---|---|---|
+| Email link click | 12 | ✅ MailerLite sync |
+| Email open | 4 | ✅ MailerLite sync |
+| Opt-in / subscribed | 10 | ✅ MailerLite sync |
+| Pricing click | **30** | ❌ nothing yet — see below |
+| Story reply | 25 | ❌ nothing yet |
+| Love code delivered | 20 | ❌ nothing yet |
+| Attended an event | 18 | ❌ nothing yet |
+
+The four dormant ones are the highest-weighted, so until something writes them the queue
+ranks mostly on email engagement plus pipeline stage. Concretely, that means the Tier 1
+actions which fire today are **voice notes** (a `new` lead with any email engagement) and
+**follow-ups** (a voice note sent 14+ days ago with no reply). Booking nudges, story-reply
+answers and code follow-ups stay dormant because their trigger events are never written.
+
+**The good news:** `pricing_click` — the single highest weight — can be derived from data
+the site already collects. The public analytics already record a `booking_click` conversion
+on every service card, tarot card and booking grid, and `leads.session_key` links a lead to
+their analytics session. Wiring `analytics_events` → `lead_events` would light up the most
+valuable signal in the rubric for free, with no new integration. That is not built yet.
 
 ---
 
@@ -202,71 +222,64 @@ requests, comfortably inside the limit.
 
 ---
 
-## Task 2 — ManyChat CSV export
+## Task 2 — Instagram leads: not currently possible
 
-**Purpose:** brings in the Instagram DM audience. These are people who replied to a
-story or ran a love-code flow — often the warmest leads Gabs has, and completely
-invisible to MailerLite unless they also joined the email list.
+**Status: parked.** Nothing to do here. This section exists to record why, so the
+question doesn't get re-opened from scratch.
 
-The upload merges them into the *same* `leads` table: matched on email if present,
-otherwise on Instagram handle. So someone who DM'd on Instagram and later subscribed by
-email becomes one lead with one combined score — which is exactly the person who should
-be top of the queue.
+### ManyChat cannot export contacts
 
-It also populates `ig_handle`, which is what lets the Daily Actions cards deep-link
-straight to a DM thread instead of dumping you in a generic inbox.
+An earlier version of this guide said to click **Export** in ManyChat's Audience view.
+**That button does not exist** — not on Free, not on any paid tier. ManyChat's own help
+doc lists exactly two ways to get contact data out, and neither is a CSV download:
 
-### Export from ManyChat
+- **Google Sheets integration** — an automation writes contact fields into a sheet
+  (rate-limited to roughly 250 contacts per 100 seconds, so it needs batching).
+- **External Request** — ManyChat POSTs `Full Contact Data` as JSON to a server you own.
 
-1. Log in to [ManyChat](https://manychat.com/) → select the Instagram page.
-2. **Audience** in the left sidebar.
-3. *(Optional but useful)* filter to the segment you care about — e.g. people who
-   entered the love-code flow — rather than every follower who ever triggered a keyword.
-4. Click **Export** (top right) → choose **CSV**.
-5. ManyChat emails the file to your account address. It usually arrives in a few minutes.
-   Larger audiences take longer.
-6. Download it. **Don't open and re-save it in Excel** if you can avoid it — Excel
-   sometimes mangles dates and drops leading zeros. If you must, save as *CSV UTF-8*.
+Both are paid-tier features. "Export contacts to CSV" remains an open feature request on
+their community board.
 
-> On the Free tier this is the only route — there's no API access. That's why this is a
-> manual upload rather than a Sync button like MailerLite.
+ManyChat also overhauled its pricing on **2 March 2026** into Free / Essential / Pro /
+Business, and the new **Free tier caps at 25 contacts**. This account is on that tier, so
+there is no bulk Instagram audience worth engineering a pipeline for right now.
 
-### Upload
+### What this costs
 
-`/admin/lead-queue` → **Queue** tab → **Upload ManyChat CSV** → pick the file.
+Less than it sounds:
 
-### Read the merge report — this matters
+- **The queue still works.** MailerLite is the richer behavioural source anyway — it knows
+  opens and clicks, which is what scoring actually ranks on.
+- **`ig_handle` stays empty**, so Tier 1 action cards deep-link to the generic Instagram
+  inbox or a `mailto:` rather than straight to a DM thread. One extra click, not a
+  blocker.
+- **Instagram-only people (no email) never enter the queue.** At a 25-contact cap this is
+  a handful of people at most.
+- **The `w_manychat_optin` scoring weight never fires.** Harmless — it just never
+  contributes.
 
-The parser **does not assume ManyChat's column names**, because the real export format
-wasn't available when this was built and guessing would have silently dropped data.
-Instead it matches headers against a list of known aliases and then tells you exactly
-what it did.
+### If Instagram leads matter later
 
-After upload you get a report with four numbers (rows read / created / merged / skipped)
-and, more importantly, two lists:
+In rough order of value for money:
 
-- **Columns used** — e.g. `Email → email, Instagram Username → ig_handle`.
-  Check this looks right.
-- **Columns ignored** — every header it didn't recognise. **Nothing from these columns
-  was imported.** If something important is in this list (a phone number, an opt-in date,
-  a custom field you use for segmenting), send me the list and I'll add the alias.
-- **Skipped rows**, with a per-row reason.
+1. **Capture at source (free).** End the love-code flow by sending people to the site's
+   signup. They then arrive through `/api/leads` with full attribution and land in the
+   queue automatically — and in MailerLite too. Only catches new people, not the back
+   catalogue, but it removes the export problem permanently.
+2. **Paste-in entry (free, needs a small build).** A textarea on the Queue tab accepting
+   `email, handle, name` lines, reusing the CSV merge logic and merge report. Right answer
+   for a warm list of tens of people.
+3. **External Request webhook (needs a paid tier).** If the account ever upgrades, spend it
+   here rather than on spreadsheets: ManyChat POSTs contact JSON to an endpoint and leads
+   arrive in real time, with no export step at all.
 
-This is the deliberate design: the tool would rather tell you it ignored a column than
-quietly guess wrong and give you a queue built on bad data.
+### The CSV uploader is not wasted
 
-### Two behaviours to expect
-
-- **Rows with an IG handle but no email are skipped** if the handle doesn't match an
-  existing lead. The `leads` table requires an email, so there's nothing to create. They
-  are listed in the skipped section with that reason — not silently dropped.
-- **Re-uploading the same file is safe.** Rows merge into existing leads rather than
-  duplicating, and the import events are deduplicated.
-
-### Verify
-
-The queue should now show leads with Instagram handles. Click one → the drawer shows the
-IG handle and a timeline entry of type `csv_import`.
+The **Upload CSV** button on the Queue tab is **not ManyChat-specific**. It is a generic
+merger — it detects columns by alias, merges on email then IG handle, and reports every
+column it ignored. Any CSV with an email or handle column works: a Google Sheet export, a
+spreadsheet typed by hand, an export from some future tool. Only the ManyChat *source* is
+blocked, not the feature.
 
 ---
 
