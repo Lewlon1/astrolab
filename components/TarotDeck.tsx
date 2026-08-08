@@ -399,6 +399,8 @@ function CardSlot({
   onToggle,
   desktopLift,
 }: CardSlotProps) {
+  const bookingTarget = bookingForSlug(card.slug);
+
   return (
     <div>
       {/* Desktop-only horseshoe lift spacer */}
@@ -408,13 +410,20 @@ function CardSlot({
         style={{ height: desktopLift }}
       />
       <div
-        onClick={onToggle}
+        onClick={(e) => {
+            // Let the card-back CTAs handle their own clicks. We can't call
+            // stopPropagation on them: the Cal.com popup relies on the click
+            // reaching its delegated listener on `document`.
+            if ((e.target as HTMLElement).closest("a, button")) return;
+            onToggle();
+          }}
           role="button"
           tabIndex={0}
           aria-label={`${card.cardName[lang]} — ${
             lang === "en" ? "tap to reveal" : "toca para revelar"
           }`}
           onKeyDown={(e) => {
+            if ((e.target as HTMLElement).closest("a, button")) return;
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               onToggle();
@@ -557,40 +566,48 @@ function CardSlot({
                 </p>
               ))}
             </div>
+            {bookingTarget && (
+              <BookAction
+                target={bookingTarget}
+                label={`${lang === "en" ? "Book Now" : "Reservar Ahora"} →`}
+                analyticsName="cta_book_card_back"
+                conversionName="booking_click"
+                serviceSlug={card.slug}
+                className="block w-full text-center font-dm-mono uppercase mb-1.5"
+                style={{
+                  background: "var(--ed-ink)",
+                  color: "var(--ed-paper)",
+                  padding: "10px 8px",
+                  fontSize: 9,
+                  letterSpacing: "0.2em",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              />
+            )}
             <a
               href="#tarot-detail"
               data-analytics="cta_tarot_start_here"
               data-service-slug={card.slug}
               onClick={(e) => {
-                e.stopPropagation();
                 e.preventDefault();
                 document
                   .getElementById("tarot-detail")
                   ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
-              className="block text-center font-dm-mono uppercase mb-1.5"
-              style={{
-                background: "var(--ed-ink)",
-                color: "var(--ed-paper)",
-                padding: "10px 8px",
-                fontSize: 9,
-                letterSpacing: "0.2em",
-                fontWeight: 500,
-                textDecoration: "none",
-              }}
-            >
-              {lang === "en" ? "Start Here" : "Empieza Aquí"} →
-            </a>
-            <div
-              className="text-center font-dm-mono uppercase"
+              className="block text-center font-dm-mono uppercase"
               style={{
                 fontSize: 8,
                 color: "var(--ed-text-mute)",
                 letterSpacing: "0.15em",
+                textDecoration: "none",
+                padding: "2px 0",
               }}
             >
-              {lang === "en" ? "Tap to flip back" : "Toca para volver"}
-            </div>
+              {lang === "en" ? "Read more" : "Leer más"} ↓
+            </a>
           </div>
         </div>
 
