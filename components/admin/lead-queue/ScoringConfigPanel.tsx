@@ -65,7 +65,7 @@ export default function ScoringConfigPanel({ config, notify, onSaved }: Props) {
         <p className="text-sm text-[#6b6560] mt-1">
           No config rows found. Run{" "}
           <code className="text-xs bg-[#f5f3ef] px-1.5 py-0.5 rounded">
-            sql/lead-queue-daily-actions.sql
+            supabase/migrations/013_lead_queue_daily_actions.sql
           </code>{" "}
           in the Supabase dashboard — the engine is falling back to built-in
           defaults until then.

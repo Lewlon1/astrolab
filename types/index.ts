@@ -87,8 +87,8 @@ export interface Lead {
   utm_medium?: string | null;
   utm_campaign?: string | null;
   landing_path?: string | null;
-  // Lead Queue columns (sql/lead-queue-daily-actions.sql) — optional so rows
-  // read before that SQL is applied stay type-safe.
+  // Added in migration 013 — optional so rows read before the migration
+  // runs (or from an un-migrated database) stay type-safe.
   ig_handle?: string | null;
   language?: string | null;
   mailerlite_id?: string | null;
@@ -159,7 +159,7 @@ export interface EngagementAccount {
   why_engage: string | null;
   is_active: boolean;
   created_at: string;
-  // Added by sql/lead-queue-daily-actions.sql for Tier 3 rotation.
+  // Added in migration 013 for Tier 3 rotation.
   last_engaged_at?: string | null;
   category?: string | null;
   notes?: string | null;

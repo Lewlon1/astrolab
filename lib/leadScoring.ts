@@ -19,9 +19,8 @@ import type {
 
 /**
  * Fallback weights, used only when `lead_scoring_config` is unreadable or has
- * not been seeded yet (the SQL file has not been run). Keeps the queue usable
- * instead of ranking everything zero. Mirrors the INSERT in
- * sql/lead-queue-daily-actions.sql.
+ * not been seeded yet (migration 013 has not been run). Keeps the queue usable
+ * instead of ranking everything zero. Mirrors the INSERT in migration 013.
  */
 export const DEFAULT_WEIGHTS: ScoringWeights = {
   recency_decay_days: 30,

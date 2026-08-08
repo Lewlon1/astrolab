@@ -414,7 +414,12 @@ Owner enabled CAPI via the **Conversions API Gateway** path (not manual/code). T
 # Lead Queue + Daily Actions (admin tool #5)
 
 **Session date:** 2026-08-07
-**Status:** Built. Typecheck + `next build` clean, engine logic covered by a 46-assertion harness. **Not yet run against real data** — the SQL has not been applied and MailerLite was unreachable from the build environment.
+**Status:** Built. Typecheck + `next build` clean, engine logic covered by a 46-assertion harness. **Not yet run against real data** — migration 013 has not been applied and MailerLite was unreachable from the build environment.
+
+Schema ships as `supabase/migrations/013_lead_queue_daily_actions.sql`, following the repo's
+numbered convention (012 was the previous highest). Like every migration in this project it is
+**run by hand in the Supabase SQL editor** — the numbering is for ordering and review, not for
+an automated runner. Nothing in it was executed by the session that wrote it.
 
 ## Discovery findings (Step 0)
 
@@ -521,7 +526,7 @@ confirm about the engine's shape:
 
 ## Not done / next session
 
-1. **Run `sql/lead-queue-daily-actions.sql`** in the Supabase dashboard. Nothing works until
+1. **Run `supabase/migrations/013_lead_queue_daily_actions.sql`** in the Supabase dashboard. Nothing works until
    then — the UI degrades to built-in default weights and an empty queue.
 2. **First MailerLite sync** — verify paging and activity shapes against the real API.
 3. **Real ManyChat export** — check the merge report's "columns ignored" list, then extend

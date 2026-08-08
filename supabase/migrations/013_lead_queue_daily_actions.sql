@@ -1,9 +1,9 @@
 -- ============================================================================
--- Lead Queue + Daily Actions (admin tool #5)
+-- Migration 013 — Lead Queue + Daily Actions (admin tool #5)
 --
--- RUN THIS MANUALLY in the Supabase dashboard SQL editor.
--- It is deliberately NOT in supabase/migrations/ — this session applies no
--- migrations. Every statement is idempotent, so re-running is safe.
+-- RUN THIS MANUALLY in the Supabase dashboard SQL editor, BEFORE the code that
+-- ships with it goes live. Nothing here has been applied by the session that
+-- wrote it. Every statement is idempotent, so re-running is safe.
 --
 -- Design note: this EXTENDS the existing `leads` and `engagement_accounts`
 -- tables rather than introducing parallel `lead_profiles` / `engagement_targets`
