@@ -50,12 +50,26 @@ loads but the queue is empty and the scoring panel shows a warning.
 Every statement is idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), so running it
 twice is harmless.
 
+**What it does:**
+- Adds queue columns to the existing `leads` table (`ig_handle`, `language`,
+  `mailerlite_id`, `tags`, `unsubscribed`, activity timestamps).
+- **Widens the `leads.source` CHECK constraint** to allow `'mailerlite'` and
+  `'csv_import'`. Without this every synced row is rejected — this is the one statement
+  that will break the sync if you skip it.
+- Merges duplicate-email leads and makes `leads.email` unique (see above).
+- Creates `lead_events` (the behavioural timeline), `lead_scoring_config` (the weights),
+  `action_items` (the daily batch), `ritual_calendar` (weekly fixtures).
+- Adds `last_engaged_at` to `engagement_accounts` so Tier 3 can rotate properly.
+- Seeds 15 scoring weights and 2 ritual fixtures.
+- Applies RLS policies matching migration 007. **Without these the tool reads empty even
+  though the data is there** — so don't run a partial selection of the file.
+
 ### It merges duplicate leads — look before you run
 
 `leads` has never had a unique constraint on email, and the newsletter form did a plain
 `INSERT`, so **repeat signups created duplicate rows**. Email is the merge key for both
 MailerLite and the CSV upload, so it has to become unique — which means the existing
-duplicates get collapsed. Section 1a of the migration does that, and it **deletes rows**.
+duplicates get collapsed. Section 7 of the migration does that, and it **deletes rows**.
 
 It is not destructive of information. For each duplicated address one row survives and
 absorbs everything the others had first:
@@ -87,20 +101,6 @@ order by count(*) desc;
 
 The migration also lower-cases every stored email, so `Gabs@x.com` and `gabs@x.com` stop
 being two different leads.
-
-**What it does:**
-- Adds queue columns to the existing `leads` table (`ig_handle`, `language`,
-  `mailerlite_id`, `tags`, `unsubscribed`, activity timestamps).
-- **Widens the `leads.source` CHECK constraint** to allow `'mailerlite'` and
-  `'csv_import'`. Without this every synced row is rejected — this is the one statement
-  that will break the sync if you skip it.
-- Merges duplicate-email leads and makes `leads.email` unique (see above).
-- Creates `lead_events` (the behavioural timeline), `lead_scoring_config` (the weights),
-  `action_items` (the daily batch), `ritual_calendar` (weekly fixtures).
-- Adds `last_engaged_at` to `engagement_accounts` so Tier 3 can rotate properly.
-- Seeds 15 scoring weights and 2 ritual fixtures.
-- Applies RLS policies matching migration 007. **Without these the tool reads empty even
-  though the data is there** — so don't run a partial selection of the file.
 
 One knock-on change outside the admin tool: `app/api/leads/route.ts` (the public newsletter
 form) now does an `upsert` instead of an `insert`. Without that, the new unique constraint

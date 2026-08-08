@@ -524,7 +524,7 @@ unique constraint was not checked, only the column list.
 
 **Fixes applied:**
 
-1. **Section 1a — dedupe before indexing.** Collapses duplicate emails, choosing the survivor
+1. **Section 7 — dedupe before indexing.** Collapses duplicate emails, choosing the survivor
    by furthest-along stage then oldest, so a `booked` row is never dropped for a `new` one.
    The survivor absorbs the earliest `created_at` and every non-null field the others had.
    Notes are **concatenated**, not COALESCEd — the first version of this lost hand-written
@@ -542,6 +542,34 @@ unique constraint was not checked, only the column list.
    break because of a scope line would have been the wrong call. First-touch attribution is
    preserved (`ignoreDuplicates`), and the email is normalised before both the DB write and
    the MailerLite call.
+
+### Second failure: the fix itself did not survive the Supabase SQL editor
+
+The first fix used a helper table (`_lead_dedupe_plan`) plus a `DO $$ ... $$` block to
+conditionally re-point child rows. It passed cleanly in local `psql` and then failed in the
+dashboard with:
+
+```
+ERROR: 42P01: relation "_lead_dedupe_plan" does not exist
+```
+
+**Lesson: local `psql` is not a faithful model of the Supabase SQL editor.** Anything relying
+on state carried between statements — a temp or helper table — is unsafe there.
+
+Section 7 was rewritten to remove that whole class of problem rather than to work around it:
+
+- **No helper table, no `DO` block.** Every statement is self-contained, repeating the
+  ranked/plan CTE inline. Verbose, but it cannot break on how the editor splits or pools.
+- **Moved to the end of the migration.** `lead_events` and `action_items` are created in
+  sections 2 and 4, so by section 7 they always exist and the conditional `to_regclass`
+  logic disappears entirely.
+- **Removed semicolons from inside comments and string literals** (`-- 0 = Sunday; NULL…`,
+  `'Received their code; the follow-up…'`). A naive statement splitter cuts on those. It
+  cost nothing to remove and eliminates a real footgun.
+
+Re-verified with a **statement-by-statement run on separate connections** — the harshest
+execution model, and the one that would have caught the helper-table bug the first time.
+58/58 statements pass individually.
 
 **Verified against a real Postgres 16** (scratch instance, schema rebuilt from migrations
 001/009 plus an `auth.role()` stub) rather than by inspection:

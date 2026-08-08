@@ -37,129 +37,6 @@ ALTER TABLE leads ADD CONSTRAINT leads_source_check
     'mailerlite', 'csv_import'
   ));
 
--- ----------------------------------------------------------------------------
--- 1a. Collapse duplicate emails
---
--- `leads` has never had a unique constraint on email, and the public newsletter
--- form (app/api/leads/route.ts) does a plain INSERT — so a repeat signup created
--- a second row. Email is the merge key for both MailerLite sync and CSV upload,
--- so it has to be unique from here on, and the existing duplicates have to be
--- collapsed before the index below can be created.
---
--- THIS DELETES ROWS. It is not destructive of information: for each duplicated
--- address one surviving row absorbs every non-null value from the others first.
--- Run the read-only query in the comment block at the bottom of this file if you
--- want to see what will be merged before running it.
---
--- Survivor is chosen by furthest-along stage, then oldest — so a booked row is
--- never dropped in favour of a `new` one. The survivor's created_at is reset to
--- the earliest in the group, so the original signup date is preserved.
--- ----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS _lead_dedupe_plan;
-
-CREATE TABLE _lead_dedupe_plan AS
-WITH ranked AS (
-  SELECT
-    id,
-    lower(email) AS email_key,
-    row_number() OVER (
-      PARTITION BY lower(email)
-      ORDER BY
-        CASE status
-          WHEN 'converted'       THEN 5
-          WHEN 'booked'          THEN 4
-          WHEN 'nurturing'       THEN 3
-          WHEN 'voice_note_sent' THEN 2
-          ELSE 1
-        END DESC,
-        created_at ASC,
-        id ASC
-    ) AS rn
-  FROM leads
-  WHERE email IS NOT NULL
-)
-SELECT
-  r.id,
-  r.email_key,
-  r.rn,
-  first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
-FROM ranked r
-WHERE r.email_key IN (
-  SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
-);
-
--- Fold every non-null value from the losing rows into the survivor.
-UPDATE leads t SET
-  created_at   = m.created_at,
-  name         = COALESCE(t.name,         m.name),
-  -- Notes are concatenated, not COALESCEd: a note on a discarded row is hand-
-  -- written by Gabs and must never be dropped just because the survivor also
-  -- had one. m.notes already includes the survivor's own note.
-  notes        = m.notes,
-  source       = COALESCE(t.source,       m.source),
-  session_key  = COALESCE(t.session_key,  m.session_key),
-  referrer     = COALESCE(t.referrer,     m.referrer),
-  utm_source   = COALESCE(t.utm_source,   m.utm_source),
-  utm_medium   = COALESCE(t.utm_medium,   m.utm_medium),
-  utm_campaign = COALESCE(t.utm_campaign, m.utm_campaign),
-  landing_path = COALESCE(t.landing_path, m.landing_path)
-FROM (
-  SELECT
-    p.keep_id,
-    min(l.created_at)                                          AS created_at,
-    min(l.name)         FILTER (WHERE l.name         IS NOT NULL) AS name,
-    string_agg(DISTINCT l.notes, E'\n---\n')                   AS notes,
-    min(l.source)       FILTER (WHERE l.source       IS NOT NULL) AS source,
-    min(l.session_key)  FILTER (WHERE l.session_key  IS NOT NULL) AS session_key,
-    min(l.referrer)     FILTER (WHERE l.referrer     IS NOT NULL) AS referrer,
-    min(l.utm_source)   FILTER (WHERE l.utm_source   IS NOT NULL) AS utm_source,
-    min(l.utm_medium)   FILTER (WHERE l.utm_medium   IS NOT NULL) AS utm_medium,
-    min(l.utm_campaign) FILTER (WHERE l.utm_campaign IS NOT NULL) AS utm_campaign,
-    min(l.landing_path) FILTER (WHERE l.landing_path IS NOT NULL) AS landing_path
-  FROM _lead_dedupe_plan p
-  JOIN leads l ON l.id = p.id
-  GROUP BY p.keep_id
-) m
-WHERE t.id = m.keep_id;
-
--- Re-point any child rows written by an earlier partial run of this migration.
-DO $$
-BEGIN
-  IF to_regclass('public.lead_events') IS NOT NULL THEN
-    EXECUTE $sql$
-      UPDATE lead_events e SET lead_id = p.keep_id
-      FROM _lead_dedupe_plan p
-      WHERE e.lead_id = p.id AND p.rn > 1
-    $sql$;
-  END IF;
-
-  IF to_regclass('public.action_items') IS NOT NULL THEN
-    EXECUTE $sql$
-      UPDATE action_items a SET lead_id = p.keep_id
-      FROM _lead_dedupe_plan p
-      WHERE a.lead_id = p.id AND p.rn > 1
-    $sql$;
-  END IF;
-END $$;
-
-DELETE FROM leads l
-USING _lead_dedupe_plan p
-WHERE l.id = p.id AND p.rn > 1;
-
-DROP TABLE _lead_dedupe_plan;
-
--- Normalise casing so the uniqueness rule is a plain column index rather than an
--- expression index. That matters beyond tidiness: PostgREST's upsert can only
--- name a column as its conflict target, and the public newsletter form relies on
--- that to turn a repeat signup into a no-op instead of a 500.
-UPDATE leads SET email = lower(email) WHERE email <> lower(email);
-
--- Stop the duplicates coming back. `leads.email` is the merge key for both the
--- MailerLite sync and the ManyChat CSV upload.
-CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_unique
-  ON leads (email);
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_ig_handle_unique
   ON leads (lower(ig_handle)) WHERE ig_handle IS NOT NULL;
 
@@ -214,7 +91,7 @@ INSERT INTO lead_scoring_config (key, value, label, description, sort_order) VAL
   ('recency_decay_days',   30, 'Recency half-life (days)', 'Activity older than this counts progressively less.', 1),
   ('w_pricing_click',      30, 'Pricing click',            'Viewed pricing but has not booked — strongest buying signal.', 2),
   ('w_story_reply',        25, 'Story reply',              'Replied to a story — an open conversation.', 3),
-  ('w_code_delivered',     20, 'Love code delivered',      'Received their code; the follow-up window is open.', 4),
+  ('w_code_delivered',     20, 'Love code delivered',      'Received their code, so the follow-up window is open.', 4),
   ('w_email_click',        12, 'Email link click',         'Clicked a link in a campaign.', 5),
   ('w_email_open',          4, 'Email open',               'Opened a campaign.', 6),
   ('w_event_attended',     18, 'Attended an event',        'Met Gabs in person.', 7),
@@ -293,7 +170,7 @@ CREATE TABLE IF NOT EXISTS ritual_calendar (
   title       text NOT NULL,
   type        text NOT NULL DEFAULT 'story_ritual',
   reason      text,
-  weekday     int CHECK (weekday BETWEEN 0 AND 6),  -- 0 = Sunday; NULL for one-offs
+  weekday     int CHECK (weekday BETWEEN 0 AND 6),  -- 0 = Sunday, NULL for one-offs
   on_date     date,                                 -- for one-offs (event beats)
   est_minutes int DEFAULT 15,
   link        text,
@@ -324,8 +201,209 @@ WHERE NOT EXISTS (SELECT 1 FROM ritual_calendar WHERE type = 'batch_prep' AND we
 
 
 -- ----------------------------------------------------------------------------
--- 7. RLS — matches the convention established in migration 007
---    (public gets nothing on these tables; authenticated admin gets full access)
+-- 7. Deduplicate emails, then enforce uniqueness
+--
+-- `leads` has never had a unique constraint on email, and the public newsletter
+-- form (app/api/leads/route.ts) did a plain INSERT — so every repeat signup
+-- created another row. Email is the merge key for both the MailerLite sync and
+-- the ManyChat CSV upload, so it has to be unique from here on.
+--
+-- This runs LAST, after lead_events and action_items exist, so the re-pointing
+-- below needs no conditional logic. Each statement is self-contained — no helper
+-- table, no DO block, no cross-statement state — because the Supabase SQL editor
+-- does not reliably carry a temporary/helper table between statements.
+--
+-- THIS DELETES ROWS. It is not destructive of information: for each duplicated
+-- address one survivor absorbs everything the others had first. The survivor is
+-- the row furthest along the pipeline, then the oldest — so a `booked` row is
+-- never dropped in favour of a `new` one. See the appendix at the end of this
+-- file for a read-only query that shows what will be merged.
+-- ----------------------------------------------------------------------------
+
+-- 7a. Fold every non-null value from the losing rows into the survivor.
+--     Notes are concatenated rather than COALESCEd: a note hand-written on a
+--     discarded row must not be lost just because the survivor also had one.
+WITH ranked AS (
+  SELECT
+    id,
+    lower(email) AS email_key,
+    row_number() OVER (
+      PARTITION BY lower(email)
+      ORDER BY
+        CASE status
+          WHEN 'converted'       THEN 5
+          WHEN 'booked'          THEN 4
+          WHEN 'nurturing'       THEN 3
+          WHEN 'voice_note_sent' THEN 2
+          ELSE 1
+        END DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM leads
+  WHERE email IS NOT NULL
+),
+plan AS (
+  SELECT
+    r.id,
+    r.rn,
+    first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
+  FROM ranked r
+  WHERE r.email_key IN (
+    SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
+  )
+),
+merged AS (
+  SELECT
+    p.keep_id,
+    min(l.created_at)                                             AS created_at,
+    min(l.name)         FILTER (WHERE l.name         IS NOT NULL) AS name,
+    string_agg(DISTINCT l.notes, E'\n---\n')                      AS notes,
+    min(l.source)       FILTER (WHERE l.source       IS NOT NULL) AS source,
+    min(l.session_key)  FILTER (WHERE l.session_key  IS NOT NULL) AS session_key,
+    min(l.referrer)     FILTER (WHERE l.referrer     IS NOT NULL) AS referrer,
+    min(l.utm_source)   FILTER (WHERE l.utm_source   IS NOT NULL) AS utm_source,
+    min(l.utm_medium)   FILTER (WHERE l.utm_medium   IS NOT NULL) AS utm_medium,
+    min(l.utm_campaign) FILTER (WHERE l.utm_campaign IS NOT NULL) AS utm_campaign,
+    min(l.landing_path) FILTER (WHERE l.landing_path IS NOT NULL) AS landing_path
+  FROM plan p
+  JOIN leads l ON l.id = p.id
+  GROUP BY p.keep_id
+)
+UPDATE leads t SET
+  created_at   = m.created_at,
+  name         = COALESCE(t.name,         m.name),
+  notes        = m.notes,
+  source       = COALESCE(t.source,       m.source),
+  session_key  = COALESCE(t.session_key,  m.session_key),
+  referrer     = COALESCE(t.referrer,     m.referrer),
+  utm_source   = COALESCE(t.utm_source,   m.utm_source),
+  utm_medium   = COALESCE(t.utm_medium,   m.utm_medium),
+  utm_campaign = COALESCE(t.utm_campaign, m.utm_campaign),
+  landing_path = COALESCE(t.landing_path, m.landing_path)
+FROM merged m
+WHERE t.id = m.keep_id;
+
+-- 7b. Re-point child rows onto the survivor BEFORE deleting. lead_events.lead_id
+--     is ON DELETE CASCADE, so skipping this would silently destroy history.
+WITH ranked AS (
+  SELECT
+    id,
+    lower(email) AS email_key,
+    row_number() OVER (
+      PARTITION BY lower(email)
+      ORDER BY
+        CASE status
+          WHEN 'converted'       THEN 5
+          WHEN 'booked'          THEN 4
+          WHEN 'nurturing'       THEN 3
+          WHEN 'voice_note_sent' THEN 2
+          ELSE 1
+        END DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM leads
+  WHERE email IS NOT NULL
+),
+plan AS (
+  SELECT
+    r.id,
+    r.rn,
+    first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
+  FROM ranked r
+  WHERE r.email_key IN (
+    SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
+  )
+)
+UPDATE lead_events e SET lead_id = p.keep_id
+FROM plan p
+WHERE e.lead_id = p.id AND p.rn > 1;
+
+-- 7c. Same for action_items (ON DELETE SET NULL — the link would be orphaned).
+WITH ranked AS (
+  SELECT
+    id,
+    lower(email) AS email_key,
+    row_number() OVER (
+      PARTITION BY lower(email)
+      ORDER BY
+        CASE status
+          WHEN 'converted'       THEN 5
+          WHEN 'booked'          THEN 4
+          WHEN 'nurturing'       THEN 3
+          WHEN 'voice_note_sent' THEN 2
+          ELSE 1
+        END DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM leads
+  WHERE email IS NOT NULL
+),
+plan AS (
+  SELECT
+    r.id,
+    r.rn,
+    first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
+  FROM ranked r
+  WHERE r.email_key IN (
+    SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
+  )
+)
+UPDATE action_items a SET lead_id = p.keep_id
+FROM plan p
+WHERE a.lead_id = p.id AND p.rn > 1;
+
+-- 7d. Drop the now-redundant rows.
+WITH ranked AS (
+  SELECT
+    id,
+    lower(email) AS email_key,
+    row_number() OVER (
+      PARTITION BY lower(email)
+      ORDER BY
+        CASE status
+          WHEN 'converted'       THEN 5
+          WHEN 'booked'          THEN 4
+          WHEN 'nurturing'       THEN 3
+          WHEN 'voice_note_sent' THEN 2
+          ELSE 1
+        END DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM leads
+  WHERE email IS NOT NULL
+),
+plan AS (
+  SELECT
+    r.id,
+    r.rn,
+    first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
+  FROM ranked r
+  WHERE r.email_key IN (
+    SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
+  )
+)
+DELETE FROM leads l
+USING plan p
+WHERE l.id = p.id AND p.rn > 1;
+
+-- 7e. Normalise casing so the uniqueness rule can be a plain column index rather
+--     than an expression index. That matters beyond tidiness: PostgREST's upsert
+--     can only name a column as its conflict target, and the public newsletter
+--     form relies on that to turn a repeat signup into a no-op instead of a 500.
+UPDATE leads SET email = lower(email) WHERE email <> lower(email);
+
+-- 7f. Stop the duplicates coming back.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_unique
+  ON leads (email);
+
+
+-- ----------------------------------------------------------------------------
+-- 8. RLS — matches the convention established in migration 007
+--    (public gets nothing on these tables, authenticated admin gets full access)
 -- ----------------------------------------------------------------------------
 
 ALTER TABLE lead_events         ENABLE ROW LEVEL SECURITY;
