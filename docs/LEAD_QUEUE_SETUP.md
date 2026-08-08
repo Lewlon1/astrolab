@@ -43,11 +43,50 @@ loads but the queue is empty and the scoring panel shows a warning.
 
 1. Open the [Supabase dashboard](https://supabase.com/dashboard) → your project →
    **SQL Editor** → **New query**.
-2. Paste the entire contents of `supabase/migrations/013_lead_queue_daily_actions.sql`.
-3. Click **Run**.
+2. *(Optional but recommended, see below)* run the duplicate check first.
+3. Paste the entire contents of `supabase/migrations/013_lead_queue_daily_actions.sql`.
+4. Click **Run**.
 
 Every statement is idempotent (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`), so running it
 twice is harmless.
+
+### It merges duplicate leads — look before you run
+
+`leads` has never had a unique constraint on email, and the newsletter form did a plain
+`INSERT`, so **repeat signups created duplicate rows**. Email is the merge key for both
+MailerLite and the CSV upload, so it has to become unique — which means the existing
+duplicates get collapsed. Section 1a of the migration does that, and it **deletes rows**.
+
+It is not destructive of information. For each duplicated address one row survives and
+absorbs everything the others had first:
+
+- The survivor is the one furthest along the pipeline, so a `booked` row is never dropped
+  in favour of a `new` one.
+- Its `created_at` is pulled back to the earliest in the group, preserving the real signup date.
+- Any `name`, `source`, or UTM/attribution value the survivor was missing is filled in from
+  the others.
+- **Notes are concatenated, not overwritten** — a note you hand-wrote on a discarded row is
+  kept, joined with `---`.
+
+To see exactly which addresses are affected before running anything:
+
+```sql
+select
+  lower(email)               as email,
+  count(*)                   as copies,
+  min(created_at)::date      as first_seen,
+  max(created_at)::date      as last_seen,
+  array_agg(distinct status) as stages,
+  array_agg(distinct source) as sources
+from leads
+where email is not null
+group by lower(email)
+having count(*) > 1
+order by count(*) desc;
+```
+
+The migration also lower-cases every stored email, so `Gabs@x.com` and `gabs@x.com` stop
+being two different leads.
 
 **What it does:**
 - Adds queue columns to the existing `leads` table (`ig_handle`, `language`,
@@ -55,12 +94,18 @@ twice is harmless.
 - **Widens the `leads.source` CHECK constraint** to allow `'mailerlite'` and
   `'csv_import'`. Without this every synced row is rejected — this is the one statement
   that will break the sync if you skip it.
+- Merges duplicate-email leads and makes `leads.email` unique (see above).
 - Creates `lead_events` (the behavioural timeline), `lead_scoring_config` (the weights),
   `action_items` (the daily batch), `ritual_calendar` (weekly fixtures).
 - Adds `last_engaged_at` to `engagement_accounts` so Tier 3 can rotate properly.
 - Seeds 15 scoring weights and 2 ritual fixtures.
 - Applies RLS policies matching migration 007. **Without these the tool reads empty even
   though the data is there** — so don't run a partial selection of the file.
+
+One knock-on change outside the admin tool: `app/api/leads/route.ts` (the public newsletter
+form) now does an `upsert` instead of an `insert`. Without that, the new unique constraint
+would make a returning subscriber see an error on the public site. Nothing else about the
+form changed.
 
 **Verify:** run this in the SQL editor. All five should return a row.
 

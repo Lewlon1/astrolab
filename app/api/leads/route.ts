@@ -19,26 +19,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
   }
 
+  // Migration 013 made leads.email unique and lower-cased the existing rows, so
+  // normalise here too — otherwise "Gabs@x.com" and "gabs@x.com" are two leads.
+  const normalisedEmail = email.trim().toLowerCase();
+
   const supabase = await createClient();
 
-  // Insert with attribution. If the attribution columns aren't present yet
-  // (migration 009 not applied), fall back to the base insert so a signup is
-  // never lost over a deploy/migration ordering gap.
-  let { error } = await supabase.from("leads").insert({
-    email,
-    source: source || "website_form",
-    session_key: session_key || null,
-    referrer: referrer || null,
-    utm_source: utm_source || null,
-    utm_medium: utm_medium || null,
-    utm_campaign: utm_campaign || null,
-    landing_path: landing_path || null,
-  });
+  // Upsert, not insert: someone re-subscribing is a normal thing to do and must
+  // not surface as an error on the public form. onConflict names the column
+  // behind idx_leads_email_unique (migration 013).
+  //
+  // If the attribution columns aren't present yet (migration 009 not applied),
+  // fall back to the base upsert so a signup is never lost over a
+  // deploy/migration ordering gap.
+  let { error } = await supabase.from("leads").upsert(
+    {
+      email: normalisedEmail,
+      source: source || "website_form",
+      session_key: session_key || null,
+      referrer: referrer || null,
+      utm_source: utm_source || null,
+      utm_medium: utm_medium || null,
+      utm_campaign: utm_campaign || null,
+      landing_path: landing_path || null,
+    },
+    { onConflict: "email", ignoreDuplicates: true }
+  );
 
   if (error) {
     const fallback = await supabase
       .from("leads")
-      .insert({ email, source: source || "website_form" });
+      .upsert(
+        { email: normalisedEmail, source: source || "website_form" },
+        { onConflict: "email", ignoreDuplicates: true }
+      );
     error = fallback.error;
   }
 
@@ -58,7 +72,7 @@ export async function POST(request: Request) {
         Accept: "application/json",
       },
       body: JSON.stringify({
-        email,
+        email: normalisedEmail,
         fields: {
           name: name || undefined,
         },

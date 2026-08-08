@@ -37,11 +37,128 @@ ALTER TABLE leads ADD CONSTRAINT leads_source_check
     'mailerlite', 'csv_import'
   ));
 
--- Email is the primary merge key for both MailerLite sync and CSV upload.
--- Stored lower-cased by the application; this index enforces the uniqueness
--- the upsert relies on.
+-- ----------------------------------------------------------------------------
+-- 1a. Collapse duplicate emails
+--
+-- `leads` has never had a unique constraint on email, and the public newsletter
+-- form (app/api/leads/route.ts) does a plain INSERT — so a repeat signup created
+-- a second row. Email is the merge key for both MailerLite sync and CSV upload,
+-- so it has to be unique from here on, and the existing duplicates have to be
+-- collapsed before the index below can be created.
+--
+-- THIS DELETES ROWS. It is not destructive of information: for each duplicated
+-- address one surviving row absorbs every non-null value from the others first.
+-- Run the read-only query in the comment block at the bottom of this file if you
+-- want to see what will be merged before running it.
+--
+-- Survivor is chosen by furthest-along stage, then oldest — so a booked row is
+-- never dropped in favour of a `new` one. The survivor's created_at is reset to
+-- the earliest in the group, so the original signup date is preserved.
+-- ----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS _lead_dedupe_plan;
+
+CREATE TABLE _lead_dedupe_plan AS
+WITH ranked AS (
+  SELECT
+    id,
+    lower(email) AS email_key,
+    row_number() OVER (
+      PARTITION BY lower(email)
+      ORDER BY
+        CASE status
+          WHEN 'converted'       THEN 5
+          WHEN 'booked'          THEN 4
+          WHEN 'nurturing'       THEN 3
+          WHEN 'voice_note_sent' THEN 2
+          ELSE 1
+        END DESC,
+        created_at ASC,
+        id ASC
+    ) AS rn
+  FROM leads
+  WHERE email IS NOT NULL
+)
+SELECT
+  r.id,
+  r.email_key,
+  r.rn,
+  first_value(r.id) OVER (PARTITION BY r.email_key ORDER BY r.rn) AS keep_id
+FROM ranked r
+WHERE r.email_key IN (
+  SELECT email_key FROM ranked GROUP BY email_key HAVING count(*) > 1
+);
+
+-- Fold every non-null value from the losing rows into the survivor.
+UPDATE leads t SET
+  created_at   = m.created_at,
+  name         = COALESCE(t.name,         m.name),
+  -- Notes are concatenated, not COALESCEd: a note on a discarded row is hand-
+  -- written by Gabs and must never be dropped just because the survivor also
+  -- had one. m.notes already includes the survivor's own note.
+  notes        = m.notes,
+  source       = COALESCE(t.source,       m.source),
+  session_key  = COALESCE(t.session_key,  m.session_key),
+  referrer     = COALESCE(t.referrer,     m.referrer),
+  utm_source   = COALESCE(t.utm_source,   m.utm_source),
+  utm_medium   = COALESCE(t.utm_medium,   m.utm_medium),
+  utm_campaign = COALESCE(t.utm_campaign, m.utm_campaign),
+  landing_path = COALESCE(t.landing_path, m.landing_path)
+FROM (
+  SELECT
+    p.keep_id,
+    min(l.created_at)                                          AS created_at,
+    min(l.name)         FILTER (WHERE l.name         IS NOT NULL) AS name,
+    string_agg(DISTINCT l.notes, E'\n---\n')                   AS notes,
+    min(l.source)       FILTER (WHERE l.source       IS NOT NULL) AS source,
+    min(l.session_key)  FILTER (WHERE l.session_key  IS NOT NULL) AS session_key,
+    min(l.referrer)     FILTER (WHERE l.referrer     IS NOT NULL) AS referrer,
+    min(l.utm_source)   FILTER (WHERE l.utm_source   IS NOT NULL) AS utm_source,
+    min(l.utm_medium)   FILTER (WHERE l.utm_medium   IS NOT NULL) AS utm_medium,
+    min(l.utm_campaign) FILTER (WHERE l.utm_campaign IS NOT NULL) AS utm_campaign,
+    min(l.landing_path) FILTER (WHERE l.landing_path IS NOT NULL) AS landing_path
+  FROM _lead_dedupe_plan p
+  JOIN leads l ON l.id = p.id
+  GROUP BY p.keep_id
+) m
+WHERE t.id = m.keep_id;
+
+-- Re-point any child rows written by an earlier partial run of this migration.
+DO $$
+BEGIN
+  IF to_regclass('public.lead_events') IS NOT NULL THEN
+    EXECUTE $sql$
+      UPDATE lead_events e SET lead_id = p.keep_id
+      FROM _lead_dedupe_plan p
+      WHERE e.lead_id = p.id AND p.rn > 1
+    $sql$;
+  END IF;
+
+  IF to_regclass('public.action_items') IS NOT NULL THEN
+    EXECUTE $sql$
+      UPDATE action_items a SET lead_id = p.keep_id
+      FROM _lead_dedupe_plan p
+      WHERE a.lead_id = p.id AND p.rn > 1
+    $sql$;
+  END IF;
+END $$;
+
+DELETE FROM leads l
+USING _lead_dedupe_plan p
+WHERE l.id = p.id AND p.rn > 1;
+
+DROP TABLE _lead_dedupe_plan;
+
+-- Normalise casing so the uniqueness rule is a plain column index rather than an
+-- expression index. That matters beyond tidiness: PostgREST's upsert can only
+-- name a column as its conflict target, and the public newsletter form relies on
+-- that to turn a repeat signup into a no-op instead of a 500.
+UPDATE leads SET email = lower(email) WHERE email <> lower(email);
+
+-- Stop the duplicates coming back. `leads.email` is the merge key for both the
+-- MailerLite sync and the ManyChat CSV upload.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_email_unique
-  ON leads (lower(email));
+  ON leads (email);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_leads_ig_handle_unique
   ON leads (lower(ig_handle)) WHERE ig_handle IS NOT NULL;
@@ -235,3 +352,29 @@ DROP POLICY IF EXISTS "Admin: full access" ON ritual_calendar;
 CREATE POLICY "Admin: full access" ON ritual_calendar
   FOR ALL USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
+
+
+-- ----------------------------------------------------------------------------
+-- Appendix — read-only duplicate check
+--
+-- Run this BEFORE the migration if you want to see which addresses will be
+-- collapsed by section 1a. It changes nothing.
+--
+--   select
+--     lower(email)               as email,
+--     count(*)                   as copies,
+--     min(created_at)::date      as first_seen,
+--     max(created_at)::date      as last_seen,
+--     array_agg(distinct status) as stages,
+--     array_agg(distinct source) as sources
+--   from leads
+--   where email is not null
+--   group by lower(email)
+--   having count(*) > 1
+--   order by count(*) desc, lower(email);
+--
+-- And AFTER, to confirm none remain (should return zero rows):
+--
+--   select lower(email), count(*) from leads
+--   group by lower(email) having count(*) > 1;
+-- ----------------------------------------------------------------------------

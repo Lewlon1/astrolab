@@ -507,6 +507,55 @@ confirm about the engine's shape:
   "That is a finished day, not an empty one." The maintenance list is a **finite literal of
   three** — that is the structural reason the engine cannot manufacture a tenth action.
 
+## Migration 013 failed on first real run — duplicate emails
+
+The first attempt to apply 013 errored:
+
+```
+ERROR: 23505: could not create unique index "idx_leads_email_unique"
+DETAIL: Key (lower(email))=(lonsdale744@gmail.com) is duplicated.
+```
+
+**Root cause: an unvalidated assumption.** The migration treated `leads.email` as though it
+were already unique. It never has been — migration 001 declares it `text NOT NULL` with no
+constraint, and `app/api/leads/route.ts` did a plain `INSERT`, so every repeat signup created
+another row. This was inventoried from the migrations during discovery but the *absence* of a
+unique constraint was not checked, only the column list.
+
+**Fixes applied:**
+
+1. **Section 1a — dedupe before indexing.** Collapses duplicate emails, choosing the survivor
+   by furthest-along stage then oldest, so a `booked` row is never dropped for a `new` one.
+   The survivor absorbs the earliest `created_at` and every non-null field the others had.
+   Notes are **concatenated**, not COALESCEd — the first version of this lost hand-written
+   notes whenever the survivor already had one, which the local test caught.
+   It also re-points `lead_events` / `action_items` rows before deleting, which matters
+   because `lead_events.lead_id` is `ON DELETE CASCADE` and the events would otherwise
+   vanish silently.
+2. **Plain column index, not an expression index.** All emails are lower-cased and the index
+   moved from `lower(email)` to `(email)`. PostgREST's upsert can only name a *column* as its
+   conflict target, so an expression index would have left the public form unable to upsert.
+3. **`app/api/leads/route.ts` switched from `insert` to `upsert`** (`onConflict: "email"`,
+   `ignoreDuplicates: true`). Without this the new unique constraint turns a returning
+   subscriber into a visible error on the public newsletter form — a regression the migration
+   would have caused. Technically the public site was out of scope, but shipping a known
+   break because of a scope line would have been the wrong call. First-touch attribution is
+   preserved (`ignoreDuplicates`), and the email is normalised before both the DB write and
+   the MailerLite call.
+
+**Verified against a real Postgres 16** (scratch instance, schema rebuilt from migrations
+001/009 plus an `auth.role()` stub) rather than by inspection:
+- 9 seeded rows across 5 addresses → 5 rows, zero duplicates.
+- The `booked` row survived, kept its notes *and* the discarded row's note, and inherited the
+  earliest `created_at` and a `utm_source` it did not have.
+- Mixed-case pairs merged; singletons untouched.
+- Migration re-run three times — leads, weights and rituals all stable.
+- Partial-run branch exercised: child rows pointing at a doomed lead were repointed, zero
+  orphans.
+
+**Lesson for next time:** when adding a unique index to a table that has existed without one,
+assume duplicates exist. Reading the column list is not the same as reading the constraints.
+
 ## What the time-budget guard gets wrong (known)
 
 - **Tier 1 can exceed 45 minutes and the guard allows it.** Read literally — "conversion work
