@@ -69,6 +69,7 @@ export default function AdminNav() {
   const desktopNavRef = useRef<HTMLElement | null>(null);
   const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const mobileToggleRef = useRef<HTMLButtonElement | null>(null);
+  const mobilePanelRef = useRef<HTMLDivElement | null>(null);
 
   // Close everything on navigation.
   useEffect(() => {
@@ -76,26 +77,33 @@ export default function AdminNav() {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Dismiss on outside pointer interaction, focus leaving the nav, or Escape.
+  // Dismiss the desktop panel on outside pointer/focus, and either panel on
+  // Escape. Pointer/focus dismissal only serves the desktop dropdown — the
+  // mobile panel has no outside-tap dismissal, unchanged from before.
   useEffect(() => {
     if (!openGroup && !mobileOpen) return;
 
-    const handlePointerDown = (event: PointerEvent) => {
+    const closeIfOutside = (target: Node | null) => {
       if (
+        target &&
         desktopNavRef.current &&
-        !desktopNavRef.current.contains(event.target as Node)
+        !desktopNavRef.current.contains(target)
       ) {
         setOpenGroup(null);
       }
     };
 
+    const handlePointerDown = (event: PointerEvent) => {
+      closeIfOutside(event.target as Node);
+    };
+
     const handleFocusIn = (event: FocusEvent) => {
-      if (
-        desktopNavRef.current &&
-        !desktopNavRef.current.contains(event.target as Node)
-      ) {
-        setOpenGroup(null);
-      }
+      const target = event.target as Node | null;
+      // Focus falling to <body> is not a deliberate exit — Safari/Firefox do
+      // this on mousedown over elements they don't focus on click, and
+      // closing here would unmount the link before its click dispatches.
+      if (!target || target === document.body) return;
+      closeIfOutside(target);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -110,13 +118,19 @@ export default function AdminNav() {
       }
 
       if (mobileOpen) {
+        const active = document.activeElement;
+        const focusWasInside =
+          mobileToggleRef.current === active ||
+          !!mobilePanelRef.current?.contains(active);
         setMobileOpen(false);
-        mobileToggleRef.current?.focus();
+        if (focusWasInside) mobileToggleRef.current?.focus();
       }
     };
 
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("focusin", handleFocusIn);
+    if (openGroup) {
+      document.addEventListener("pointerdown", handlePointerDown);
+      document.addEventListener("focusin", handleFocusIn);
+    }
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
@@ -194,7 +208,6 @@ export default function AdminNav() {
               {isOpen && (
                 <ul
                   id={panelId}
-                  aria-label={group.label}
                   className="absolute left-0 top-full mt-1.5 min-w-[184px] bg-white border border-[#e8e5df] rounded-xl shadow-sm py-1.5 z-50"
                 >
                   {group.items.map((item) => {
@@ -203,9 +216,10 @@ export default function AdminNav() {
                     return (
                       <Fragment key={item.href}>
                         {item.dividerBefore && (
-                          <li aria-hidden="true">
-                            <div className="my-1.5 border-t border-[#f0ede8]" />
-                          </li>
+                          <li
+                            aria-hidden="true"
+                            className="my-1.5 border-t border-[#f0ede8]"
+                          />
                         )}
                         <li>
                           <Link
@@ -214,7 +228,7 @@ export default function AdminNav() {
                             aria-current={itemActive ? "page" : undefined}
                             className={`block text-sm px-3 py-2 mx-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
                               itemActive
-                            )} ${itemActive ? "bg-[#f5f3ef]" : ""}`}
+                            )}${itemActive ? " bg-[#f5f3ef]" : ""}`}
                           >
                             {item.label}
                           </Link>
@@ -255,11 +269,12 @@ export default function AdminNav() {
       {/* Mobile dropdown */}
       {mobileOpen && (
         <div
+          ref={mobilePanelRef}
           id="admin-nav-mobile-panel"
           className="md:hidden absolute top-14 left-0 right-0 bg-white border-b border-[#e8e5df] shadow-sm z-50 max-h-[calc(100dvh-3.5rem)] overflow-y-auto"
         >
           <nav
-            aria-label="Admin mobile"
+            aria-label="Admin"
             className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-0.5"
           >
             <Link
@@ -299,7 +314,7 @@ export default function AdminNav() {
                         aria-current={itemActive ? "page" : undefined}
                         className={`block text-sm px-3 py-2 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
                           itemActive
-                        )} ${itemActive ? "bg-[#f5f3ef]" : ""}`}
+                        )}${itemActive ? " bg-[#f5f3ef]" : ""}`}
                       >
                         {item.label}
                       </Link>
