@@ -85,8 +85,17 @@ indicator comes essentially free:
 - The group containing the current page gets the darker foreground treatment
   (`text-[#1a1a18]`) that links currently only get on hover.
 - Inside an open panel, the link matching the current path is highlighted.
-- `/admin` matches the Dashboard link exactly; group membership is determined by
-  exact match against each item's `href`.
+Matching rule:
+
+- The Dashboard link uses **exact** match (`pathname === "/admin"`), so it does
+  not light up on every admin page.
+- Group items use **prefix** match
+  (`pathname === href || pathname.startsWith(href + "/")`), so sub-routes such as
+  `/admin/blog/new` and `/admin/events/new` — both linked from the dashboard's
+  own quick actions — correctly highlight Blog and Events.
+
+Exact matching everywhere was considered first and rejected: it leaves the nav
+showing no active state at all while writing a blog post or creating an event.
 
 Today there is no active indicator at all, so this is a net addition.
 
