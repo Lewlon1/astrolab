@@ -71,11 +71,32 @@ presentations cannot drift out of sync.
 
 ## Accessibility
 
-- Each trigger carries `aria-expanded` and `aria-haspopup`.
-- The panel carries `role="menu"`; its links carry `role="menuitem"`.
-- `Escape` closes the open menu and returns focus to its trigger.
-- Triggers are real `<button>` elements, so they are keyboard-reachable by
-  default.
+This is a **disclosure**, not an ARIA `menu`.
+
+An earlier draft of this spec mandated `role="menu"` / `role="menuitem"`. That was
+wrong and is superseded. The ARIA `menu` role carries an interaction contract —
+`ArrowUp`/`ArrowDown`/`Home`/`End` roving focus, and focus moving into the panel
+on open — that this component does not implement. Worse, `role="menuitem"`
+*overrides* the native link role, so the destinations stop being announced as
+links and drop out of screen-reader link lists. Claiming the role while behaving
+like a plain list of links is worse for assistive-technology users than not
+claiming it.
+
+The component is a button that shows and hides a list of links. That is a
+disclosure, and Tab-through is the expected interaction for one.
+
+- Each trigger is a real `<button>` carrying `aria-expanded` and `aria-controls`
+  pointing at its panel. No `aria-haspopup`.
+- The panel is a `<ul>` of `<li>` items containing ordinary `Link`s — no `menu`
+  or `menuitem` roles.
+- The current page's link carries `aria-current="page"`.
+- `Escape` closes the open panel and returns focus to its trigger — but only when
+  focus was inside the nav, so it cannot steal focus from elsewhere on the page.
+- Moving focus out of the nav closes the open panel.
+- On mobile, each group is a `role="group"` labelled by its heading via
+  `aria-labelledby`, so the grouping is conveyed programmatically and not only
+  visually.
+- Both `<nav>` landmarks are labelled.
 
 ## Active state
 
