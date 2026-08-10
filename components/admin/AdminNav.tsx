@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type NavItem = { label: string; href: string };
+type NavItem = {
+  label: string;
+  href: string;
+  /** Render a divider immediately before this item. */
+  dividerBefore?: boolean;
+};
 
 type NavGroup = {
   label: string;
   items: NavItem[];
-  /** href of the item that should be preceded by a divider */
-  dividerBefore?: string;
 };
 
 const dashboardLink: NavItem = { label: "Dashboard", href: "/admin" };
@@ -40,10 +43,9 @@ const navGroups: NavGroup[] = [
       { label: "Transits", href: "/admin/transits" },
       { label: "Repurpose", href: "/admin/repurpose" },
       { label: "Engagement", href: "/admin/engagement" },
-      { label: "Video Editor", href: "/admin/video-editor" },
+      { label: "Video Editor", href: "/admin/video-editor", dividerBefore: true },
       { label: "Photoshop", href: "/admin/photoshop" },
     ],
-    dividerBefore: "/admin/video-editor",
   },
 ];
 
@@ -52,12 +54,21 @@ function matchesItem(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+const tone = (active: boolean) =>
+  active
+    ? "text-[#1a1a18] font-medium"
+    : "text-[#6b6560] hover:text-[#1a1a18]";
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a18]/25";
+
 export default function AdminNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const pathname = usePathname();
   const desktopNavRef = useRef<HTMLElement | null>(null);
   const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const mobileToggleRef = useRef<HTMLButtonElement | null>(null);
 
   // Close everything on navigation.
   useEffect(() => {
@@ -65,11 +76,20 @@ export default function AdminNav() {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Dismiss the open menu on outside click or Escape.
+  // Dismiss on outside pointer interaction, focus leaving the nav, or Escape.
   useEffect(() => {
-    if (!openGroup) return;
+    if (!openGroup && !mobileOpen) return;
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        desktopNavRef.current &&
+        !desktopNavRef.current.contains(event.target as Node)
+      ) {
+        setOpenGroup(null);
+      }
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
       if (
         desktopNavRef.current &&
         !desktopNavRef.current.contains(event.target as Node)
@@ -80,18 +100,30 @@ export default function AdminNav() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
-      const trigger = triggerRefs.current[openGroup];
-      setOpenGroup(null);
-      trigger?.focus();
+
+      if (openGroup) {
+        const nav = desktopNavRef.current;
+        const focusWasInside = !!nav && nav.contains(document.activeElement);
+        const trigger = triggerRefs.current[openGroup];
+        setOpenGroup(null);
+        if (focusWasInside) trigger?.focus();
+      }
+
+      if (mobileOpen) {
+        setMobileOpen(false);
+        mobileToggleRef.current?.focus();
+      }
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("focusin", handleFocusIn);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("focusin", handleFocusIn);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [openGroup]);
+  }, [openGroup, mobileOpen]);
 
   // Dashboard is an exact match so it doesn't light up on every admin page.
   const dashboardActive = pathname === dashboardLink.href;
@@ -109,15 +141,14 @@ export default function AdminNav() {
       {/* Desktop nav */}
       <nav
         ref={desktopNavRef}
+        aria-label="Admin"
         className="hidden md:flex items-center gap-1"
       >
         <Link
           href={dashboardLink.href}
-          className={`text-sm px-3 py-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${
+          className={`text-sm px-3 py-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
             dashboardActive
-              ? "text-[#1a1a18] font-medium"
-              : "text-[#6b6560] hover:text-[#1a1a18]"
-          }`}
+          )}`}
         >
           {dashboardLink.label}
         </Link>
@@ -127,6 +158,7 @@ export default function AdminNav() {
           const isActive = group.items.some((item) =>
             matchesItem(pathname, item.href)
           );
+          const panelId = `admin-nav-${group.label.toLowerCase()}`;
 
           return (
             <div key={group.label} className="relative">
@@ -137,12 +169,10 @@ export default function AdminNav() {
                 type="button"
                 onClick={() => setOpenGroup(isOpen ? null : group.label)}
                 aria-expanded={isOpen}
-                aria-haspopup="menu"
-                className={`flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${
+                aria-controls={panelId}
+                className={`flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
                   isActive || isOpen
-                    ? "text-[#1a1a18] font-medium"
-                    : "text-[#6b6560] hover:text-[#1a1a18]"
-                }`}
+                )}`}
               >
                 {group.label}
                 <svg
@@ -155,15 +185,15 @@ export default function AdminNav() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   aria-hidden="true"
-                  className={`transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  className={`shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
                 >
                   <path d="M2.5 4L5 6.5L7.5 4" />
                 </svg>
               </button>
 
               {isOpen && (
-                <div
-                  role="menu"
+                <ul
+                  id={panelId}
                   aria-label={group.label}
                   className="absolute left-0 top-full mt-1.5 min-w-[184px] bg-white border border-[#e8e5df] rounded-xl shadow-sm py-1.5 z-50"
                 >
@@ -171,29 +201,28 @@ export default function AdminNav() {
                     const itemActive = matchesItem(pathname, item.href);
 
                     return (
-                      <div key={item.href}>
-                        {group.dividerBefore === item.href && (
-                          <div
-                            role="separator"
-                            className="my-1.5 border-t border-[#f0ede8]"
-                          />
+                      <Fragment key={item.href}>
+                        {item.dividerBefore && (
+                          <li aria-hidden="true">
+                            <div className="my-1.5 border-t border-[#f0ede8]" />
+                          </li>
                         )}
-                        <Link
-                          role="menuitem"
-                          href={item.href}
-                          aria-current={itemActive ? "page" : undefined}
-                          className={`block text-sm px-3 py-2 mx-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${
-                            itemActive
-                              ? "text-[#1a1a18] font-medium bg-[#f5f3ef]"
-                              : "text-[#6b6560] hover:text-[#1a1a18]"
-                          }`}
-                        >
-                          {item.label}
-                        </Link>
-                      </div>
+                        <li>
+                          <Link
+                            href={item.href}
+                            onClick={() => setOpenGroup(null)}
+                            aria-current={itemActive ? "page" : undefined}
+                            className={`block text-sm px-3 py-2 mx-1.5 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
+                              itemActive
+                            )} ${itemActive ? "bg-[#f5f3ef]" : ""}`}
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      </Fragment>
                     );
                   })}
-                </div>
+                </ul>
               )}
             </div>
           );
@@ -202,10 +231,12 @@ export default function AdminNav() {
 
       {/* Mobile hamburger */}
       <button
+        ref={mobileToggleRef}
         onClick={() => setMobileOpen((v) => !v)}
-        className="md:hidden p-1.5 rounded-lg hover:bg-[#f5f3ef] transition-colors"
+        className={`md:hidden p-1.5 rounded-lg hover:bg-[#f5f3ef] transition-colors ${focusRing}`}
         aria-label="Toggle navigation"
         aria-expanded={mobileOpen}
+        aria-controls="admin-nav-mobile-panel"
       >
         {mobileOpen ? (
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
@@ -223,46 +254,60 @@ export default function AdminNav() {
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="md:hidden absolute top-14 left-0 right-0 bg-white border-b border-[#e8e5df] shadow-sm z-50 max-h-[calc(100vh-3.5rem)] overflow-y-auto">
-          <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-0.5">
+        <div
+          id="admin-nav-mobile-panel"
+          className="md:hidden absolute top-14 left-0 right-0 bg-white border-b border-[#e8e5df] shadow-sm z-50 max-h-[calc(100dvh-3.5rem)] overflow-y-auto"
+        >
+          <nav
+            aria-label="Admin mobile"
+            className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-0.5"
+          >
             <Link
               href={dashboardLink.href}
               onClick={() => setMobileOpen(false)}
-              className={`text-sm px-3 py-2 rounded-lg transition-colors hover:bg-[#f5f3ef] ${
+              className={`text-sm px-3 py-2 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
                 dashboardActive
-                  ? "text-[#1a1a18] font-medium"
-                  : "text-[#6b6560] hover:text-[#1a1a18]"
-              }`}
+              )}`}
             >
               {dashboardLink.label}
             </Link>
 
-            {navGroups.map((group) => (
-              <div key={group.label} className="mt-2">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-[#b8b0a4] px-3 pb-1">
-                  {group.label}
-                </p>
-                {group.items.map((item) => {
-                  const itemActive = matchesItem(pathname, item.href);
+            {navGroups.map((group) => {
+              const headingId = `admin-nav-mobile-${group.label.toLowerCase()}`;
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      aria-current={itemActive ? "page" : undefined}
-                      className={`block text-sm px-3 py-2 rounded-lg transition-colors hover:bg-[#f5f3ef] ${
-                        itemActive
-                          ? "text-[#1a1a18] font-medium bg-[#f5f3ef]"
-                          : "text-[#6b6560] hover:text-[#1a1a18]"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+              return (
+                <div
+                  key={group.label}
+                  className="mt-2"
+                  role="group"
+                  aria-labelledby={headingId}
+                >
+                  <p
+                    id={headingId}
+                    className="text-[10px] font-medium uppercase tracking-wider text-[#b8b0a4] px-3 pb-1"
+                  >
+                    {group.label}
+                  </p>
+                  {group.items.map((item) => {
+                    const itemActive = matchesItem(pathname, item.href);
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        aria-current={itemActive ? "page" : undefined}
+                        className={`block text-sm px-3 py-2 rounded-lg transition-colors hover:bg-[#f5f3ef] ${focusRing} ${tone(
+                          itemActive
+                        )} ${itemActive ? "bg-[#f5f3ef]" : ""}`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </nav>
         </div>
       )}
