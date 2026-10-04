@@ -154,7 +154,9 @@ export async function POST(req: NextRequest) {
       });
     } else {
       if (!validEmail) {
-        // `leads.email` is NOT NULL, so a handle-only row cannot create one.
+        // Migration 014 makes `leads.email` nullable, so this skip is no longer
+        // forced by the schema — creating handle-only leads is a later phase of
+        // the funnel build. Until then the row is reported, not silently lost.
         report.skipped.push({
           row: i + 1,
           reason: `IG handle "${handle}" matched no existing lead and the row has no email to create one`,
@@ -164,7 +166,7 @@ export async function POST(req: NextRequest) {
 
       const { data: inserted, error } = await supabase
         .from("leads")
-        .insert({ ...patch, source: "manychat", status: "new" })
+        .insert({ ...patch, source: "manychat", status: "lead", track: "cold" })
         .select("id")
         .single();
 

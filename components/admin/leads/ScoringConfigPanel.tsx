@@ -41,7 +41,7 @@ export default function ScoringConfigPanel({ config, notify, onSaved }: Props) {
         return;
       }
 
-      const res = await fetch("/api/admin/lead-queue", {
+      const res = await fetch("/api/admin/leads", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ weights }),

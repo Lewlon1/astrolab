@@ -13,6 +13,7 @@ import {
   loadWeights,
   scoreAndRank,
 } from "@/lib/leadScoring";
+import { normalizeStage } from "@/lib/leadStages";
 import type { Lead, LeadEvent, ScoringWeight } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -75,7 +76,8 @@ export async function GET(req: NextRequest) {
     config: config ?? [],
     counts: {
       total: ranked.length,
-      unworked: ranked.filter((r) => r.lead.status === "new").length,
+      unworked: ranked.filter((r) => normalizeStage(r.lead.status) === "lead")
+        .length,
     },
   });
 }

@@ -1,5 +1,12 @@
 // Database row types (matching Supabase schema)
 
+// The stage/track/source vocabulary lives in lib/leadStages.ts, which owns the
+// mapping between the spec's names and the column names Postgres actually uses.
+// Re-exported here so `import { LeadStage } from "@/types"` keeps working.
+import type { LeadSource, LeadStage, LeadTrack } from "@/lib/leadStages";
+
+export type { LeadSource, LeadStage, LeadTrack };
+
 export interface Service {
   id: string;
   name: string;
@@ -75,9 +82,18 @@ export interface Event {
 export interface Lead {
   id: string;
   name: string | null;
-  email: string;
-  source: "website_form" | "lovecode" | "event_qr" | "manychat" | null;
-  status: "new" | "voice_note_sent" | "nurturing" | "booked" | "converted";
+  /**
+   * Nullable from migration 014: a handle-only ManyChat import has no address.
+   * `leads_identity_check` guarantees email or ig_handle is present.
+   */
+  email: string | null;
+  source: LeadSource | null;
+  /**
+   * The pipeline stage. Still called `status` in Postgres — see lib/leadStages.ts
+   * for why. Read it through `normalizeStage()`: a row written before the
+   * migration's code deploy can still carry the legacy vocabulary.
+   */
+  status: LeadStage;
   notes: string | null;
   created_at: string;
   // Attribution (added in migration 009 — nullable for older rows)
@@ -99,6 +115,21 @@ export interface Lead {
   last_activity_at?: string | null;
   last_actioned_at?: string | null;
   last_synced_at?: string | null;
+  // Added in migration 014 — the funnel spec's track and gate fields.
+  track?: LeadTrack | null;
+  birth_date?: string | null;
+  /** null with birth_time_known false = asked and unknown, which is permitted. */
+  birth_time?: string | null;
+  /** true = known, false = asked and unknown, null = never asked. */
+  birth_time_known?: boolean | null;
+  birth_place?: string | null;
+  opening_question?: string | null;
+  whatsapp?: string | null;
+  referred_by?: string | null;
+  consent_at?: string | null;
+  consent_version?: string | null;
+  /** Set only when an admin deliberately corrects a mis-set stage. */
+  stage_override_at?: string | null;
 }
 
 // Component prop types
@@ -180,7 +211,13 @@ export type LeadEventType =
   | "code_delivered"
   | "csv_import"
   | "actioned"
-  | "note";
+  | "note"
+  // Added with the funnel build (migration 014 onwards).
+  | "capture"
+  | "dm_reply"
+  | "purchase"
+  | "suppressed"
+  | "stage_migrated";
 
 export interface LeadEvent {
   id: string;

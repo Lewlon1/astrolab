@@ -63,7 +63,10 @@ export default async function AdminDashboardPage() {
 
   const metrics = [
     { label: "Leads this week", value: leadsThisWeek ?? 0 },
-    { label: "Total subscribers", value: totalLeads ?? 0 },
+    // This is count(leads), which has never been a subscriber count — a lead
+    // can be unsubscribed, or have arrived from a CSV import and never been on
+    // a list at all. MailerLite subscription state lives in leads.unsubscribed.
+    { label: "Total leads", value: totalLeads ?? 0 },
     { label: "Blog views", value: "Coming soon", muted: true },
     { label: "Upcoming events", value: upcomingEventsCount ?? 0 },
   ];

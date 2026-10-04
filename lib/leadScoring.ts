@@ -16,6 +16,13 @@ import type {
   ScoredLead,
   ScoringWeights,
 } from "@/types";
+import {
+  type LeadStage,
+  STAGE_LABELS,
+  leadDisplayName,
+  normalizeStage,
+  normalizeTrack,
+} from "./leadStages";
 
 /**
  * Fallback weights, used only when `lead_scoring_config` is unreadable or has
@@ -31,11 +38,18 @@ export const DEFAULT_WEIGHTS: ScoringWeights = {
   w_email_open: 4,
   w_event_attended: 18,
   w_manychat_optin: 10,
-  w_stage_new: 5,
-  w_stage_voice_note: 15,
-  w_stage_nurturing: 10,
+  // Stage bonuses, keyed to the migration 014 vocabulary. The legacy
+  // w_stage_new / w_stage_voice_note / w_stage_nurturing / w_stage_converted
+  // rows seeded by 013 are inert once 014 has run; migration 015 deletes them.
+  w_stage_lead: 5,
+  w_stage_code_delivered: 15,
+  w_stage_engaged: 10,
   w_stage_booked: 0,
-  w_stage_converted: 0,
+  w_stage_client: 0,
+  w_capture: 8,
+  w_dm_reply: 25,
+  w_purchase: 0,
+  w_track_warm: 12,
   penalty_unsubscribed: 50,
   penalty_recent_touch: 20,
 };
@@ -49,14 +63,17 @@ const EVENT_WEIGHT_KEYS: Record<string, string> = {
   opened: "w_email_open",
   event_attended: "w_event_attended",
   subscribed: "w_manychat_optin",
+  capture: "w_capture",
+  dm_reply: "w_dm_reply",
+  purchase: "w_purchase",
 };
 
-const STAGE_WEIGHT_KEYS: Record<string, string> = {
-  new: "w_stage_new",
-  voice_note_sent: "w_stage_voice_note",
-  nurturing: "w_stage_nurturing",
+const STAGE_WEIGHT_KEYS: Record<LeadStage, string> = {
+  lead: "w_stage_lead",
+  code_delivered: "w_stage_code_delivered",
+  engaged: "w_stage_engaged",
   booked: "w_stage_booked",
-  converted: "w_stage_converted",
+  client: "w_stage_client",
 };
 
 const EVENT_LABELS: Record<string, string> = {
@@ -67,6 +84,9 @@ const EVENT_LABELS: Record<string, string> = {
   opened: "Opened an email",
   event_attended: "Attended an event",
   subscribed: "Opted in",
+  capture: "Filled in a gate form",
+  dm_reply: "Replied to a DM",
+  purchase: "Paid",
 };
 
 const DAY_MS = 86_400_000;
@@ -165,14 +185,29 @@ export function scoreLead(
   }
 
   // --- Stage bonus ---
-  const stageKey = STAGE_WEIGHT_KEYS[lead.status];
-  if (stageKey) {
-    const points = weight(weights, stageKey);
-    if (points !== 0) {
+  // normalizeStage, not lead.status directly: a row can still carry the legacy
+  // vocabulary in the window between migration 014 being applied by hand and
+  // this code being deployed.
+  const stage = normalizeStage(lead.status);
+  const points = weight(weights, STAGE_WEIGHT_KEYS[stage]);
+  if (points !== 0) {
+    factors.push({
+      key: `stage_${stage}`,
+      label: `Stage: ${STAGE_LABELS[stage].toLowerCase()}`,
+      points: Math.round(points),
+    });
+  }
+
+  // --- Warm track bonus ---
+  // Someone Gabs met in person or who arrived on a referral is warmer than a
+  // stranger at the same stage.
+  if (normalizeTrack(lead.track) === "warm") {
+    const warmPoints = weight(weights, "w_track_warm");
+    if (warmPoints !== 0) {
       factors.push({
-        key: `stage_${lead.status}`,
-        label: `Stage: ${lead.status.replace(/_/g, " ")}`,
-        points: Math.round(points),
+        key: "track_warm",
+        label: "Warm track",
+        points: Math.round(warmPoints),
       });
     }
   }
@@ -219,7 +254,7 @@ export function buildReason(
     .filter((f) => f.points > 0)
     .sort((a, b) => b.points - a.points)[0];
 
-  const name = lead.name || lead.email;
+  const name = leadDisplayName(lead);
 
   if (!top) {
     if (lead.unsubscribed) return `${name} has unsubscribed — no outreach.`;
@@ -237,14 +272,13 @@ export function buildReason(
           ? " yesterday"
           : ` ${Math.round(age)} days ago`;
 
-  const stage =
-    lead.status === "voice_note_sent"
-      ? " Voice note already sent — this is the follow-up."
-      : lead.status === "booked"
-        ? " Already booked."
-        : lead.status === "converted"
-          ? " Already converted."
-          : "";
+  const stageNote: Partial<Record<LeadStage, string>> = {
+    code_delivered: " Code already delivered — this is the follow-up.",
+    booked: " Already booked.",
+    client: " Already a client.",
+  };
+
+  const stage = stageNote[normalizeStage(lead.status)] ?? "";
 
   return `${top.label.toLowerCase()}${when}.${stage}`.replace(/^./, (c) =>
     c.toUpperCase()
