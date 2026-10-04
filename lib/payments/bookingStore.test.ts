@@ -85,6 +85,38 @@ describe("recordCalEvent", () => {
     expect(repo.rows).toHaveLength(1);
     expect(b).toMatchObject({ cal_uid: "u2", start_time: "2026-10-12T09:00:00.000Z", payment_status: "paid" });
   });
+
+  it("returns a paid, accepted booking to pending when rescheduled onto a requires-confirmation event", async () => {
+    const repo = memoryRepo();
+    await recordCalEvent(repo, calEvent());
+    await recordPayment(repo, payment());
+    await repo.update(repo.rows[0].id, { cal_status: "accepted" });
+    const b = await recordCalEvent(
+      repo,
+      calEvent({ trigger: "BOOKING_RESCHEDULED", uid: "u2", previousUid: "u1", calStatus: "pending" })
+    );
+    expect(repo.rows).toHaveLength(1);
+    expect(b).toMatchObject({ cal_uid: "u2", cal_status: "pending", payment_status: "paid" });
+  });
+
+  it("keeps the existing status when a reschedule carries no status", async () => {
+    const repo = memoryRepo();
+    await recordCalEvent(repo, calEvent());
+    await repo.update(repo.rows[0].id, { cal_status: "accepted" });
+    const b = await recordCalEvent(
+      repo,
+      calEvent({ trigger: "BOOKING_RESCHEDULED", uid: "u2", previousUid: "u1", calStatus: null })
+    );
+    expect(b).toMatchObject({ cal_uid: "u2", cal_status: "accepted" });
+  });
+
+  it("clears a stale confirm_error when Cal reports the booking accepted", async () => {
+    const repo = memoryRepo();
+    const b = await recordCalEvent(repo, calEvent());
+    await repo.update(b.id, { confirm_error: "boom" });
+    const after = await recordCalEvent(repo, calEvent({ trigger: "BOOKING_CREATED", calStatus: "accepted" }));
+    expect(after).toMatchObject({ cal_status: "accepted", confirm_error: null });
+  });
 });
 
 describe("recordPayment", () => {

@@ -25,8 +25,12 @@ export function paymentSummary(b: Booking): string {
 
 export function needsAttention(b: Booking): boolean {
   if (b.cal_uid === null) return true; // unmatched payment
-  if (b.confirm_error) return true;
-  return b.cal_status === "pending";
+  // Paid but no session: likely needs a refund.
+  if (b.payment_status !== "unpaid" && (b.cal_status === "rejected" || b.cal_status === "cancelled")) {
+    return true;
+  }
+  if (b.cal_status === "pending") return true;
+  return false;
 }
 
 export function isUpcoming(b: Booking, now: Date = new Date()): boolean {

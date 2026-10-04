@@ -7,8 +7,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { parseCalEvent, verifyCalSignature } from "@/lib/payments/calWebhook";
-import { recordCalEvent } from "@/lib/payments/bookingStore";
+import { confirmInCal, recordCalEvent } from "@/lib/payments/bookingStore";
 import { supabaseBookingsRepo } from "@/lib/payments/supabaseRepo";
+import { calApi } from "@/lib/payments/calApi";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +38,13 @@ export async function POST(req: NextRequest) {
   if (!event) return NextResponse.json({ received: true, ignored: true });
 
   try {
-    await recordCalEvent(supabaseBookingsRepo(createAdminClient()), event);
+    const repo = supabaseBookingsRepo(createAdminClient());
+    const booking = await recordCalEvent(repo, event);
+    // A paid booking rescheduled onto a requires-confirmation event comes back
+    // pending in Cal: re-confirm it now that payment is already on file.
+    if (booking.payment_status !== "unpaid" && booking.cal_status === "pending") {
+      await confirmInCal(repo, calApi(), booking);
+    }
     return NextResponse.json({ received: true });
   } catch (e) {
     console.error("[webhooks/cal]", e);

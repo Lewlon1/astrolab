@@ -54,7 +54,12 @@ export async function recordCalEvent(
   ev: CalBookingEvent
 ): Promise<Booking> {
   let existing = await repo.findByCalUid(ev.uid);
-  if (!existing && ev.previousUid) existing = await repo.findByCalUid(ev.previousUid);
+  // Reschedule: Cal issues a brand-new booking (new uid), so its status is authoritative.
+  let rescheduled = false;
+  if (!existing && ev.previousUid) {
+    existing = await repo.findByCalUid(ev.previousUid);
+    rescheduled = existing !== null;
+  }
 
   const patch: BookingPatch = { cal_uid: ev.uid };
   if (ev.serviceSlug) patch.service_slug = ev.serviceSlug;
@@ -65,8 +70,11 @@ export async function recordCalEvent(
   if (ev.endTime) patch.end_time = ev.endTime;
 
   // A late BOOKING_REQUESTED must never undo a confirm/cancel we already saw.
-  const downgrade = ev.calStatus === "pending" && existing && existing.cal_status !== "pending";
+  const downgrade =
+    !rescheduled && ev.calStatus === "pending" && existing && existing.cal_status !== "pending";
   if (ev.calStatus && !downgrade) patch.cal_status = ev.calStatus;
+  // Cal confirmed it some other way: any earlier confirm failure is stale.
+  if (patch.cal_status === "accepted") patch.confirm_error = null;
 
   if (existing) return repo.update(existing.id, patch);
   return repo.insert({ ...EMPTY, ...patch });

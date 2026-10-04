@@ -52,9 +52,19 @@ describe("needsAttention", () => {
   it("flags pending, failed confirms and unmatched payments", () => {
     expect(needsAttention(b())).toBe(true);
     expect(needsAttention(b({ cal_status: "accepted" }))).toBe(false);
-    expect(needsAttention(b({ cal_status: "accepted", confirm_error: "x" }))).toBe(true);
+    expect(needsAttention(b({ cal_status: "pending", confirm_error: "x" }))).toBe(true);
+    expect(needsAttention(b({ cal_status: "accepted", confirm_error: "x" }))).toBe(false);
     expect(needsAttention(b({ cal_uid: null, cal_status: "pending", payment_status: "paid" }))).toBe(true);
     expect(needsAttention(b({ cal_status: "cancelled" }))).toBe(false);
+  });
+});
+
+describe("needsAttention (paid but dead booking)", () => {
+  it("flags a payment on a rejected or cancelled booking", () => {
+    expect(needsAttention(b({ cal_status: "rejected", payment_status: "paid" }))).toBe(true);
+    expect(needsAttention(b({ cal_status: "cancelled", payment_status: "paid" }))).toBe(true);
+    expect(needsAttention(b({ cal_status: "cancelled", payment_status: "manual" }))).toBe(true);
+    expect(needsAttention(b({ cal_status: "rejected", payment_status: "unpaid" }))).toBe(false);
   });
 });
 
