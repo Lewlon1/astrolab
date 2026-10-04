@@ -7,6 +7,7 @@ const navLinks = [
   { label: "Dashboard", href: "/admin" },
   { label: "Analytics", href: "/admin/analytics" },
   { label: "Services", href: "/admin/services" },
+  { label: "Bookings", href: "/admin/bookings" },
   { label: "Blog", href: "/admin/blog" },
   { label: "Testimonials", href: "/admin/testimonials" },
   { label: "Events", href: "/admin/events" },

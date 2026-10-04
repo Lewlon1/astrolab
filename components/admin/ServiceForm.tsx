@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Lang } from "@/context/LangContext";
 import type { Service } from "@/types";
-import { bookingForSlug } from "@/lib/booking";
+import { bookingForSlug, calTargetFromUrl } from "@/lib/booking";
 import {
   localizeService,
   SERVICE_CARD_LABELS,
@@ -62,6 +62,7 @@ export default function ServiceForm({
     initialData?.description_es ?? ""
   );
   const [bookingUrl, setBookingUrl] = useState(initialData?.booking_url ?? "");
+  const [paymentUrl, setPaymentUrl] = useState(initialData?.payment_url ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(
     initialData?.image_url ?? null
   );
@@ -94,6 +95,8 @@ export default function ServiceForm({
   );
 
   const hasBuiltInBooking = !!bookingForSlug(slug);
+  const bookingIsCalLink = !!calTargetFromUrl(bookingUrl);
+  const canPayAfterBooking = hasBuiltInBooking || bookingIsCalLink;
 
   const previewService: Service = {
     id: initialData?.id ?? "preview",
@@ -111,6 +114,7 @@ export default function ServiceForm({
     created_at: initialData?.created_at ?? "",
     updated_at: initialData?.updated_at ?? "",
     booking_url: bookingUrl || null,
+    payment_url: paymentUrl || null,
     image_url: imageUrl,
     name_es: nameEs || null,
     tag_es: tagEs || null,
@@ -121,6 +125,20 @@ export default function ServiceForm({
   };
 
   async function handleSave() {
+    const trimmedPaymentUrl = paymentUrl.trim();
+    if (trimmedPaymentUrl) {
+      let valid = false;
+      try {
+        valid = new URL(trimmedPaymentUrl).protocol === "https:";
+      } catch {
+        valid = false;
+      }
+      if (!valid) {
+        setToast({ message: "Payment link must be a full https:// URL", type: "error" });
+        return;
+      }
+    }
+
     setSaving(true);
     const supabase = createClient();
 
@@ -136,6 +154,11 @@ export default function ServiceForm({
       sort_order: Number(sortOrder) || 0,
       is_active: isActive,
       booking_url: bookingUrl.trim() || null,
+      // Only send payment_url when set or being cleared, so saves keep working
+      // on a database that doesn't have the column yet.
+      ...(trimmedPaymentUrl || initialData?.payment_url
+        ? { payment_url: trimmedPaymentUrl || null }
+        : {}),
       image_url: imageUrl,
       name_es: nameEs || null,
       tag_es: tagEs || null,
@@ -380,14 +403,45 @@ export default function ServiceForm({
                 placeholder="https://cal.com/... or https://book.stripe.com/..."
               />
               <p className="text-xs text-[#b8b0a4] mt-1.5">
-                Paste a Cal.com event link or Stripe Payment Link — the public
-                Book button opens it in a new tab. If empty and no built-in
-                booking exists, the button is hidden.
+                Paste a Cal.com event link (e.g. https://cal.com/theastropsychelab/event)
+                or a Stripe Payment Link. Links open in a new tab, except a
+                Cal.com link with a payment link below, which opens the booking
+                calendar on the site. If empty and no built-in booking exists,
+                the button is hidden.
               </p>
               {hasBuiltInBooking && (
                 <p className="text-xs text-green-700 mt-1.5">
                   ✓ This slug has built-in Cal.com/Stripe booking configured in
                   the site code; it takes precedence over the link above.
+                </p>
+              )}
+            </div>
+            <div>
+              <AdminInput
+                label="Payment link (pay after booking)"
+                id="payment_url"
+                value={paymentUrl}
+                onChange={(e) => setPaymentUrl(e.target.value)}
+                placeholder="https://buy.stripe.com/..."
+              />
+              <p className="text-xs text-[#b8b0a4] mt-1.5">
+                Stripe Payment Link (promo codes allowed). After booking in
+                Cal.com the client is sent here to pay, and the booking is
+                confirmed automatically once payment arrives. Needs a Cal.com
+                event link above (or built-in booking); the Cal event must use
+                &quot;Requires confirmation&quot; and must not have the Cal
+                Stripe app. Leave empty to keep the current behaviour.
+              </p>
+              {paymentUrl.trim() && !canPayAfterBooking && (
+                <p className="text-xs text-amber-700 mt-1.5">
+                  The booking link above isn&apos;t a Cal.com event link, so this
+                  payment link will not be used.
+                </p>
+              )}
+              {paymentUrl.trim() && canPayAfterBooking && (
+                <p className="text-xs text-green-700 mt-1.5">
+                  ✓ Pay after booking is on: clients book in Cal.com, then pay
+                  here.
                 </p>
               )}
             </div>
