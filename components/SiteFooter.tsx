@@ -37,7 +37,7 @@ export default function SiteFooter({ editorialDate }: Props) {
             textDecoration: "none",
           }}
         >
-          <LangText en="Book a Session" es="Reservar" />
+          <LangText en="Book Now" es="Reservar" />
         </Link>
       </div>
       <a

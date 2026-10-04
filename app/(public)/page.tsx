@@ -8,7 +8,6 @@ import MagazineDetail from "@/components/MagazineDetail";
 import Testimonials from "@/components/Testimonials";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
-import ServicesIndex from "@/components/services/ServicesIndex";
 import HomeCTA from "@/components/HomeCTA";
 import TrackSection from "@/components/analytics/TrackSection";
 import { organizationJsonLd } from "@/lib/jsonld";
@@ -68,9 +67,6 @@ export default async function HomePage() {
       </TrackSection>
       <TrackSection name="magazine" index={5}>
         <MagazineDetail />
-      </TrackSection>
-      <TrackSection name="services_index" index={6}>
-        <ServicesIndex services={services ?? []} />
       </TrackSection>
       <TrackSection name="testimonials" index={7}>
         <Testimonials testimonials={testimonials ?? []} />

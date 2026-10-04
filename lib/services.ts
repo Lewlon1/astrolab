@@ -34,8 +34,8 @@ export interface LocalizedService {
 // LangProvider) and the public pages render identical copy.
 export const SERVICE_CARD_LABELS: Record<Lang, { book: string; free: string }> =
   {
-    en: { book: "Book session", free: "Get yours free" },
-    es: { book: "Reservar sesión", free: "Consíguelo gratis" },
+    en: { book: "Book now", free: "Get yours free" },
+    es: { book: "Reservar", free: "Consíguelo gratis" },
   };
 
 export function serviceCta(service: Service): ServiceCta {

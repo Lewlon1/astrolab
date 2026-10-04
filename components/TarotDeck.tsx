@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { useLang } from "@/context/LangContext";
 import LangText from "@/components/LangText";
@@ -310,8 +311,8 @@ export default function TarotDeck({ services }: Props) {
             }}
           >
             <LangText
-              en="Five sessions, laid as a reading. Select a card to see what it holds."
-              es="Cinco sesiones, dispuestas como una lectura. Selecciona una carta para ver lo que guarda."
+              en="Five services, laid as a reading. Select a card to see what it holds."
+              es="Cinco servicios, dispuestos como una lectura. Selecciona una carta para ver lo que guarda."
             />
           </p>
         </div>
@@ -368,6 +369,22 @@ export default function TarotDeck({ services }: Props) {
             )}
             lang={lang}
           />
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link
+            href="/services"
+            data-analytics="tarot_all_services"
+            className="font-dm-mono uppercase"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.22em",
+              color: "var(--ed-rust)",
+              textDecoration: "none",
+            }}
+          >
+            <LangText en="See all services →" es="Ver todos los servicios →" />
+          </Link>
         </div>
       </div>
     </section>

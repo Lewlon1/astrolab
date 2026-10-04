@@ -7,7 +7,7 @@ import type { Service } from "@/types";
 export const metadata = {
   title: "Services",
   description:
-    "Personalised astrology sessions blending astrological precision with psychological insight. From free voice notes to full chart readings.",
+    "Personalised astrology services blending astrological precision with psychological insight. From free voice notes to full chart readings.",
 };
 
 export default async function ServicesPage() {

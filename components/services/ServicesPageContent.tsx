@@ -22,8 +22,8 @@ const FAQ_ITEMS: EditorialFAQItem[] = [
   },
   {
     q: {
-      en: "How are sessions delivered?",
-      es: "¿Cómo se realizan las sesiones?",
+      en: "How are live readings delivered?",
+      es: "¿Cómo se realizan las lecturas en directo?",
     },
     a: {
       en: "Via Zoom, recorded so you can rewatch.",
@@ -32,8 +32,8 @@ const FAQ_ITEMS: EditorialFAQItem[] = [
   },
   {
     q: {
-      en: "Can I gift a session?",
-      es: "¿Puedo regalar una sesión?",
+      en: "Can I gift a service?",
+      es: "¿Puedo regalar un servicio?",
     },
     a: {
       en: "Yes! Email me for a gift voucher.",
@@ -131,8 +131,8 @@ export default function ServicesPageContent({
             }}
           >
             <LangText
-              en="Every session blends astrological precision with psychological insight. Start free, go as deep as you need."
-              es="Cada sesión combina precisión astrológica con perspectiva psicológica. Empieza gratis y profundiza tanto como necesites."
+              en="Every service blends astrological precision with psychological insight. Start free, go as deep as you need."
+              es="Cada servicio combina precisión astrológica con perspectiva psicológica. Empieza gratis y profundiza tanto como necesites."
             />
           </p>
         </div>
