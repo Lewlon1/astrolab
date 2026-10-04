@@ -10,7 +10,9 @@ export const calLink = (slug: string) => `${CAL_USERNAME}/${slug}`;
 export const CAL_BRAND = "#C26B4A"; // sunset terracotta
 
 export type BookingTarget =
-  | { kind: "cal"; slug: string }
+  // paymentUrl: Stripe Payment Link the client is sent to after booking
+  // (pay-after-booking flow). Set from services.payment_url via withPaymentUrl.
+  | { kind: "cal"; slug: string; paymentUrl?: string }
   | { kind: "stripe"; url: string };
 
 export type ServiceMeta = {
@@ -77,4 +79,23 @@ const SLUG_TO_KEY: Record<string, keyof typeof SERVICES> = {
 export function bookingForSlug(slug: string): BookingTarget | null {
   const key = SLUG_TO_KEY[slug];
   return key ? SERVICES[key].booking : null;
+}
+
+// Stripe Payment Link with the Cal booking uid attached, so the Stripe webhook
+// can tie the payment back to the booking.
+export function paymentLinkFor(paymentUrl: string, calUid: string): string {
+  const url = new URL(paymentUrl);
+  url.searchParams.set("client_reference_id", calUid);
+  return url.toString();
+}
+
+// Attach a service's payment_url to a Cal booking target. Stripe targets and
+// empty URLs pass through unchanged.
+export function withPaymentUrl(
+  target: BookingTarget | null,
+  paymentUrl: string | null | undefined
+): BookingTarget | null {
+  const url = paymentUrl?.trim();
+  if (!target || target.kind !== "cal" || !url) return target;
+  return { ...target, paymentUrl: url };
 }
