@@ -26,10 +26,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
 
+  let client;
+  try {
+    client = stripe();
+  } catch (e) {
+    console.error("[webhooks/stripe]", e);
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+  }
+
   const rawBody = await req.text();
   let event;
   try {
-    event = verifyStripeEvent(stripe(), rawBody, req.headers.get("stripe-signature"), secret);
+    event = verifyStripeEvent(client, rawBody, req.headers.get("stripe-signature"), secret);
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
@@ -38,15 +46,17 @@ export async function POST(req: NextRequest) {
 
   try {
     const sessionId = (event.data.object as { id: string }).id;
-    const payment = await loadPayment(stripe(), sessionId);
+    const payment = await loadPayment(client, sessionId);
     // Quick Hit / Travel and other links aren't part of this flow.
     if (!payment.isBookingPayment || !payment.paid) {
       return NextResponse.json({ received: true, ignored: true });
     }
 
     const repo = supabaseBookingsRepo(createAdminClient());
-    const { booking, duplicate } = await recordPayment(repo, payment);
-    if (!duplicate) await confirmInCal(repo, calApi(), booking);
+    const { booking } = await recordPayment(repo, payment);
+    // Also on replays: confirmInCal no-ops unless still pending, so a retry
+    // after a timed-out confirm completes it.
+    await confirmInCal(repo, calApi(), booking);
 
     return NextResponse.json({ received: true });
   } catch (e) {
