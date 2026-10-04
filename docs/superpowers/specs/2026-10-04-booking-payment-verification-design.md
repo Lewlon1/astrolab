@@ -143,6 +143,8 @@ External setup (documented in a setup guide alongside the migration):
 
 ## Testing
 
+The repo has no test runner yet; add `vitest` as a dev dependency with an `npm test` script.
+
 - Unit tests for `extractPayment`, `extractBooking`, and the store's state transitions: either-order upsert, duplicate delivery, promo extraction, unmatched payments.
 - Signature verification against Stripe/Cal test signatures.
 - Manual E2E in Stripe test mode with a promo code and a Cal test event (steps in the setup guide).
