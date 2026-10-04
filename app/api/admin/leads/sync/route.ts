@@ -69,8 +69,13 @@ export async function POST() {
     .select("id, email, status, source")
     .returns<Pick<Lead, "id" | "email" | "status" | "source">[]>();
 
+  // Handle-only leads (email nullable from migration 014) cannot be matched to
+  // a MailerLite subscriber, which is keyed on address — skip them rather than
+  // crash on the lowercase.
   const existing = new Map(
-    (existingRows ?? []).map((l) => [l.email.toLowerCase(), l])
+    (existingRows ?? [])
+      .filter((l): l is typeof l & { email: string } => Boolean(l.email))
+      .map((l) => [l.email.toLowerCase(), l])
   );
 
   const now = new Date().toISOString();
@@ -106,7 +111,7 @@ export async function POST() {
     } else {
       const { error } = await supabase
         .from("leads")
-        .insert({ ...patch, source: "mailerlite", status: "new" });
+        .insert({ ...patch, source: "mailerlite", status: "lead", track: "cold" });
       if (error) report.errors.push(`${sub.email}: ${error.message}`);
       else report.created++;
     }

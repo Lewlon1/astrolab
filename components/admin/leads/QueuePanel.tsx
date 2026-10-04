@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MergeReport, ScoredLead, ScoringWeight, SyncReport } from "@/types";
 import { timeAgo } from "@/lib/utils";
+import {
+  STAGE_LABELS,
+  STAGE_ORDER,
+  formatStage,
+  leadDisplayName,
+} from "@/lib/leadStages";
 import ScoringConfigPanel from "./ScoringConfigPanel";
-import LeadDrawer from "./LeadDrawer";
 
 const STAGES = [
   { value: "all", label: "All stages" },
-  { value: "new", label: "New" },
-  { value: "voice_note_sent", label: "Voice note sent" },
-  { value: "nurturing", label: "Nurturing" },
-  { value: "booked", label: "Booked" },
-  { value: "converted", label: "Converted" },
+  ...STAGE_ORDER.map((s) => ({ value: s, label: STAGE_LABELS[s] })),
 ];
 
 const LANGUAGES = [
@@ -23,9 +24,15 @@ const LANGUAGES = [
 
 interface Props {
   notify: (message: string, type: "success" | "error") => void;
+  /**
+   * Opening the drawer is the parent's job — it owns the one canonical drawer
+   * and drives it from the `?lead=` URL param, so the same row click is
+   * shareable and works from a Daily Action deep link.
+   */
+  onOpenLead: (leadId: string) => void;
 }
 
-export default function QueuePanel({ notify }: Props) {
+export default function QueuePanel({ notify, onOpenLead }: Props) {
   const [leads, setLeads] = useState<ScoredLead[]>([]);
   const [config, setConfig] = useState<ScoringWeight[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +40,6 @@ export default function QueuePanel({ notify }: Props) {
   const [uploading, setUploading] = useState(false);
   const [stage, setStage] = useState("all");
   const [language, setLanguage] = useState("all");
-  const [selected, setSelected] = useState<ScoredLead | null>(null);
   const [merge, setMerge] = useState<MergeReport | null>(null);
   const [sync, setSync] = useState<SyncReport | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -42,7 +48,7 @@ export default function QueuePanel({ notify }: Props) {
     setLoading(true);
     try {
       const qs = new URLSearchParams({ stage, language });
-      const res = await fetch(`/api/admin/lead-queue?${qs}`);
+      const res = await fetch(`/api/admin/leads?${qs}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Could not load the queue");
       setLeads(json.leads ?? []);
@@ -62,7 +68,7 @@ export default function QueuePanel({ notify }: Props) {
     setSyncing(true);
     setSync(null);
     try {
-      const res = await fetch("/api/admin/lead-queue/sync", { method: "POST" });
+      const res = await fetch("/api/admin/leads/sync", { method: "POST" });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Sync failed");
       setSync(json.report);
@@ -84,7 +90,7 @@ export default function QueuePanel({ notify }: Props) {
     try {
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/admin/lead-queue/upload", { method: "POST", body });
+      const res = await fetch("/api/admin/import/manychat", { method: "POST", body });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Upload failed");
       setMerge(json.report);
@@ -210,7 +216,7 @@ export default function QueuePanel({ notify }: Props) {
                 {leads.map((scored) => (
                   <tr
                     key={scored.lead.id}
-                    onClick={() => setSelected(scored)}
+                    onClick={() => onOpenLead(scored.lead.id)}
                     className="border-b border-[#f0ede8] last:border-0 hover:bg-[#f5f3ef] cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-3">
@@ -220,10 +226,10 @@ export default function QueuePanel({ notify }: Props) {
                     </td>
                     <td className="px-3 py-3 min-w-0">
                       <p className="font-medium text-[#1a1a18] truncate">
-                        {scored.lead.name || scored.lead.ig_handle || "Anonymous"}
+                        {leadDisplayName(scored.lead)}
                       </p>
                       <p className="text-xs text-[#6b6560] truncate">
-                        {scored.lead.email}
+                        {scored.lead.email ?? "no email on file"}
                       </p>
                     </td>
                     <td className="px-3 py-3 text-[#6b6560] max-w-md">
@@ -231,7 +237,7 @@ export default function QueuePanel({ notify }: Props) {
                     </td>
                     <td className="px-3 py-3">
                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                        {scored.lead.status.replace(/_/g, " ")}
+                        {formatStage(scored.lead.status)}
                       </span>
                     </td>
                     <td className="px-6 py-3 text-right text-[11px] text-[#b8b0a4]">
@@ -250,15 +256,6 @@ export default function QueuePanel({ notify }: Props) {
         notify={notify}
         onSaved={load}
       />
-
-      {selected && (
-        <LeadDrawer
-          scored={selected}
-          onClose={() => setSelected(null)}
-          notify={notify}
-          onChanged={load}
-        />
-      )}
     </div>
   );
 }

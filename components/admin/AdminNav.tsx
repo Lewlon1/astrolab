@@ -33,7 +33,6 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Analytics", href: "/admin/analytics" },
       { label: "Leads", href: "/admin/leads" },
-      { label: "Lead Queue", href: "/admin/lead-queue" },
     ],
   },
   {

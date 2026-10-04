@@ -1,6 +1,12 @@
 # Lead Queue + Daily Actions — setup guide
 
-Everything you need to do by hand before `/admin/lead-queue` does anything useful.
+> **Status: Task 2 (ManyChat CSV) is parked.** Contact export from ManyChat appears to
+> need a paid subscription, so the importer has never run against a real file. Tasks 0 and
+> 1 (migrations, MailerLite) are unaffected. The lead queue moved: it is now the **Queue**
+> tab of `/admin/leads`, and `/admin/lead-queue` redirects there. Migration 014 must also be
+> run after 013 — see `supabase/migrations/014_lead_funnel_alignment.sql`.
+
+Everything you need to do by hand before the Lead Queue (`/admin/leads` → **Queue** tab) does anything useful.
 Three tasks, in order. The first is required; tasks 2 and 3 each unlock one of the two
 data sources.
 
@@ -116,7 +122,7 @@ union all
 select 'weights: ' || count(*)::text from lead_scoring_config;
 ```
 
-Then load `/admin/lead-queue` → **Queue** tab. The scoring panel should list 15 editable
+Then load `/admin/leads` → **Queue** tab. The scoring panel should list 15 editable
 weights rather than the "No config rows found" warning.
 
 ---
@@ -172,7 +178,7 @@ It's already gitignored via the `.env*.local` rule, so it will not be committed.
 
 ### Verify
 
-`/admin/lead-queue` → **Queue** tab → **Sync MailerLite**. You should get a toast like
+`/admin/leads` → **Queue** tab → **Sync MailerLite**. You should get a toast like
 "Synced 214 subscribers — 189 new, 25 updated", and the table fills with scored leads.
 
 **If it fails:**
@@ -228,12 +234,14 @@ straight to a DM thread instead of dumping you in a generic inbox.
 6. Download it. **Don't open and re-save it in Excel** if you can avoid it — Excel
    sometimes mangles dates and drops leading zeros. If you must, save as *CSV UTF-8*.
 
-> On the Free tier this is the only route — there's no API access. That's why this is a
-> manual upload rather than a Sync button like MailerLite.
+> **Unverified.** An earlier version of this guide said a CSV export is available on
+> ManyChat's Free tier. That has not been confirmed and is likely wrong: contact export
+> appears to need a paid plan, and the real export format has never been seen by this
+> parser. Treat the whole of Task 2 as parked until you've confirmed you can export.
 
 ### Upload
 
-`/admin/lead-queue` → **Queue** tab → **Upload ManyChat CSV** → pick the file.
+`/admin/leads` → **Queue** tab → **Upload ManyChat CSV** → pick the file.
 
 ### Read the merge report — this matters
 
@@ -285,7 +293,7 @@ than pad to 10.
 
 ### Worth doing in week one
 
-- **Retune the weights.** `/admin/lead-queue` → Queue → *Scoring weights*. The starting
+- **Retune the weights.** `/admin/leads` → Queue → *Scoring weights*. The starting
   numbers are an educated guess and are expected to be wrong. Changes take effect on the
   next page load — no redeploy, no re-sync.
 - **Confirm the ritual calendar.** Two fixtures are seeded (Tuesday story ritual 20 min,

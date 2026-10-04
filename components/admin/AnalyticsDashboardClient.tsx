@@ -1,45 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import {
-  timeAgo,
-  leadSourceColors,
-  leadStatusColors,
-  formatSource,
-  formatStatus,
-} from "@/lib/utils";
 import { SECTION_ORDER } from "@/lib/analytics/constants";
-import type {
-  OverviewKpis,
-  SectionDwellRow,
-  TopClickRow,
-  FunnelCounts,
-} from "@/types";
+import type { OverviewKpis, SectionDwellRow, TopClickRow } from "@/types";
 
-export interface DashboardSignup {
-  id: string;
-  email: string;
-  source: string | null;
-  status: string;
-  created_at: string;
-  referrer: string | null;
-  utm_source: string | null;
-  device: string | null;
-  country: string | null;
-  sections_seen: string[];
-}
-
+/**
+ * Traffic and behaviour only.
+ *
+ * The conversion funnel, the "who signs up" breakdown and the recent-signups
+ * table all moved to /admin/leads. They were lead-shaped, and having them here
+ * meant two pages answered "how many signed up" from two different sources —
+ * this one counted sessions via the analytics_funnel RPC, the other counted
+ * rows in `leads`. The funnel now sits beside the stage funnel on the Leads
+ * page, with both units named.
+ */
 interface Props {
   rangeKey: string;
   available: boolean;
   overview: OverviewKpis;
   sectionDwell: SectionDwellRow[];
   topClicks: TopClickRow[];
-  funnel: FunnelCounts;
-  totalLeads: number;
-  bySource: Record<string, number>;
-  byStatus: Record<string, number>;
-  signups: DashboardSignup[];
   sectionLabels: Record<string, string>;
 }
 
@@ -104,11 +84,6 @@ export default function AnalyticsDashboardClient({
   overview,
   sectionDwell,
   topClicks,
-  funnel,
-  totalLeads,
-  bySource,
-  byStatus,
-  signups,
   sectionLabels,
 }: Props) {
   // --- KPI cards ---
@@ -132,16 +107,6 @@ export default function AnalyticsDashboardClient({
     };
   });
   const maxDwell = Math.max(1, ...sectionRows.map((r) => r.avg));
-
-  // --- Funnel ---
-  const funnelStages = [
-    { key: "visit", label: "Visited", value: num(funnel.visit) },
-    { key: "engaged", label: "Read a section", value: num(funnel.engaged) },
-    { key: "cta_click", label: "Clicked a CTA", value: num(funnel.cta_click) },
-    { key: "lead", label: "Signed up / booked click", value: num(funnel.lead) },
-    { key: "booking", label: "Confirmed booking", value: num(funnel.booking) },
-  ];
-  const funnelTop = Math.max(1, funnelStages[0].value);
 
   // --- Top clicks ---
   const maxClicks = Math.max(1, ...topClicks.map((c) => num(c.clicks)));
@@ -218,39 +183,6 @@ export default function AnalyticsDashboardClient({
           </div>
         </Card>
 
-        {/* Conversion funnel */}
-        <Card>
-          <h2 className="font-heading text-lg text-[#1a1a18] mb-1">
-            Conversion funnel
-          </h2>
-          <p className="text-xs text-[#b8b0a4] mb-5">
-            Distinct sessions reaching each stage.
-          </p>
-          <div className="space-y-4">
-            {funnelStages.map((stage, i) => {
-              const prev = i === 0 ? stage.value : funnelStages[i - 1].value;
-              const stepPct = prev > 0 ? Math.round((stage.value / prev) * 100) : 0;
-              return (
-                <div key={stage.key}>
-                  <div className="flex items-baseline justify-between mb-1.5">
-                    <span className="text-sm text-[#1a1a18]">{stage.label}</span>
-                    <span className="text-xs text-[#6b6560]">
-                      {stage.value.toLocaleString()}
-                      {i > 0 && (
-                        <span className="text-[#b8b0a4]"> · {stepPct}% of prev</span>
-                      )}
-                    </span>
-                  </div>
-                  <Bar
-                    pct={(stage.value / funnelTop) * 100}
-                    color={i === funnelStages.length - 1 ? "bg-coral" : "bg-ocean"}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-
         {/* Top clicks */}
         <Card>
           <h2 className="font-heading text-lg text-[#1a1a18] mb-5">
@@ -277,132 +209,9 @@ export default function AnalyticsDashboardClient({
           )}
         </Card>
 
-        {/* Who signs up — breakdown */}
-        <Card>
-          <h2 className="font-heading text-lg text-[#1a1a18] mb-1">
-            Who signs up
-          </h2>
-          <p className="text-xs text-[#b8b0a4] mb-5">
-            {totalLeads.toLocaleString()} signup{totalLeads === 1 ? "" : "s"} in this period.
-          </p>
-
-          <p className="text-xs uppercase tracking-wide text-[#b8b0a4] mb-2">
-            By source
-          </p>
-          <div className="flex flex-wrap gap-2 mb-5">
-            {Object.keys(bySource).length === 0 ? (
-              <span className="text-sm text-[#b8b0a4]">None yet</span>
-            ) : (
-              Object.entries(bySource)
-                .sort((a, b) => b[1] - a[1])
-                .map(([src, count]) => (
-                  <span
-                    key={src}
-                    className={`text-xs px-2.5 py-1 rounded-full ${
-                      leadSourceColors[src]?.bg ?? "bg-slate-100"
-                    } ${leadSourceColors[src]?.text ?? "text-slate-600"}`}
-                  >
-                    {formatSource(src)} · {count}
-                  </span>
-                ))
-            )}
-          </div>
-
-          <p className="text-xs uppercase tracking-wide text-[#b8b0a4] mb-2">
-            By status
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {Object.keys(byStatus).length === 0 ? (
-              <span className="text-sm text-[#b8b0a4]">None yet</span>
-            ) : (
-              Object.entries(byStatus)
-                .sort((a, b) => b[1] - a[1])
-                .map(([status, count]) => (
-                  <span
-                    key={status}
-                    className={`text-xs px-2.5 py-1 rounded-full ${
-                      leadStatusColors[status]?.bg ?? "bg-slate-100"
-                    } ${leadStatusColors[status]?.text ?? "text-slate-600"}`}
-                  >
-                    {formatStatus(status)} · {count}
-                  </span>
-                ))
-            )}
-          </div>
-        </Card>
       </div>
 
-      {/* Recent signups with attribution */}
-      <Card>
-        <h2 className="font-heading text-lg text-[#1a1a18] mb-4">
-          Recent signups
-        </h2>
-        {signups.length === 0 ? (
-          <p className="text-sm text-[#b8b0a4]">No signups in this period.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs uppercase tracking-wide text-[#b8b0a4] border-b border-[#f0ede8]">
-                  <th className="py-2 pr-4 font-normal">Email</th>
-                  <th className="py-2 pr-4 font-normal">Source</th>
-                  <th className="py-2 pr-4 font-normal">Came from</th>
-                  <th className="py-2 pr-4 font-normal">Device</th>
-                  <th className="py-2 pr-4 font-normal">Sections read</th>
-                  <th className="py-2 pr-0 font-normal text-right">When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {signups.map((s) => (
-                  <tr
-                    key={s.id}
-                    className="border-b border-[#f5f3ef] last:border-0 align-top"
-                  >
-                    <td className="py-2.5 pr-4 text-[#1a1a18] max-w-[200px] truncate">
-                      {s.email}
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      {s.source && (
-                        <span
-                          className={`text-[11px] px-2 py-0.5 rounded-full ${
-                            leadSourceColors[s.source]?.bg ?? "bg-slate-100"
-                          } ${leadSourceColors[s.source]?.text ?? "text-slate-600"}`}
-                        >
-                          {formatSource(s.source)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 pr-4 text-[#6b6560] max-w-[180px] truncate">
-                      {s.utm_source
-                        ? `utm: ${s.utm_source}`
-                        : s.referrer
-                          ? hostOf(s.referrer)
-                          : "Direct"}
-                    </td>
-                    <td className="py-2.5 pr-4 text-[#6b6560]">
-                      {[s.device, s.country].filter(Boolean).join(" · ") || "—"}
-                    </td>
-                    <td className="py-2.5 pr-4 text-[#6b6560]">
-                      {s.sections_seen.length > 0 ? s.sections_seen.length : "—"}
-                    </td>
-                    <td className="py-2.5 pr-0 text-right text-[#b8b0a4] whitespace-nowrap">
-                      {timeAgo(s.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
     </div>
   );
 }
 
-function hostOf(url: string): string {
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}

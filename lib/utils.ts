@@ -15,31 +15,58 @@ export function timeAgo(dateString: string): string {
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
+/**
+ * Lead badge styling and labels.
+ *
+ * The vocabulary itself lives in lib/leadStages.ts. These re-exports keep the
+ * existing `leadStatusColors[lead.status]` call sites working while sourcing
+ * their values from one place — and, unlike the maps they replace, they cover
+ * every source the importers actually write. `mailerlite` and `csv_import`
+ * rendered as unstyled grey pills before this.
+ *
+ * Legacy keys are included so a row read between the migration being applied
+ * and the code being deployed still renders with the right colour.
+ */
+import {
+  SOURCE_COLORS,
+  STAGE_COLORS,
+  formatSource as formatSourceLabel,
+  formatStage,
+  normalizeSource,
+  normalizeStage,
+} from "./leadStages";
+
+const LEGACY_STAGE_KEYS = [
+  "new",
+  "voice_note_sent",
+  "nurturing",
+  "converted",
+] as const;
+
+const LEGACY_SOURCE_KEYS = ["website_form", "event_qr"] as const;
+
 export const leadStatusColors: Record<string, { bg: string; text: string }> = {
-  new: { bg: "bg-orange-50", text: "text-orange-700" },
-  voice_note_sent: { bg: "bg-blue-50", text: "text-blue-700" },
-  nurturing: { bg: "bg-purple-50", text: "text-purple-700" },
-  booked: { bg: "bg-green-50", text: "text-green-700" },
-  converted: { bg: "bg-amber-50", text: "text-amber-700" },
+  ...STAGE_COLORS,
+  ...Object.fromEntries(
+    LEGACY_STAGE_KEYS.map((k) => [k, STAGE_COLORS[normalizeStage(k)]])
+  ),
 };
 
 export const leadSourceColors: Record<string, { bg: string; text: string }> = {
-  website_form: { bg: "bg-slate-100", text: "text-slate-600" },
-  lovecode: { bg: "bg-pink-50", text: "text-pink-600" },
-  event_qr: { bg: "bg-indigo-50", text: "text-indigo-600" },
-  manychat: { bg: "bg-sky-50", text: "text-sky-600" },
+  ...SOURCE_COLORS,
+  ...Object.fromEntries(
+    LEGACY_SOURCE_KEYS.map((k) => {
+      const normalized = normalizeSource(k);
+      return [k, normalized ? SOURCE_COLORS[normalized] : SOURCE_COLORS.manual];
+    })
+  ),
 };
 
+/** @deprecated Prefer `formatStage` from lib/leadStages. */
 export function formatStatus(status: string): string {
-  return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return formatStage(status);
 }
 
 export function formatSource(source: string): string {
-  const labels: Record<string, string> = {
-    website_form: "Website",
-    lovecode: "Love Code",
-    event_qr: "Event QR",
-    manychat: "ManyChat",
-  };
-  return labels[source] || source;
+  return formatSourceLabel(source);
 }

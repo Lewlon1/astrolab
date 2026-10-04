@@ -13,6 +13,7 @@
  */
 
 import { daysSince } from "@/lib/leadScoring";
+import { leadDisplayName, normalizeStage } from "@/lib/leadStages";
 import type {
   ActionTier,
   CandidateAction,
@@ -56,11 +57,25 @@ export interface AssembledBatch {
 }
 
 function leadLink(leadId: string, handle?: string | null): string {
-  return handle ? `https://instagram.com/${handle.replace(/^@/, "")}` : `/admin/lead-queue?lead=${leadId}`;
+  return handle ? `https://instagram.com/${handle.replace(/^@/, "")}` : `/admin/leads?tab=queue&lead=${leadId}`;
 }
 
 function displayName(scored: ScoredLead): string {
-  return scored.lead.name || scored.lead.ig_handle || scored.lead.email;
+  return leadDisplayName(scored.lead);
+}
+
+/**
+ * Where the action should take Gabs.
+ *
+ * Instagram first, then email. A handle-only ManyChat import has no address at
+ * all (email is nullable from migration 014), so the lead's own admin page is
+ * the last resort rather than a `mailto:null`.
+ */
+function contactLink(scored: ScoredLead): string {
+  const { lead } = scored;
+  if (lead.ig_handle) return `https://instagram.com/${lead.ig_handle.replace(/^@/, "")}`;
+  if (lead.email) return `mailto:${lead.email}`;
+  return leadLink(lead.id, null);
 }
 
 function hasEvent(scored: ScoredLead, type: string): boolean {
@@ -91,9 +106,11 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
   for (const scored of input.scoredLeads) {
     const { lead } = scored;
 
-    // Converted, booked and unsubscribed leads are not conversion work.
+    // Clients, booked and unsubscribed leads are not conversion work.
     if (lead.unsubscribed) continue;
-    if (lead.status === "converted") continue;
+
+    const stage = normalizeStage(lead.status);
+    if (stage === "client") continue;
 
     const name = displayName(scored);
     const link = leadLink(lead.id, lead.ig_handle);
@@ -126,8 +143,8 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
     }
 
     // -- Voice note owed --
-    // Opted in, engaged, still sitting at `new`.
-    if (lead.status === "new" && scored.score > 0) {
+    // Opted in, engaged, still sitting at `lead`.
+    if (stage === "lead" && scored.score > 0) {
       const age = daysSince(lead.created_at);
       out.push({
         lead_id: lead.id,
@@ -135,16 +152,16 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
         tier: 1,
         type: "voice_note",
         title: `Send ${name} a voice note`,
-        reason: `${scored.reason} Still at "new"${age !== null && age >= 1 ? ` after ${round(age)} days` : ""} — the voice note is what moves them.`,
+        reason: `${scored.reason} Still at "lead"${age !== null && age >= 1 ? ` after ${round(age)} days` : ""} — the voice note is what moves them.`,
         est_minutes: 5,
-        link: lead.ig_handle ? link : `mailto:${lead.email}`,
+        link: contactLink(scored),
         dedupe_key: `voice_note:${lead.id}`,
       });
       continue;
     }
 
     // -- Booking nudge: pricing click, no booking (kit pattern 3) --
-    if (hasEvent(scored, "pricing_click") && !hasEvent(scored, "booking") && lead.status !== "booked") {
+    if (hasEvent(scored, "pricing_click") && !hasEvent(scored, "booking") && stage !== "booked") {
       const age = latestAge(scored, "pricing_click");
       out.push({
         lead_id: lead.id,
@@ -154,7 +171,7 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
         title: `Nudge ${name} towards booking`,
         reason: `Looked at pricing ${age === null ? "recently" : age < 1 ? "today" : `${round(age)} days ago`} and has not booked. Strongest buying signal on the board — kit pattern 3.`,
         est_minutes: 4,
-        link: lead.ig_handle ? link : `mailto:${lead.email}`,
+        link: contactLink(scored),
         dedupe_key: `booking_nudge:${lead.id}`,
       });
       continue;
@@ -162,7 +179,7 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
 
     // -- Personal follow-up: code delivered, silent 14d+ (kit pattern 4) --
     const codeAge = latestAge(scored, "code_delivered");
-    if (codeAge !== null && codeAge >= FOLLOW_UP_AFTER_DAYS && lead.status !== "booked") {
+    if (codeAge !== null && codeAge >= FOLLOW_UP_AFTER_DAYS && stage !== "booked") {
       out.push({
         lead_id: lead.id,
         target_id: null,
@@ -171,14 +188,14 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
         title: `Follow up with ${name}`,
         reason: `Love code delivered ${round(codeAge)} days ago with no reply since. Past the ${FOLLOW_UP_AFTER_DAYS}-day mark — kit pattern 4.`,
         est_minutes: 5,
-        link: lead.ig_handle ? link : `mailto:${lead.email}`,
+        link: contactLink(scored),
         dedupe_key: `follow_up:${lead.id}`,
       });
       continue;
     }
 
-    // -- Voice note sent, no reply: one follow-up, then leave them alone --
-    if (lead.status === "voice_note_sent") {
+    // -- Code delivered, no reply: one follow-up, then leave them alone --
+    if (stage === "code_delivered") {
       const age = daysSince(lead.last_actioned_at);
       if (age !== null && age >= FOLLOW_UP_AFTER_DAYS) {
         out.push({
@@ -187,9 +204,9 @@ function tier1Candidates(input: EngineInput): CandidateAction[] {
           tier: 1,
           type: "follow_up",
           title: `Follow up with ${name}`,
-          reason: `Voice note sent ${round(age)} days ago, no reply. One follow-up, then let it rest — kit pattern 4.`,
+          reason: `Code delivered ${round(age)} days ago, no reply. One follow-up, then let it rest — kit pattern 4.`,
           est_minutes: 4,
-          link: lead.ig_handle ? link : `mailto:${lead.email}`,
+          link: contactLink(scored),
           dedupe_key: `follow_up:${lead.id}`,
         });
       }
