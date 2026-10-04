@@ -8,6 +8,8 @@ in **Admin → Bookings** for Gabs to chase, mark paid, or decline.
 
 Run `supabase/migrations/014_bookings_payments.sql` (Supabase SQL editor or MCP).
 
+**Apply this migration BEFORE deploying this code.** The service editor saves a `payment_url` column that does not exist until 014 runs.
+
 ## 2. Environment variables (Vercel → Settings → Environment Variables, and `.env.local`)
 
 | Name | Where to get it |
@@ -58,7 +60,8 @@ Leave it empty to switch a service back to the old behaviour.
 6. Book again but close the Stripe tab. Expected: row stays *Unpaid*; **Copy payment link** gives a link that, when paid, confirms that booking.
 7. Use **Mark paid manually** on another test booking. Expected: `Paid manually · <note>`, Cal confirmed.
 8. Use **Decline** on another. Expected: `Cal: rejected`, slot freed, client emailed by Cal.
-9. Check Stripe → Webhooks → recent deliveries show `200`; Cal → Webhooks → recent deliveries show `200`.
+9. Reschedule a paid, confirmed test booking. Expected: the row moves to the new time and returns to `Cal: accepted` automatically (no payment needed again).
+10. Check Stripe → Webhooks → recent deliveries show `200`; Cal → Webhooks → recent deliveries show `200`.
 
 Then switch to live keys, live Payment Links and a live Stripe webhook.
 

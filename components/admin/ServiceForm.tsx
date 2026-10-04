@@ -123,6 +123,20 @@ export default function ServiceForm({
   };
 
   async function handleSave() {
+    const trimmedPaymentUrl = paymentUrl.trim();
+    if (trimmedPaymentUrl) {
+      let valid = false;
+      try {
+        valid = new URL(trimmedPaymentUrl).protocol === "https:";
+      } catch {
+        valid = false;
+      }
+      if (!valid) {
+        setToast({ message: "Payment link must be a full https:// URL", type: "error" });
+        return;
+      }
+    }
+
     setSaving(true);
     const supabase = createClient();
 
@@ -138,7 +152,11 @@ export default function ServiceForm({
       sort_order: Number(sortOrder) || 0,
       is_active: isActive,
       booking_url: bookingUrl.trim() || null,
-      payment_url: paymentUrl.trim() || null,
+      // Only send payment_url when set or being cleared, so saves keep working
+      // on a database that doesn't have the column yet.
+      ...(trimmedPaymentUrl || initialData?.payment_url
+        ? { payment_url: trimmedPaymentUrl || null }
+        : {}),
       image_url: imageUrl,
       name_es: nameEs || null,
       tag_es: tagEs || null,

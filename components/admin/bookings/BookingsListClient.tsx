@@ -69,26 +69,31 @@ export default function BookingsListClient({
 
   async function act(id: string, body: Record<string, unknown>, success: string) {
     setBusy(id);
-    const res = await fetch(`/api/admin/bookings/${id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const json = await res.json().catch(() => ({}));
-    setBusy(null);
-    if (!res.ok) {
-      setToast({ message: json.error ?? "Action failed", type: "error" });
-      return;
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setToast({ message: json.error ?? "Action failed", type: "error" });
+        return;
+      }
+      const updated = json.booking as Booking | undefined;
+      setToast(
+        updated?.confirm_error
+          ? { message: `Saved, but Cal confirm failed: ${updated.confirm_error}`, type: "error" }
+          : { message: success, type: "success" }
+      );
+      setNoteFor(null);
+      setNote("");
+      router.refresh();
+    } catch {
+      setToast({ message: "Network error — please try again", type: "error" });
+    } finally {
+      setBusy(null);
     }
-    const updated = json.booking as Booking | undefined;
-    setToast(
-      updated?.confirm_error
-        ? { message: `Saved, but Cal confirm failed: ${updated.confirm_error}`, type: "error" }
-        : { message: success, type: "success" }
-    );
-    setNoteFor(null);
-    setNote("");
-    router.refresh();
   }
 
   async function copyPaymentLink(b: Booking) {
@@ -97,8 +102,12 @@ export default function BookingsListClient({
       setToast({ message: "This service has no payment link set", type: "error" });
       return;
     }
-    await navigator.clipboard.writeText(paymentLinkFor(url, b.cal_uid));
-    setToast({ message: "Payment link copied", type: "success" });
+    try {
+      await navigator.clipboard.writeText(paymentLinkFor(url, b.cal_uid));
+      setToast({ message: "Payment link copied", type: "success" });
+    } catch {
+      setToast({ message: "Could not copy the payment link — check the service's payment URL", type: "error" });
+    }
   }
 
   return (
@@ -162,6 +171,13 @@ export default function BookingsListClient({
                     </span>
                   </div>
                 </div>
+
+                {b.payment_status !== "unpaid" &&
+                  (b.cal_status === "rejected" || b.cal_status === "cancelled") && (
+                    <p className="text-xs text-red-700">
+                      Paid but booking is {b.cal_status} — refund in Stripe if needed.
+                    </p>
+                  )}
 
                 {b.confirm_error && (
                   <p className="text-xs text-red-700">Cal confirm failed: {b.confirm_error}</p>

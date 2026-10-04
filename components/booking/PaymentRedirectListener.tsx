@@ -21,8 +21,15 @@ export default function PaymentRedirectListener() {
       const paymentUrl = takeArmedPaymentUrl();
       if (!uid || !paymentUrl) return;
       // Short delay so the booking_confirmed analytics beacon gets out first.
+      let target: string;
+      try {
+        target = paymentLinkFor(paymentUrl, uid);
+      } catch (err) {
+        console.error("[payment-redirect] invalid payment link", err);
+        return;
+      }
       timer = setTimeout(() => {
-        window.location.assign(paymentLinkFor(paymentUrl, uid));
+        window.location.assign(target);
       }, 400);
     };
 

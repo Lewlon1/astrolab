@@ -39,14 +39,11 @@ CREATE INDEX IF NOT EXISTS bookings_start_time_idx ON bookings (start_time);
 
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
--- Admins read + update (same pattern as 007). No anon access at all.
--- Inserts/deletes happen only through the service role (webhooks, admin API),
+-- Admins read (same pattern as 007). No anon access at all.
+-- All writes happen only through the service role (webhooks, admin API),
 -- which bypasses RLS.
 DROP POLICY IF EXISTS "Admin: read bookings" ON bookings;
 CREATE POLICY "Admin: read bookings" ON bookings
   FOR SELECT USING (auth.role() = 'authenticated');
 
 DROP POLICY IF EXISTS "Admin: update bookings" ON bookings;
-CREATE POLICY "Admin: update bookings" ON bookings
-  FOR UPDATE USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
