@@ -3,11 +3,16 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Toast from "@/components/admin/ui/Toast";
-import { paymentLinkFor } from "@/lib/booking";
+import { calTargetFromUrl, paymentLinkFor } from "@/lib/booking";
 import { isUpcoming, needsAttention, paymentSummary } from "@/lib/payments/bookingView";
 import type { Booking, CalStatus } from "@/lib/payments/types";
 
-type ServiceRef = { slug: string; name: string; payment_url: string | null };
+type ServiceRef = {
+  slug: string;
+  name: string;
+  booking_url: string | null;
+  payment_url: string | null;
+};
 type Tab = "attention" | "upcoming" | "all";
 
 const TABS: { key: Tab; label: string }[] = [
@@ -53,10 +58,17 @@ export default function BookingsListClient({
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const closeToast = useCallback(() => setToast(null), []);
 
-  const serviceBySlug = useMemo(
-    () => new Map(services.map((s) => [s.slug, s])),
-    [services]
-  );
+  // Bookings carry the Cal event slug, which matches the service slug for
+  // built-in services and the pasted Cal link's event for admin-added ones.
+  const serviceBySlug = useMemo(() => {
+    const map = new Map<string, ServiceRef>();
+    for (const s of services) {
+      map.set(s.slug, s);
+      const calEvent = calTargetFromUrl(s.booking_url)?.slug;
+      if (calEvent && !map.has(calEvent)) map.set(calEvent, s);
+    }
+    return map;
+  }, [services]);
 
   const visible = bookings.filter((b) =>
     tab === "attention" ? needsAttention(b) : tab === "upcoming" ? isUpcoming(b) : true

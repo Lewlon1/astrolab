@@ -16,8 +16,15 @@ export default async function BookingsPage() {
       .returns<Booking[]>(),
     supabase
       .from("services")
-      .select("slug, name, payment_url")
-      .returns<{ slug: string; name: string; payment_url: string | null }[]>(),
+      .select("slug, name, booking_url, payment_url")
+      .returns<
+        {
+          slug: string;
+          name: string;
+          booking_url: string | null;
+          payment_url: string | null;
+        }[]
+      >(),
   ]);
 
   const all = bookings ?? [];

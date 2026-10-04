@@ -4,7 +4,12 @@
 
 import type { Lang } from "@/context/LangContext";
 import type { Service } from "@/types";
-import { bookingForSlug, withPaymentUrl, type BookingTarget } from "@/lib/booking";
+import {
+  bookingForSlug,
+  calTargetFromUrl,
+  withPaymentUrl,
+  type BookingTarget,
+} from "@/lib/booking";
 
 export type ServiceCta =
   // Hardcoded Cal.com/Stripe config for the original slugs (lib/booking.ts)
@@ -47,6 +52,12 @@ export function serviceCta(service: Service): ServiceCta {
   if (target) return { kind: "booking", target };
 
   const url = service.booking_url?.trim();
+  // A pasted Cal event link opens in the on-site popup when the service has a
+  // payment link, so the client can be sent on to Stripe after booking.
+  const payment = withPaymentUrl(calTargetFromUrl(url), service.payment_url);
+  if (payment?.kind === "cal" && payment.paymentUrl) {
+    return { kind: "booking", target: payment };
+  }
   if (url) return { kind: "external", url };
 
   return { kind: "none" };
