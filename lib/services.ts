@@ -4,7 +4,7 @@
 
 import type { Lang } from "@/context/LangContext";
 import type { Service } from "@/types";
-import { bookingForSlug, type BookingTarget } from "@/lib/booking";
+import { bookingForSlug, withPaymentUrl, type BookingTarget } from "@/lib/booking";
 
 export type ServiceCta =
   // Hardcoded Cal.com/Stripe config for the original slugs (lib/booking.ts)
@@ -43,7 +43,7 @@ export function serviceCta(service: Service): ServiceCta {
   // display-only.
   if (service.tag === "Lead magnet") return { kind: "lead" };
 
-  const target = bookingForSlug(service.slug);
+  const target = withPaymentUrl(bookingForSlug(service.slug), service.payment_url);
   if (target) return { kind: "booking", target };
 
   const url = service.booking_url?.trim();

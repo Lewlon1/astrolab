@@ -34,6 +34,7 @@ export default function BookAction({
         analyticsName={analyticsName}
         conversionName={conversionName}
         serviceSlug={serviceSlug}
+        paymentUrl={target.paymentUrl}
       />
     );
   }

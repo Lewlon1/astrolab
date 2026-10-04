@@ -62,6 +62,7 @@ export default function ServiceForm({
     initialData?.description_es ?? ""
   );
   const [bookingUrl, setBookingUrl] = useState(initialData?.booking_url ?? "");
+  const [paymentUrl, setPaymentUrl] = useState(initialData?.payment_url ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(
     initialData?.image_url ?? null
   );
@@ -111,6 +112,7 @@ export default function ServiceForm({
     created_at: initialData?.created_at ?? "",
     updated_at: initialData?.updated_at ?? "",
     booking_url: bookingUrl || null,
+    payment_url: paymentUrl || null,
     image_url: imageUrl,
     name_es: nameEs || null,
     tag_es: tagEs || null,
@@ -136,6 +138,7 @@ export default function ServiceForm({
       sort_order: Number(sortOrder) || 0,
       is_active: isActive,
       booking_url: bookingUrl.trim() || null,
+      payment_url: paymentUrl.trim() || null,
       image_url: imageUrl,
       name_es: nameEs || null,
       tag_es: tagEs || null,
@@ -388,6 +391,29 @@ export default function ServiceForm({
                 <p className="text-xs text-green-700 mt-1.5">
                   ✓ This slug has built-in Cal.com/Stripe booking configured in
                   the site code; it takes precedence over the link above.
+                </p>
+              )}
+            </div>
+            <div>
+              <AdminInput
+                label="Payment link (pay after booking)"
+                id="payment_url"
+                value={paymentUrl}
+                onChange={(e) => setPaymentUrl(e.target.value)}
+                placeholder="https://buy.stripe.com/..."
+              />
+              <p className="text-xs text-[#b8b0a4] mt-1.5">
+                Stripe Payment Link (promo codes allowed). After booking in
+                Cal.com the client is sent here to pay, and the booking is
+                confirmed automatically once payment arrives. Only works with
+                built-in Cal.com booking; the Cal event must use &quot;Requires
+                confirmation&quot; and must not have the Cal Stripe app. Leave
+                empty to keep the current behaviour.
+              </p>
+              {paymentUrl.trim() && !hasBuiltInBooking && (
+                <p className="text-xs text-amber-700 mt-1.5">
+                  This slug has no built-in Cal.com booking, so the payment link
+                  will not be used.
                 </p>
               )}
             </div>
