@@ -39,3 +39,16 @@ and `TarotDeck.tsx` (subtitle/link), on hunks that branch does not edit.
   lint and that branch's vitest suite pass on the merged result.
 - Browser: homepage shows tarot + link and no grid; header has no "Sessions";
   `/services` lists all active services; tarot Book buttons still open booking.
+
+## Revision 2026-10-07 — single continuous homepage
+
+Supersedes the "`/services` is the single complete list" decision above.
+The separate page is removed so browsing is one continuous scroll:
+
+- Tarot spread → Jung → Founder → Contents → Travel Magazine → **Every
+  service.** (`ServicesIndex`, `id="services"`, restored) → Reviews → …
+- The "services" vocabulary stays ("Every service.", "Book Now").
+- FAQ (`components/services/faqItems.ts`) sits under the grid behind an
+  expandable "Common questions" toggle.
+- `/services` and `/book` 301 to `/#services`; sitemap entry removed; all
+  CTAs/nav point at `/#services`. Service JSON-LD moved to the homepage.

@@ -1,6 +1,6 @@
 // Shared service helpers: CTA resolution + EN/ES localization.
-// Used by the homepage services index, the /services page, and the
-// admin form's live preview, so all three render identically.
+// Used by the homepage services index and the admin form's live preview,
+// so both render identically.
 
 import type { Lang } from "@/context/LangContext";
 import type { Service } from "@/types";

@@ -5,12 +5,13 @@ import JungRibbon from "@/components/JungRibbon";
 import Founder from "@/components/Founder";
 import TarotDeck from "@/components/TarotDeck";
 import MagazineDetail from "@/components/MagazineDetail";
+import ServicesIndex from "@/components/services/ServicesIndex";
 import Testimonials from "@/components/Testimonials";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
 import HomeCTA from "@/components/HomeCTA";
 import TrackSection from "@/components/analytics/TrackSection";
-import { organizationJsonLd } from "@/lib/jsonld";
+import { organizationJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
 import type { Service, Testimonial, BlogPost } from "@/types";
 
@@ -50,6 +51,15 @@ export default async function HomePage() {
         }}
       />
 
+      {services && services.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(services.map(serviceJsonLd)),
+          }}
+        />
+      )}
+
       <TrackSection name="hero" index={0}>
         <Hero editorialDate={editorialDate} />
       </TrackSection>
@@ -67,6 +77,9 @@ export default async function HomePage() {
       </TrackSection>
       <TrackSection name="magazine" index={5}>
         <MagazineDetail />
+      </TrackSection>
+      <TrackSection name="services_index" index={6}>
+        <ServicesIndex services={services ?? []} />
       </TrackSection>
       <TrackSection name="testimonials" index={7}>
         <Testimonials testimonials={testimonials ?? []} />

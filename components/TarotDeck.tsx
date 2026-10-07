@@ -374,7 +374,7 @@ export default function TarotDeck({ services }: Props) {
 
         <div className="mt-12 text-center">
           <Link
-            href="/services"
+            href="/#services"
             data-analytics="tarot_all_services"
             className="font-dm-mono uppercase"
             style={{

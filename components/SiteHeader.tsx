@@ -36,7 +36,7 @@ type NavLink = {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/#founder", labelEn: "About", labelEs: "Sobre Mí" },
-  { href: "/services", labelEn: "Services", labelEs: "Servicios" },
+  { href: "/#services", labelEn: "Services", labelEs: "Servicios" },
   {
     href: "/#magazine",
     labelEn: "Travel Magazine",
@@ -47,7 +47,7 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 const BOOK_LINK = {
-  href: "/services",
+  href: "/#services",
   labelEn: "Book Now",
   labelEs: "Reservar",
 };

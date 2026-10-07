@@ -612,3 +612,26 @@ assume duplicates exist. Reading the column list is not the same as reading the 
 5. Tier 3 duplicates what `/admin/engagement` already does (daily rotation, done-state in
    `localStorage`). Once Daily Actions is trusted, that tool is a retirement candidate —
    the DB-backed rotation here is strictly better than the localStorage one.
+
+---
+
+## Session: consolidate services into the homepage (2026-10-07)
+
+**Ask:** remove the separate services page; show all services under the Travel Magazine
+("Every session." section) for a continuous scroll; keep "services" language; FAQs expandable.
+
+**Files touched:** `app/(public)/page.tsx`, `app/(public)/services/page.tsx` (deleted),
+`components/services/ServicesIndex.tsx` (restored + FAQ toggle), `components/services/faqItems.ts` (new),
+`components/services/ServicesPageContent.tsx` (deleted), `components/TarotDeck.tsx`, `components/SiteHeader.tsx`,
+`components/SiteFooter.tsx`, `components/HomeCTA.tsx`, `app/(public)/about/page.tsx`, `app/sitemap.ts`,
+`next.config.mjs` (301s), `lib/services.ts` (comment), `docs/superpowers/specs/2026-10-04-services-terminology-design.md`.
+No DB/migration changes.
+
+**Lessons learned**
+- "Current main" and the working branch had diverged in opposite directions (branch deleted the grid;
+  main had it). Check `git log HEAD ^origin/main` and `origin/main ^HEAD` before assuming what exists.
+- Don't overwrite a branch's tree to match main; a normal `git merge origin/main` was clean and kept history.
+- Deleting a page deletes its unique content (the FAQ lived only there) — move it, don't lose it.
+- Redirect the old URL (`/services`) rather than 404; hash anchors in 301 targets work (browser keeps the fragment).
+- Analytics: `services_index` section name/index 6 was already registered in `lib/analytics/constants.ts`, so reuse it.
+- Not verified in a browser (no Supabase env in the sandbox): tsc, vitest (56) pass; visually check the anchor scroll and FAQ toggle.
