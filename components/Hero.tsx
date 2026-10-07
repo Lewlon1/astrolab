@@ -69,7 +69,82 @@ export default function Hero({ editorialDate }: Props) {
           <LangText en={coverEn} es={coverEs} />
         </div>
 
-        {/* 2. Unopened-letter mock-up — click to unfold the note (modal) */}
+        {/* 2. Cards + CTAs */}
+        <div className="flex flex-col items-center gap-4 mb-16 md:mb-24">
+          <DeckPeek />
+          <div className="flex flex-wrap justify-center gap-3.5">
+            <a
+              href="#tarot"
+              data-analytics="cta_draw_card"
+              className="font-dm-mono uppercase"
+              style={{
+                background: "var(--ed-ink)",
+                color: "var(--ed-paper)",
+                padding: "14px 26px",
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              <LangText en="Draw a Card →" es="Saca una Carta →" />
+            </a>
+            <a
+              href="#founder"
+              data-analytics="cta_meet_gabriela"
+              className="font-dm-mono uppercase"
+              style={{
+                background: "transparent",
+                color: "var(--ed-ink)",
+                border: "1px solid var(--ed-ink)",
+                padding: "14px 26px",
+                fontSize: 11,
+                letterSpacing: "0.2em",
+                fontWeight: 500,
+                textDecoration: "none",
+              }}
+            >
+              <LangText en="Meet Gabriela" es="Conoce a Gabriela" />
+            </a>
+          </div>
+        </div>
+
+        {/* 3. Big Jung pull-quote */}
+        <blockquote
+          className="m-0 mx-auto text-center mb-16 md:mb-24"
+          style={{ maxWidth: 820 }}
+        >
+          <p
+            className="font-fraunces m-0"
+            style={{
+              fontStyle: "italic",
+              fontWeight: 300,
+              fontSize: "clamp(34px, 5.2vw, 60px)",
+              lineHeight: 1.1,
+              letterSpacing: "-0.02em",
+              color: "var(--ed-ink)",
+            }}
+          >
+            <span style={{ color: "var(--ed-rust)" }}>&ldquo;</span>
+            <LangText
+              en="The privilege of a lifetime is to become who you truly are."
+              es="El privilegio de una vida es convertirse en quien verdaderamente eres."
+            />
+            <span style={{ color: "var(--ed-rust)" }}>&rdquo;</span>
+          </p>
+          <div
+            className="font-dm-mono uppercase mt-6"
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.28em",
+              color: "var(--ed-text-mute)",
+            }}
+          >
+            — C.G. Jung
+          </div>
+        </blockquote>
+
+        {/* 4. Unopened-letter mock-up — click to unfold the note (modal) */}
         <div className="mb-8 md:mb-10 flex justify-center">
           <button
             type="button"
@@ -176,81 +251,6 @@ export default function Hero({ editorialDate }: Props) {
         {/* 2b. Levitating celestial strip — drifts L→R under the letter */}
         <div className="mb-12 md:mb-20">
           <LevitatingStrip />
-        </div>
-
-        {/* 3. Big Jung pull-quote */}
-        <blockquote
-          className="m-0 mx-auto text-center mb-16 md:mb-24"
-          style={{ maxWidth: 820 }}
-        >
-          <p
-            className="font-fraunces m-0"
-            style={{
-              fontStyle: "italic",
-              fontWeight: 300,
-              fontSize: "clamp(34px, 5.2vw, 60px)",
-              lineHeight: 1.1,
-              letterSpacing: "-0.02em",
-              color: "var(--ed-ink)",
-            }}
-          >
-            <span style={{ color: "var(--ed-rust)" }}>&ldquo;</span>
-            <LangText
-              en="The privilege of a lifetime is to become who you truly are."
-              es="El privilegio de una vida es convertirse en quien verdaderamente eres."
-            />
-            <span style={{ color: "var(--ed-rust)" }}>&rdquo;</span>
-          </p>
-          <div
-            className="font-dm-mono uppercase mt-6"
-            style={{
-              fontSize: 11,
-              letterSpacing: "0.28em",
-              color: "var(--ed-text-mute)",
-            }}
-          >
-            — C.G. Jung
-          </div>
-        </blockquote>
-
-        {/* 4. Cards + CTAs */}
-        <div className="flex flex-col items-center gap-4 mb-16 md:mb-24">
-          <DeckPeek />
-          <div className="flex flex-wrap justify-center gap-3.5">
-            <a
-              href="#tarot"
-              data-analytics="cta_draw_card"
-              className="font-dm-mono uppercase"
-              style={{
-                background: "var(--ed-ink)",
-                color: "var(--ed-paper)",
-                padding: "14px 26px",
-                fontSize: 11,
-                letterSpacing: "0.2em",
-                fontWeight: 500,
-                textDecoration: "none",
-              }}
-            >
-              <LangText en="Draw a Card →" es="Saca una Carta →" />
-            </a>
-            <a
-              href="#founder"
-              data-analytics="cta_meet_gabriela"
-              className="font-dm-mono uppercase"
-              style={{
-                background: "transparent",
-                color: "var(--ed-ink)",
-                border: "1px solid var(--ed-ink)",
-                padding: "14px 26px",
-                fontSize: 11,
-                letterSpacing: "0.2em",
-                fontWeight: 500,
-                textDecoration: "none",
-              }}
-            >
-              <LangText en="Meet Gabriela" es="Conoce a Gabriela" />
-            </a>
-          </div>
         </div>
 
         {/* 5. Closing headline */}
