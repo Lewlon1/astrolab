@@ -123,7 +123,7 @@ export default function ServicesIndex({ services }: Props) {
                 color: "var(--ed-rust)",
               }}
             >
-              <LangText en="Common questions" es="Preguntas frecuentes" />
+              <LangText en="Frequently asked questions" es="Preguntas frecuentes" />
             </span>
             <span
               className="flex-1"
