@@ -24,6 +24,7 @@ const SECTION_LABELS: Record<string, string> = {
   jung: "Jung quote",
   founder: "Founder",
   tarot: "Services · Tarot",
+  lead_inline: "Newsletter (inline)",
   magazine: "Travel magazine",
   services_index: "Services · Catalog",
   testimonials: "Testimonials",

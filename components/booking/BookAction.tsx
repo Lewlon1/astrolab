@@ -13,6 +13,8 @@ type Props = {
   analyticsName?: string;
   conversionName?: string;
   serviceSlug?: string;
+  /** Where the CTA sits ("tarot" | "grid"), so conversions can be split by surface. */
+  placement?: "tarot" | "grid";
 };
 
 export default function BookAction({
@@ -23,6 +25,7 @@ export default function BookAction({
   analyticsName,
   conversionName,
   serviceSlug,
+  placement,
 }: Props) {
   if (target.kind === "cal") {
     return (
@@ -34,6 +37,7 @@ export default function BookAction({
         analyticsName={analyticsName}
         conversionName={conversionName}
         serviceSlug={serviceSlug}
+        placement={placement}
         paymentUrl={target.paymentUrl}
       />
     );
@@ -48,6 +52,7 @@ export default function BookAction({
       data-analytics={analyticsName}
       data-analytics-conversion={conversionName}
       data-service-slug={serviceSlug}
+      data-placement={placement}
       className={className}
       style={style}
     >

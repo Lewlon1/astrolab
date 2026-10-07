@@ -26,6 +26,7 @@ export const SECTION_ORDER = [
   "jung",
   "founder",
   "tarot",
+  "lead_inline",
   "magazine",
   "services_index",
   "testimonials",

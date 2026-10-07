@@ -56,7 +56,7 @@ export default function ServicesIndex({ services }: Props) {
           </span>
         </div>
         <h2
-          className="font-fraunces m-0 mb-12 md:mb-14"
+          className="font-fraunces m-0 mb-5 md:mb-6"
           style={{
             fontSize: "clamp(40px, 6vw, 72px)",
             fontWeight: 300,
@@ -83,6 +83,27 @@ export default function ServicesIndex({ services }: Props) {
             }
           />
         </h2>
+
+        <p
+          className="font-spectral m-0 mb-12 md:mb-14"
+          style={{ fontSize: 17, color: "var(--ed-ink-soft)", lineHeight: 1.6 }}
+        >
+          <LangText
+            en="Not sure where to start? "
+            es="¿No sabes por dónde empezar? "
+          />
+          <a
+            href="#tarot"
+            data-analytics="cta_services_leadin_tarot"
+            style={{
+              color: "var(--ed-rust)",
+              textDecoration: "none",
+              borderBottom: "1px solid var(--ed-rust)",
+            }}
+          >
+            <LangText en="Draw a card." es="Saca una carta." />
+          </a>
+        </p>
 
         <div
           className="grid grid-cols-1 md:grid-cols-3"

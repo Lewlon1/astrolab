@@ -104,6 +104,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       const props: Record<string, unknown> = {};
       if (el.dataset.serviceSlug) props.service_slug = el.dataset.serviceSlug;
       if (el.dataset.section) props.section = el.dataset.section;
+      if (el.dataset.placement) props.placement = el.dataset.placement;
       const href = (el as HTMLAnchorElement).href;
       if (href) props.href = href;
 

@@ -129,6 +129,7 @@ export default function ServiceRowCard({
             analyticsName="cta_book_card"
             conversionName="booking_click"
             serviceSlug={item.slug}
+            placement="grid"
             style={{ ...ctaStyle, background: "none", cursor: "pointer" }}
           />
         )}
@@ -140,6 +141,7 @@ export default function ServiceRowCard({
             data-analytics="cta_book_card"
             data-analytics-conversion="booking_click"
             data-service-slug={item.slug}
+            data-placement="grid"
             style={ctaStyle}
           >
             {ctaLabel}

@@ -7,6 +7,7 @@ import TarotDeck from "@/components/TarotDeck";
 import MagazineDetail from "@/components/MagazineDetail";
 import ServicesIndex from "@/components/services/ServicesIndex";
 import Testimonials from "@/components/Testimonials";
+import LeadCaptureInline from "@/components/LeadCaptureInline";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
 import HomeCTA from "@/components/HomeCTA";
@@ -65,6 +66,9 @@ export default async function HomePage() {
       </TrackSection>
       <TrackSection name="tarot" index={1}>
         <TarotDeck services={services ?? []} />
+      </TrackSection>
+      <TrackSection name="lead_inline" index={11}>
+        <LeadCaptureInline />
       </TrackSection>
       <TrackSection name="jung" index={2}>
         <JungRibbon />

@@ -593,6 +593,7 @@ function CardSlot({
                 analyticsName="cta_book_card_back"
                 conversionName="booking_click"
                 serviceSlug={card.slug}
+                placement="tarot"
                 className="block w-full text-center font-dm-mono uppercase mb-1.5"
                 style={{
                   background: "var(--ed-ink)",
@@ -802,6 +803,7 @@ function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
               analyticsName="cta_book_card"
               conversionName="booking_click"
               serviceSlug={card.slug}
+              placement="tarot"
               className="inline-block font-dm-mono uppercase"
               style={{
                 background: "var(--ed-ink)",

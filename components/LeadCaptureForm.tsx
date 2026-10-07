@@ -5,7 +5,12 @@ import { getSessionKey, getAttribution } from "@/lib/analytics/session";
 import { track } from "@/lib/analytics/track";
 import { trackLead } from "@/lib/fbpixel";
 
-export default function LeadCaptureForm() {
+type Props = {
+  /** Where the form is mounted; goes into the analytics event only (not `leads.source`). */
+  placement?: "section" | "inline";
+};
+
+export default function LeadCaptureForm({ placement = "section" }: Props) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -36,7 +41,7 @@ export default function LeadCaptureForm() {
 
       if (res.ok) {
         setStatus("success");
-        track("conversion", "newsletter_signup", { source: "website_form" });
+        track("conversion", "newsletter_signup", { source: "website_form", placement });
         // Meta Pixel Lead conversion with Advanced Matching (hashed email) so the
         // CAPI Gateway can match it server-side. Consent-gated (no-ops if fbq absent).
         trackLead(email);

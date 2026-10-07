@@ -1601,3 +1601,24 @@
   background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
   background-color: #ffffff;
 }
+
+/* Quiet variant of .ed-newsletter for paper backgrounds (inline strip). */
+.ed-newsletter-light input[type="email"] {
+  border: 1px solid var(--ed-ink);
+  border-right: none;
+  background: transparent;
+  color: var(--ed-ink);
+}
+.ed-newsletter-light input[type="email"]::placeholder {
+  color: var(--ed-text-mute);
+}
+.ed-newsletter-light input[type="email"]:focus {
+  border-color: var(--ed-rust);
+}
+.ed-newsletter-light button[type="submit"] {
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+}
+.ed-newsletter-light p {
+  color: var(--ed-rust);
+}

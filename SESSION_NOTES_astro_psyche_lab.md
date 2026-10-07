@@ -681,3 +681,32 @@ Check after deploy: mobile sessions with a `tarot` section_view should be ≥ se
 - A 1px tolerance in the visibility check makes "199 of 200 needed" pass — tests must sit clearly
   either side of the bar.
 - All analytics events funnel through `enqueue()`; gate opt-outs there, not in each emitter.
+
+---
+
+## Session: conversion Tasks 3 + 4 (2026-10-07)
+
+**Files:** `components/booking/BookAction.tsx`, `components/booking/CalBookButton.tsx`,
+`components/services/ServiceRowCard.tsx`, `components/TarotDeck.tsx`, `components/services/ServicesIndex.tsx`,
+`components/LeadCaptureInline.tsx` (new), `components/LeadCaptureForm.tsx`, `app/(public)/page.tsx`,
+`lib/analytics/constants.ts`, `app/admin/analytics/page.tsx`.
+Extra files beyond the plan (owner-approved): `context/AnalyticsContext.tsx` (click listener now forwards
+`data-placement`), `types/index.ts` (`lead_inline` in `SectionName`), `app/globals.css` (`.ed-newsletter-light`).
+No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean for touched files.
+
+**What changed**
+- `booking_click` / `cta_book_card` events now carry `placement` = `tarot` | `grid` (event names unchanged).
+  Query: `props->>'placement'` on `analytics_events`. Events before deploy have no placement.
+- Lead-in under "Every service.": "Not sure where to start? Draw a card." → `#tarot`
+  (click event `cta_services_leadin_tarot`). Owner changed the plan's draft (free option) to the tarot deck.
+- Inline newsletter strip right after the tarot (`lead_inline`, index 11). `newsletter_signup` carries
+  `placement` = `inline` | `section`. Deploy date: ____ (decision gate for grid position ≈ 4 weeks later).
+
+**Lessons learned**
+- The plan assumed `BookingConversionListener` might need to read placement; it doesn't. Booking clicks go
+  through the delegated listener in `AnalyticsContext`, which reads `data-*` attributes.
+- The homepage order had changed since the plan was written (tarot is now directly after the hero), so
+  "after the tarot" sits above the Jung ribbon. Check the live order before placing sections.
+- `LeadCaptureForm` is styled for dark backgrounds; a light placement needs a CSS variant, not a new form.
+- Known, untouched: the form's success text says "Check your DMs for your free Love & Career Code" and the
+  button says "Get my free code", which doesn't match the "new moon letter" promise. Needs owner copy.
