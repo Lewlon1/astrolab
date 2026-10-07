@@ -10,8 +10,14 @@ export const calLink = (slug: string) => `${CAL_USERNAME}/${slug}`;
 export const CAL_BRAND = "#C26B4A"; // sunset terracotta
 
 export type BookingTarget =
-  | { kind: "cal"; slug: string }
+  // paymentUrl: Stripe Payment Link the client is sent to after booking
+  // (pay-after-booking flow). Set from services.payment_url via withPaymentUrl.
+  // path: full Cal link ("user/event") for admin-pasted Cal URLs; when absent
+  // the link is CAL_USERNAME/slug.
+  | { kind: "cal"; slug: string; path?: string; paymentUrl?: string }
   | { kind: "stripe"; url: string };
+
+export type CalTarget = Extract<BookingTarget, { kind: "cal" }>;
 
 export type ServiceMeta = {
   name: string;
@@ -77,4 +83,48 @@ const SLUG_TO_KEY: Record<string, keyof typeof SERVICES> = {
 export function bookingForSlug(slug: string): BookingTarget | null {
   const key = SLUG_TO_KEY[slug];
   return key ? SERVICES[key].booking : null;
+}
+
+// Stripe Payment Link with the Cal booking uid attached, so the Stripe webhook
+// can tie the payment back to the booking.
+export function paymentLinkFor(paymentUrl: string, calUid: string): string {
+  const url = new URL(paymentUrl);
+  url.searchParams.set("client_reference_id", calUid);
+  return url.toString();
+}
+
+// Attach a service's payment_url to a Cal booking target. Stripe targets and
+// empty URLs pass through unchanged.
+export function withPaymentUrl(
+  target: BookingTarget | null,
+  paymentUrl: string | null | undefined
+): BookingTarget | null {
+  const url = paymentUrl?.trim();
+  if (!target || target.kind !== "cal" || !url) return target;
+  return { ...target, paymentUrl: url };
+}
+
+const CAL_HOSTS = new Set(["cal.com", "www.cal.com", "app.cal.com"]);
+
+// An admin-pasted cal.com event link (e.g. https://cal.com/user/event) as an
+// embeddable Cal target, or null if it isn't one. Profile-only links
+// (cal.com/user) are not events and return null.
+export function calTargetFromUrl(raw: string | null | undefined): CalTarget | null {
+  const value = raw?.trim();
+  if (!value) return null;
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (!CAL_HOSTS.has(url.hostname)) return null;
+  const segments = url.pathname.split("/").filter(Boolean);
+  if (segments.length < 2) return null;
+  return { kind: "cal", slug: segments[segments.length - 1], path: segments.join("/") };
+}
+
+// The Cal embed link for a cal target.
+export function calPathFor(target: CalTarget): string {
+  return target.path ?? calLink(target.slug);
 }

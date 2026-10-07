@@ -3,6 +3,7 @@
 import { getCalApi } from "@calcom/embed-react";
 import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { CAL_BRAND } from "@/lib/booking";
+import { armPaymentRedirect } from "@/lib/payments/payRedirect";
 
 type Props = {
   link: string;
@@ -13,6 +14,8 @@ type Props = {
   analyticsName?: string;
   conversionName?: string;
   serviceSlug?: string;
+  /** Stripe Payment Link to send the client to once the Cal booking completes. */
+  paymentUrl?: string;
 };
 
 export default function CalBookButton({
@@ -23,6 +26,7 @@ export default function CalBookButton({
   analyticsName,
   conversionName,
   serviceSlug,
+  paymentUrl,
 }: Props) {
   useEffect(() => {
     (async () => {
@@ -48,6 +52,7 @@ export default function CalBookButton({
       data-analytics={analyticsName}
       data-analytics-conversion={conversionName}
       data-service-slug={serviceSlug}
+      onClick={() => armPaymentRedirect(paymentUrl ?? null)}
       className={className}
       style={style}
     >

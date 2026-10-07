@@ -19,6 +19,8 @@ export interface Service {
   // Added in migration 012 — optional so rows read before the migration
   // runs (or from an un-migrated database) stay type-safe.
   booking_url?: string | null;
+  // Added in migration 014 — Stripe Payment Link for pay-after-booking.
+  payment_url?: string | null;
   image_url?: string | null;
   name_es?: string | null;
   tag_es?: string | null;

@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useLang } from "@/context/LangContext";
 import LangText from "@/components/LangText";
 import BookAction from "@/components/booking/BookAction";
-import { bookingForSlug } from "@/lib/booking";
+import { bookingForSlug, withPaymentUrl } from "@/lib/booking";
 import { track } from "@/lib/analytics/track";
 import type { Service } from "@/types";
 
@@ -348,6 +348,7 @@ export default function TarotDeck({ services }: Props) {
                   }
                 }}
                 desktopLift={LIFT[i]}
+                paymentUrl={svc?.payment_url}
               />
             );
           })}
@@ -403,6 +404,7 @@ type CardSlotProps = {
   lang: "en" | "es";
   onToggle: () => void;
   desktopLift: number;
+  paymentUrl?: string | null;
 };
 
 function CardSlot({
@@ -415,8 +417,9 @@ function CardSlot({
   lang,
   onToggle,
   desktopLift,
+  paymentUrl,
 }: CardSlotProps) {
-  const bookingTarget = bookingForSlug(card.slug);
+  const bookingTarget = withPaymentUrl(bookingForSlug(card.slug), paymentUrl);
 
   return (
     <div>
@@ -643,7 +646,7 @@ type ServiceDetailProps = {
 function ServiceDetail({ card, service, lang }: ServiceDetailProps) {
   const name = service?.name ?? card.fallbackName;
   const price = service?.price ?? card.fallbackPrice;
-  const bookingTarget = bookingForSlug(card.slug);
+  const bookingTarget = withPaymentUrl(bookingForSlug(card.slug), service?.payment_url);
   const duration = card.fallbackDuration[lang];
 
   return (
