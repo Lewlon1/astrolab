@@ -4,6 +4,7 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { LangProvider } from "@/context/LangContext";
 import { AnalyticsProvider } from "@/context/AnalyticsContext";
 import BookingConversionListener from "@/components/analytics/BookingConversionListener";
+import PaymentRedirectListener from "@/components/booking/PaymentRedirectListener";
 import { getEditorialDate } from "@/lib/editorialDate";
 
 export default function PublicLayout({
@@ -22,6 +23,7 @@ export default function PublicLayout({
           <SiteFooter editorialDate={editorialDate} />
         </div>
         <BookingConversionListener />
+        <PaymentRedirectListener />
         <CookieConsentBanner />
       </AnalyticsProvider>
     </LangProvider>

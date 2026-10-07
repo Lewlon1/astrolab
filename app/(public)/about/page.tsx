@@ -190,7 +190,7 @@ export default function AboutPage() {
             position: "relative",
           }}
         >
-          <Link href="/services" className="btn-white">
+          <Link href="/#services" className="btn-white">
             Explore services
           </Link>
           <Link

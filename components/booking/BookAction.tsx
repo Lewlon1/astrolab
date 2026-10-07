@@ -2,7 +2,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import CalBookButton from "./CalBookButton";
-import { calLink, type BookingTarget } from "@/lib/booking";
+import { calPathFor, type BookingTarget } from "@/lib/booking";
 
 type Props = {
   target: BookingTarget;
@@ -27,13 +27,14 @@ export default function BookAction({
   if (target.kind === "cal") {
     return (
       <CalBookButton
-        link={calLink(target.slug)}
+        link={calPathFor(target)}
         label={label}
         className={className}
         style={style}
         analyticsName={analyticsName}
         conversionName={conversionName}
         serviceSlug={serviceSlug}
+        paymentUrl={target.paymentUrl}
       />
     );
   }

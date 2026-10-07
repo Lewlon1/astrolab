@@ -1,10 +1,15 @@
 // Shared service helpers: CTA resolution + EN/ES localization.
-// Used by the homepage services index, the /services page, and the
-// admin form's live preview, so all three render identically.
+// Used by the homepage services index and the admin form's live preview,
+// so both render identically.
 
 import type { Lang } from "@/context/LangContext";
 import type { Service } from "@/types";
-import { bookingForSlug, type BookingTarget } from "@/lib/booking";
+import {
+  bookingForSlug,
+  calTargetFromUrl,
+  withPaymentUrl,
+  type BookingTarget,
+} from "@/lib/booking";
 
 export type ServiceCta =
   // Hardcoded Cal.com/Stripe config for the original slugs (lib/booking.ts)
@@ -43,10 +48,16 @@ export function serviceCta(service: Service): ServiceCta {
   // display-only.
   if (service.tag === "Lead magnet") return { kind: "lead" };
 
-  const target = bookingForSlug(service.slug);
+  const target = withPaymentUrl(bookingForSlug(service.slug), service.payment_url);
   if (target) return { kind: "booking", target };
 
   const url = service.booking_url?.trim();
+  // A pasted Cal event link opens in the on-site popup when the service has a
+  // payment link, so the client can be sent on to Stripe after booking.
+  const payment = withPaymentUrl(calTargetFromUrl(url), service.payment_url);
+  if (payment?.kind === "cal" && payment.paymentUrl) {
+    return { kind: "booking", target: payment };
+  }
   if (url) return { kind: "external", url };
 
   return { kind: "none" };

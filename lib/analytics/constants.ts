@@ -2,6 +2,8 @@
 
 /** Ephemeral session id — sessionStorage so it dies when the tab closes (cookieless). */
 export const SESSION_KEY_STORAGE = "apl.an.sid";
+/** localStorage flag: this browser is the owner's — record nothing (`?internal=1` / `?internal=0`). */
+export const INTERNAL_FLAG_STORAGE = "apl.an.internal";
 /** Flag so `session_start` fires at most once per session. */
 export const SESSION_STARTED_FLAG = "apl.an.started";
 

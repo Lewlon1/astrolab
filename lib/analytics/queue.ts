@@ -10,6 +10,7 @@ import {
   MAX_BATCH_EVENTS,
 } from "./constants";
 import { getSessionKey } from "./session";
+import { isInternal } from "./internal";
 
 let queue: AnalyticsEventInput[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
@@ -22,6 +23,7 @@ export function setAttribution(attr: SessionAttribution): void {
 
 export function enqueue(ev: AnalyticsEventInput): void {
   if (typeof window === "undefined") return;
+  if (isInternal()) return; // owner's own browser — record nothing
   queue.push(ev);
   if (queue.length >= FLUSH_MAX_EVENTS) {
     flush();
