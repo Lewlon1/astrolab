@@ -635,3 +635,25 @@ No DB/migration changes.
 - Redirect the old URL (`/services`) rather than 404; hash anchors in 301 targets work (browser keeps the fragment).
 - Analytics: `services_index` section name/index 6 was already registered in `lib/analytics/constants.ts`, so reuse it.
 - Not verified in a browser (no Supabase env in the sandbox): tsc, vitest (56) pass; visually check the anchor scroll and FAQ toggle.
+
+---
+
+## Session: analytics review + test-data cleanup (2026-10-07)
+
+**Done:** read-only analytics review (findings in `docs/superpowers/plans/2026-10-07-conversion-optimisation.md`);
+deleted 19 test sessions / 497 events from production `analytics_sessions` / `analytics_events`
+(owner-authorised; list in `docs/maintenance/2026-10-07-remove-test-analytics.sql`: all non-bot sessions
+started 4–5 Oct Madrid time + 1 session matched to an admin booking). Before: 180 sessions / 3,230 events.
+No schema changes; `bookings` and `leads` untouched.
+
+**Lessons learned**
+- Analytics is cookieless by design: past own-sessions cannot be traced, only guessed (dev referrers like
+  vercel.com/localhost/github.com, bursts of booking clicks, dates when testing).
+- `bookings` has no `session_key`; linking bookings to sessions is only possible by timestamp
+  (`booking_confirmed` event within ~10 s of `bookings.created_at`). Consider adding session_key to the
+  booking flow if attribution matters (needs a migration — owner applies it).
+- `booking_confirmed` counts were inflated by payment-flow testing; older July–Aug events remain
+  unverified. Treat the confirmed-booking rate as an upper bound.
+- Section views on tall sections undercount on mobile (50%-of-section rule) — see plan Task 1.
+- Prepare destructive prod SQL as a reviewed file with a preview count, run only on explicit
+  go-ahead, and verify the counts match before and after.
