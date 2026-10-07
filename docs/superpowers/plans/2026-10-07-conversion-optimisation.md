@@ -103,8 +103,8 @@ event name), and the grid is reached by few sessions.
    the free option (copy EN/ES, text-only; no layout reorder).
 3. **Do not move the grid** until 3–4 weeks of tagged data exist (decision gate below).
 
-**Files** (step 0: read `components/BookAction.tsx` to see how it forwards analytics props)
-- `components/BookAction.tsx` — accept/forward optional `placement`
+**Files** (step 0: read `components/booking/BookAction.tsx` to see how it forwards analytics props)
+- `components/booking/BookAction.tsx` — accept/forward optional `placement`
 - `components/services/ServiceRowCard.tsx` — pass `placement="grid"`
 - `components/TarotDeck.tsx` — pass `placement="tarot"` on its `BookAction`s
 - `components/services/ServicesIndex.tsx` — lead-in line
