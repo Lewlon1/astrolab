@@ -1,6 +1,6 @@
 # Conversion optimisation — implementation plan
 
-Date: 2026-10-07 · Branch: `claude/sessions-services-display-c48d2c` · Status: proposed
+Date: 2026-10-07 · Branch: `claude/sessions-services-display-c48d2c` · Status: Tasks 1 and 6 implemented 2026-10-07; Tasks 3 and 4 pending
 
 Scope: items 1, 3, 4 and 6 from the analytics review. Items 2 (header Book Now →
 tarot) and 5 (Linktree/Facebook landing) are out of scope.
@@ -68,15 +68,14 @@ that is the fix, not a regression. Note the date.
 `?internal=1` sets `localStorage["apl.an.internal"]="1"`; `?internal=0` clears
 it. While set, the analytics client emits nothing. The flag is an owner-side
 opt-out in the owner's own browser, not a visitor identifier, so the cookieless
-design is unchanged. Also drop events server-side when attribution `referrer_host`
-is `localhost*` (dev noise) in `/api/analytics`.
+design is unchanged. (A server-side `localhost` filter was considered and dropped: attribution only arrives on a
+session's first batch, so later batches would create orphan events with no session row.)
 
 **Files** (confirm exact provider with `grep -rn ensureSessionStarted components app`)
 - `lib/analytics/internal.ts` — new: `isInternal()`, `applyInternalParam(search)` (try/catch around storage)
 - `lib/analytics/internal.test.ts` — new (vitest, stub `localStorage`)
-- `lib/analytics/track.ts` — early-return in `track()` when `isInternal()`
-- the client component that calls `ensureSessionStarted` — call `applyInternalParam(window.location.search)` first
-- `app/api/analytics/route.ts` — return 204 early for `localhost` referrer host
+- `context/AnalyticsContext.tsx` (calls `ensureSessionStarted`) — call `applyInternalParam(window.location.search)` first
+- `lib/analytics/queue.ts` — gate in `enqueue()` (the single funnel for all events); `constants.ts` — `INTERNAL_FLAG_STORAGE`
 - `SESSION_NOTES_astro_psyche_lab.md` — how to flag your phone/laptop
 
 **Do not touch:** `supabase/migrations/*`, `analytics_*` RPCs.

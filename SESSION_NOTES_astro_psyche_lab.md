@@ -657,3 +657,27 @@ No schema changes; `bookings` and `leads` untouched.
 - Section views on tall sections undercount on mobile (50%-of-section rule) — see plan Task 1.
 - Prepare destructive prod SQL as a reviewed file with a preview count, run only on explicit
   go-ahead, and verify the counts match before and after.
+
+---
+
+## Session: analytics Tasks 1 + 6 (2026-10-07)
+
+**Files:** `lib/analytics/visibility.ts` (+test), `lib/analytics/internal.ts` (+test), `lib/analytics/constants.ts`,
+`lib/analytics/queue.ts`, `components/analytics/TrackSection.tsx`, `context/AnalyticsContext.tsx`.
+No DB changes. 66 tests pass; tsc + lint clean for touched files.
+
+**How to flag your devices:** open the live site once with `?internal=1` on each browser/device
+(e.g. `https://<site>/?internal=1`). `?internal=0` undoes it. Per browser *and* per origin (localhost, preview
+URLs, Instagram's in-app browser need their own). Private windows / "clear site data" remove it.
+
+**Series break:** from the deploy date, tall sections (tarot) register on mobile. Section-view and dwell
+numbers before/after are NOT comparable. Record the deploy date here: ____.
+Check after deploy: mobile sessions with a `tarot` section_view should be ≥ sessions with a `tarot_card_flip`
+(was 3 vs 29).
+
+**Lessons learned**
+- Server-side filtering by referrer would create orphan events (attribution only rides the first batch);
+  filter on the client, before anything is sent.
+- A 1px tolerance in the visibility check makes "199 of 200 needed" pass — tests must sit clearly
+  either side of the bar.
+- All analytics events funnel through `enqueue()`; gate opt-outs there, not in each emitter.
