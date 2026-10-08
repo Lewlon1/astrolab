@@ -730,3 +730,30 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   3 days in 2 months, 0 ever marked done; `lead_events` = 0 (MailerLite/ManyChat never fed in); 6 bookings,
   all unpaid. Check usage data before redesigning UI — it changed the plan's priority to the Today screen.
 - Lead Queue batches only generate when that page is opened, so a buried page = no batches at all.
+
+---
+
+## Session 1: admin flags + grouped nav (2026-10-08)
+
+**Files:** `lib/admin/features.ts` (+test), `components/admin/navConfig.ts` (+test), `components/admin/NavIcons.tsx` (new),
+`components/admin/AdminNav.tsx` (rewrite), `components/admin/AdminTabBar.tsx` (new), `app/admin/layout.tsx`,
+`app/admin/video-editor/layout.tsx`, `app/admin/photoshop/layout.tsx`,
+`docs/maintenance/2026-10-08-remove-test-bookings.sql` (new, NOT run). No DB changes. tsc, 77 tests, lint clean.
+
+**What changed**
+- Video Editor + Photoshop hidden: gone from nav and their layouts `notFound()` unless `NEXT_PUBLIC_ADMIN_LABS=1`
+  (build-time; set it on a preview deploy to bring them back). When on, they appear under Content.
+- Nav is 5 groups (Today / Clients / Content / Website / Insights). Desktop: dropdowns. Mobile: bottom tab bar with a
+  bottom sheet for multi-page groups; the old hamburger is gone.
+- Test-bookings cleanup SQL prepared for the owner (6 rows, all unpaid, no Stripe session). Cancel the two future ones
+  (23 + 28 Oct) in Cal.com first.
+
+**Lessons learned**
+- Playwright in the repo is newer than the preinstalled browser; launch with
+  `executablePath: /opt/pw-browsers/chromium-1194/chrome-linux/chrome` and run the script from scratchpad.
+- Admin pages can't be screenshotted in the sandbox (Supabase auth); render the nav on a throwaway route, then delete it.
+- `pkill -f "<pattern>"` inside a Bash call matches the call's own shell and kills it; kill by port instead.
+- MailerLite sync has never written anything to prod: 0 leads with `source = mailerlite`, 0 `lead_events`. Before
+  blaming free-plan limits, press Sync once and read the error it returns. developers.mailerlite.com is blocked from the
+  sandbox, so plan limits couldn't be checked against the official docs.
+- Not verified in a real logged-in session: the labs routes' 404 (middleware redirects to login first in the sandbox).

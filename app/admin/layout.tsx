@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "@/components/admin/SignOutButton";
 import AdminNav from "@/components/admin/AdminNav";
+import AdminTabBar from "@/components/admin/AdminTabBar";
 
 export default async function AdminLayout({
   children,
@@ -30,8 +31,10 @@ export default async function AdminLayout({
         </div>
       </header>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">{children}</div>
+      {/* Content — extra bottom padding on mobile so the tab bar never covers it */}
+      <div className="max-w-7xl mx-auto px-6 pt-8 pb-28 md:pb-8">{children}</div>
+
+      <AdminTabBar />
     </div>
   );
 }
