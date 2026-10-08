@@ -612,3 +612,103 @@ assume duplicates exist. Reading the column list is not the same as reading the 
 5. Tier 3 duplicates what `/admin/engagement` already does (daily rotation, done-state in
    `localStorage`). Once Daily Actions is trusted, that tool is a retirement candidate —
    the DB-backed rotation here is strictly better than the localStorage one.
+
+---
+
+## Session: consolidate services into the homepage (2026-10-07)
+
+**Ask:** remove the separate services page; show all services under the Travel Magazine
+("Every session." section) for a continuous scroll; keep "services" language; FAQs expandable.
+
+**Files touched:** `app/(public)/page.tsx`, `app/(public)/services/page.tsx` (deleted),
+`components/services/ServicesIndex.tsx` (restored + FAQ toggle), `components/services/faqItems.ts` (new),
+`components/services/ServicesPageContent.tsx` (deleted), `components/TarotDeck.tsx`, `components/SiteHeader.tsx`,
+`components/SiteFooter.tsx`, `components/HomeCTA.tsx`, `app/(public)/about/page.tsx`, `app/sitemap.ts`,
+`next.config.mjs` (301s), `lib/services.ts` (comment), `docs/superpowers/specs/2026-10-04-services-terminology-design.md`.
+No DB/migration changes.
+
+**Lessons learned**
+- "Current main" and the working branch had diverged in opposite directions (branch deleted the grid;
+  main had it). Check `git log HEAD ^origin/main` and `origin/main ^HEAD` before assuming what exists.
+- Don't overwrite a branch's tree to match main; a normal `git merge origin/main` was clean and kept history.
+- Deleting a page deletes its unique content (the FAQ lived only there) — move it, don't lose it.
+- Redirect the old URL (`/services`) rather than 404; hash anchors in 301 targets work (browser keeps the fragment).
+- Analytics: `services_index` section name/index 6 was already registered in `lib/analytics/constants.ts`, so reuse it.
+- Not verified in a browser (no Supabase env in the sandbox): tsc, vitest (56) pass; visually check the anchor scroll and FAQ toggle.
+
+---
+
+## Session: analytics review + test-data cleanup (2026-10-07)
+
+**Done:** read-only analytics review (findings in `docs/superpowers/plans/2026-10-07-conversion-optimisation.md`);
+deleted 19 test sessions / 497 events from production `analytics_sessions` / `analytics_events`
+(owner-authorised; list in `docs/maintenance/2026-10-07-remove-test-analytics.sql`: all non-bot sessions
+started 4–5 Oct Madrid time + 1 session matched to an admin booking). Before: 180 sessions / 3,230 events.
+No schema changes; `bookings` and `leads` untouched.
+
+**Lessons learned**
+- Analytics is cookieless by design: past own-sessions cannot be traced, only guessed (dev referrers like
+  vercel.com/localhost/github.com, bursts of booking clicks, dates when testing).
+- `bookings` has no `session_key`; linking bookings to sessions is only possible by timestamp
+  (`booking_confirmed` event within ~10 s of `bookings.created_at`). Consider adding session_key to the
+  booking flow if attribution matters (needs a migration — owner applies it).
+- `booking_confirmed` counts were inflated by payment-flow testing; older July–Aug events remain
+  unverified. Treat the confirmed-booking rate as an upper bound.
+- Section views on tall sections undercount on mobile (50%-of-section rule) — see plan Task 1.
+- Prepare destructive prod SQL as a reviewed file with a preview count, run only on explicit
+  go-ahead, and verify the counts match before and after.
+
+---
+
+## Session: analytics Tasks 1 + 6 (2026-10-07)
+
+**Files:** `lib/analytics/visibility.ts` (+test), `lib/analytics/internal.ts` (+test), `lib/analytics/constants.ts`,
+`lib/analytics/queue.ts`, `components/analytics/TrackSection.tsx`, `context/AnalyticsContext.tsx`.
+No DB changes. 66 tests pass; tsc + lint clean for touched files.
+
+**How to flag your devices:** open the live site once with `?internal=1` on each browser/device
+(e.g. `https://<site>/?internal=1`). `?internal=0` undoes it. Per browser *and* per origin (localhost, preview
+URLs, Instagram's in-app browser need their own). Private windows / "clear site data" remove it.
+
+**Series break:** from the deploy date, tall sections (tarot) register on mobile. Section-view and dwell
+numbers before/after are NOT comparable. Record the deploy date here: ____.
+Check after deploy: mobile sessions with a `tarot` section_view should be ≥ sessions with a `tarot_card_flip`
+(was 3 vs 29).
+
+**Lessons learned**
+- Server-side filtering by referrer would create orphan events (attribution only rides the first batch);
+  filter on the client, before anything is sent.
+- A 1px tolerance in the visibility check makes "199 of 200 needed" pass — tests must sit clearly
+  either side of the bar.
+- All analytics events funnel through `enqueue()`; gate opt-outs there, not in each emitter.
+
+---
+
+## Session: conversion Tasks 3 + 4 (2026-10-07)
+
+**Files:** `components/booking/BookAction.tsx`, `components/booking/CalBookButton.tsx`,
+`components/services/ServiceRowCard.tsx`, `components/TarotDeck.tsx`, `components/services/ServicesIndex.tsx`,
+`components/LeadCaptureInline.tsx` (new), `components/LeadCaptureForm.tsx`, `app/(public)/page.tsx`,
+`lib/analytics/constants.ts`, `app/admin/analytics/page.tsx`.
+Extra files beyond the plan (owner-approved): `context/AnalyticsContext.tsx` (click listener now forwards
+`data-placement`), `types/index.ts` (`lead_inline` in `SectionName`), `app/globals.css` (`.ed-newsletter-light`).
+No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean for touched files.
+
+**What changed**
+- `booking_click` / `cta_book_card` events now carry `placement` = `tarot` | `grid` (event names unchanged).
+  Query: `props->>'placement'` on `analytics_events`. Events before deploy have no placement.
+- Lead-in under "Every service.": "Not sure where to start? Draw a card." → `#tarot`
+  (click event `cta_services_leadin_tarot`). Owner changed the plan's draft (free option) to the tarot deck.
+- Inline newsletter strip right after the tarot (`lead_inline`, index 11). `newsletter_signup` carries
+  `placement` = `inline` | `section`. Deploy date: ____ (decision gate for grid position ≈ 4 weeks later).
+
+**Lessons learned**
+- The plan assumed `BookingConversionListener` might need to read placement; it doesn't. Booking clicks go
+  through the delegated listener in `AnalyticsContext`, which reads `data-*` attributes.
+- The homepage order had changed since the plan was written (tarot is now directly after the hero), so
+  "after the tarot" sits above the Jung ribbon. Check the live order before placing sections.
+- `LeadCaptureForm` is styled for dark backgrounds; a light placement needs a CSS variant, not a new form.
+- Form copy fixed (owner-confirmed: a signup gets the newsletter, no code/DM): `LeadCaptureForm` is now EN/ES via
+  `useLang`; button "Subscribe"/"Suscribirme", success "You're in! Keep an eye on your inbox for the next letter
+  landing." The old "Love & Career Code / check your DMs" text was a leftover from a previous lead magnet.
+  API error strings from `/api/leads` stay English (server-side).

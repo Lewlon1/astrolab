@@ -25,7 +25,7 @@ export default function SiteFooter({ editorialDate }: Props) {
     >
       <div style={{ marginBottom: 18 }}>
         <Link
-          href="/services"
+          href="/#services"
           data-analytics="cta_book_footer"
           className="inline-block font-dm-mono uppercase"
           style={{
@@ -37,7 +37,7 @@ export default function SiteFooter({ editorialDate }: Props) {
             textDecoration: "none",
           }}
         >
-          <LangText en="Book a Session" es="Reservar" />
+          <LangText en="Book Now" es="Reservar" />
         </Link>
       </div>
       <a

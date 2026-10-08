@@ -183,7 +183,7 @@ export default function Founder({ editorialDate }: Props) {
                     psychotherapist with over 10 years in the field and a lover
                     of astrology. I created the Astro Psyche Lab, a carefully
                     designed project that fuses my profession and passion into
-                    tailored sessions for you.
+                    tailored services for you.
                   </>
                 }
                 es={
@@ -191,7 +191,7 @@ export default function Founder({ editorialDate }: Props) {
                     Puerto Rico born and now Europe based — I&apos;m Gabriela,
                     psicoterapeuta con más de 10 años en el campo y amante de la
                     astrología. Creé el Astro Psyche Lab, un proyecto que
-                    fusiona mi profesión y pasión en sesiones personalizadas
+                    fusiona mi profesión y pasión en servicios personalizados
                     para ti.
                   </>
                 }

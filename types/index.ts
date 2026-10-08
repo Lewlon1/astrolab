@@ -392,6 +392,7 @@ export type SectionName =
   | "jung"
   | "founder"
   | "tarot"
+  | "lead_inline"
   | "magazine"
   | "services_index"
   | "testimonials"

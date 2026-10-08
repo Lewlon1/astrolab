@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useLang } from "@/context/LangContext";
 import LangText from "@/components/LangText";
 import ServiceRowCard from "@/components/services/ServiceRowCard";
+import EditorialFAQ from "@/components/services/EditorialFAQ";
+import { SERVICES_FAQ_ITEMS } from "@/components/services/faqItems";
 import { localizeService, SERVICE_CARD_LABELS } from "@/lib/services";
 import type { Service } from "@/types";
 
@@ -13,6 +15,7 @@ type Props = {
 
 export default function ServicesIndex({ services }: Props) {
   const { lang } = useLang();
+  const [faqOpen, setFaqOpen] = useState(false);
 
   if (!services || services.length === 0) return null;
 
@@ -53,7 +56,7 @@ export default function ServicesIndex({ services }: Props) {
           </span>
         </div>
         <h2
-          className="font-fraunces m-0 mb-12 md:mb-14"
+          className="font-fraunces m-0 mb-5 md:mb-6"
           style={{
             fontSize: "clamp(40px, 6vw, 72px)",
             fontWeight: 300,
@@ -66,7 +69,7 @@ export default function ServicesIndex({ services }: Props) {
               <>
                 Every{" "}
                 <em style={{ fontStyle: "italic", color: "var(--ed-rust)" }}>
-                  session.
+                  service.
                 </em>
               </>
             }
@@ -74,12 +77,33 @@ export default function ServicesIndex({ services }: Props) {
               <>
                 Cada{" "}
                 <em style={{ fontStyle: "italic", color: "var(--ed-rust)" }}>
-                  sesión.
+                  servicio.
                 </em>
               </>
             }
           />
         </h2>
+
+        <p
+          className="font-spectral m-0 mb-12 md:mb-14"
+          style={{ fontSize: 17, color: "var(--ed-ink-soft)", lineHeight: 1.6 }}
+        >
+          <LangText
+            en="Not sure where to start? "
+            es="¿No sabes por dónde empezar? "
+          />
+          <a
+            href="#tarot"
+            data-analytics="cta_services_leadin_tarot"
+            style={{
+              color: "var(--ed-rust)",
+              textDecoration: "none",
+              borderBottom: "1px solid var(--ed-rust)",
+            }}
+          >
+            <LangText en="Draw a card." es="Saca una carta." />
+          </a>
+        </p>
 
         <div
           className="grid grid-cols-1 md:grid-cols-3"
@@ -97,20 +121,53 @@ export default function ServicesIndex({ services }: Props) {
           ))}
         </div>
 
-        <div className="mt-12 text-center">
-          <Link
-            href="/services"
-            className="font-dm-mono uppercase"
+        <div className="mt-14 md:mt-16 max-w-[760px] mx-auto">
+          <button
+            type="button"
+            onClick={() => setFaqOpen((o) => !o)}
+            aria-expanded={faqOpen}
+            aria-controls="services-faq"
+            data-analytics="services_faq_toggle"
+            className="flex w-full items-center gap-4 text-left"
             style={{
-              fontSize: 11,
-              letterSpacing: "0.22em",
-              color: "var(--ed-rust)",
-              textDecoration: "none",
-              borderBottom: "1px solid transparent",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
             }}
           >
-            <LangText en="View all details →" es="Ver todos los detalles →" />
-          </Link>
+            <span
+              className="font-dm-mono uppercase"
+              style={{
+                fontSize: 11,
+                letterSpacing: "0.24em",
+                color: "var(--ed-rust)",
+              }}
+            >
+              <LangText en="Frequently asked questions" es="Preguntas frecuentes" />
+            </span>
+            <span
+              className="flex-1"
+              style={{ height: 1, background: "var(--ed-rule)" }}
+            />
+            <span
+              aria-hidden
+              style={{
+                color: "var(--ed-rust)",
+                fontSize: 22,
+                fontWeight: 300,
+                transition: "transform 0.3s",
+                transform: faqOpen ? "rotate(45deg)" : undefined,
+              }}
+            >
+              +
+            </span>
+          </button>
+          {faqOpen && (
+            <div id="services-faq" className="mt-8">
+              <EditorialFAQ items={SERVICES_FAQ_ITEMS} />
+            </div>
+          )}
         </div>
       </div>
     </section>

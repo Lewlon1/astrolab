@@ -5,13 +5,14 @@ import JungRibbon from "@/components/JungRibbon";
 import Founder from "@/components/Founder";
 import TarotDeck from "@/components/TarotDeck";
 import MagazineDetail from "@/components/MagazineDetail";
+import ServicesIndex from "@/components/services/ServicesIndex";
 import Testimonials from "@/components/Testimonials";
+import LeadCaptureInline from "@/components/LeadCaptureInline";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
-import ServicesIndex from "@/components/services/ServicesIndex";
 import HomeCTA from "@/components/HomeCTA";
 import TrackSection from "@/components/analytics/TrackSection";
-import { organizationJsonLd } from "@/lib/jsonld";
+import { organizationJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
 import type { Service, Testimonial, BlogPost } from "@/types";
 
@@ -51,11 +52,23 @@ export default async function HomePage() {
         }}
       />
 
+      {services && services.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(services.map(serviceJsonLd)),
+          }}
+        />
+      )}
+
       <TrackSection name="hero" index={0}>
         <Hero editorialDate={editorialDate} />
       </TrackSection>
       <TrackSection name="tarot" index={1}>
         <TarotDeck services={services ?? []} />
+      </TrackSection>
+      <TrackSection name="lead_inline" index={11}>
+        <LeadCaptureInline />
       </TrackSection>
       <TrackSection name="jung" index={2}>
         <JungRibbon />

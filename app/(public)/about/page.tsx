@@ -179,7 +179,7 @@ export default function AboutPage() {
         <h2 className="cta-title">Ready to decode your chart?</h2>
         <p className="cta-sub">
           Whether you&apos;re curious about your patterns or ready for deep
-          transformation, there&apos;s a session for you.
+          transformation, there&apos;s a service for you.
         </p>
         <div
           style={{
@@ -190,7 +190,7 @@ export default function AboutPage() {
             position: "relative",
           }}
         >
-          <Link href="/services" className="btn-white">
+          <Link href="/#services" className="btn-white">
             Explore services
           </Link>
           <Link

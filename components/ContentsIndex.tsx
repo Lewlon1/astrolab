@@ -16,8 +16,8 @@ const FEATURES: Array<{
   },
   {
     pp: "Pp. 12",
-    titleEn: "Five Sessions",
-    titleEs: "Cinco Sesiones",
+    titleEn: "The Spread",
+    titleEs: "La Tirada",
     descEn: "What's calling you?",
     descEs: "¿Qué te está llamando?",
   },

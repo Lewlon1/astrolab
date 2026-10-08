@@ -54,12 +54,12 @@ export default function HomeCTA() {
         }}
       >
         <LangText
-          en="Book a session and discover the patterns, dynamics, and directions written in your chart."
-          es="Reserva una sesión y descubre los patrones, las dinámicas y las direcciones escritas en tu carta."
+          en="Explore the services and discover the patterns, dynamics, and directions written in your chart."
+          es="Explora los servicios y descubre los patrones, las dinámicas y las direcciones escritas en tu carta."
         />
       </p>
       <Link
-        href="/services"
+        href="/#services"
         data-analytics="cta_book_home"
         className="inline-block font-dm-mono uppercase"
         style={{
@@ -72,7 +72,7 @@ export default function HomeCTA() {
           textDecoration: "none",
         }}
       >
-        <LangText en="Book Your Session →" es="Reserva Tu Sesión →" />
+        <LangText en="Book Now →" es="Reservar →" />
       </Link>
     </section>
   );
