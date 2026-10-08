@@ -725,3 +725,8 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
 - Hide labs routes in their `layout.tsx` with `notFound()`, not just the nav — otherwise the URL still works.
 - Group admin by funnel stage (Clients / Content / Website / Insights), not by data type; the dashboard
   never showed unpaid bookings, which is the fastest path to revenue.
+- Revision after owner answers: phone-first (bottom tab bar), Engagement promoted not retired.
+- Prod read-only check showed the real problem is habit, not navigation: `action_items` generated on only
+  3 days in 2 months, 0 ever marked done; `lead_events` = 0 (MailerLite/ManyChat never fed in); 6 bookings,
+  all unpaid. Check usage data before redesigning UI — it changed the plan's priority to the Today screen.
+- Lead Queue batches only generate when that page is opened, so a buried page = no batches at all.
