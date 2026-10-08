@@ -761,3 +761,36 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   `execute_sql` timed out twice at 60 s with nothing deleted (count stayed 6, no stuck query in `pg_stat_activity`).
   Likely the MCP's destructive-statement confirmation can't be answered from a cloud session. Run destructive SQL in
   the Supabase SQL editor instead; always re-count after a timeout before retrying.
+
+---
+
+## Session 2: "Today" home screen (2026-10-08)
+
+**Files:** `app/admin/page.tsx`, `lib/dailyActions.ts` (new `getOrCreateTodayBatch()`), `app/api/admin/actions/route.ts`
+(now calls the helper, same response), `components/admin/lead-queue/ActionCard.tsx` (extracted from
+`DailyActionsPanel.tsx`, stacks buttons under text on phones), `components/admin/lead-queue/DailyActionsPanel.tsx`,
+`components/admin/today/TodayChecklist.tsx` (new), `components/admin/today/GetPaidCard.tsx` (new),
+`lib/admin/today.ts` (+test). No DB changes. tsc, 81 tests, lint clean.
+
+**What changed**
+- Opening `/admin` now generates today's Daily Actions batch (before: only opening Lead Queue did).
+- Home order: Get paid (bookings matching the Bookings "Needs attention" rule) → Today's actions with a progress bar,
+  grouped Follow up (tier 1) / Engage (tier 3, links to the reply assistant) / Also today (tiers 2+4) → metrics
+  ("Blog views: Coming soon" replaced by Paid bookings, 30 days) → recent leads + grouped quick actions → events.
+- Lead Queue cards got the same phone layout fix.
+
+**Deviation from plan**
+- No separate Engage card or `lib/engagementRotation.ts`: Lead Queue Tier 3 already picks 3 engagement accounts a day
+  in the DB and marking one done updates `engagement_accounts.last_engaged_at`. The home screen reuses that, so
+  engagement done-state is already DB-backed there. Task 4 shrinks to: make `/admin/engagement`'s list read the same
+  Tier 3 items instead of its own localStorage rotation.
+- "Get paid" uses the existing `needsAttention()` rule (pending, unmatched payment, paid-but-cancelled), not
+  "unpaid + accepted". Accepted-but-unpaid bookings don't show; that matches the Bookings page.
+
+**Lessons learned**
+- Check what an existing engine already stores before building a parallel feature — Tier 3 made a whole card redundant.
+- Stale `.next/types` from a deleted preview route breaks `tsc`; `rm -rf .next/types` after removing throwaway pages.
+- Card layouts with `flex-wrap` + `flex-1 min-w-0` text squeeze the text instead of wrapping the buttons on phones;
+  use `flex-col sm:flex-row`.
+- Owner reported the test-bookings cleanup as done, but prod still had 6 bookings at session start. Re-count after any
+  manual prod change.
