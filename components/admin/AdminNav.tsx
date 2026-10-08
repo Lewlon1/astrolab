@@ -1,89 +1,101 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { activeGroup, activeItem, visibleNavGroups } from "./navConfig";
 
-const navLinks = [
-  { label: "Dashboard", href: "/admin" },
-  { label: "Analytics", href: "/admin/analytics" },
-  { label: "Services", href: "/admin/services" },
-  { label: "Bookings", href: "/admin/bookings" },
-  { label: "Blog", href: "/admin/blog" },
-  { label: "Testimonials", href: "/admin/testimonials" },
-  { label: "Events", href: "/admin/events" },
-  { label: "Leads", href: "/admin/leads" },
-  { label: "Lead Queue", href: "/admin/lead-queue" },
-  { label: "Repurpose", href: "/admin/repurpose" },
-  { label: "Engagement", href: "/admin/engagement" },
-  { label: "Inspiration", href: "/admin/inspiration" },
-  { label: "Transits", href: "/admin/transits" },
-  { label: "Video Editor", href: "/admin/video-editor" },
-  { label: "Photoshop", href: "/admin/photoshop" },
-];
+const groups = visibleNavGroups();
 
+/** Desktop top bar: branding + one dropdown per group. Mobile uses AdminTabBar. */
 export default function AdminNav() {
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const [open, setOpen] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const current = activeGroup(pathname, groups);
+  const currentItem = activeItem(pathname, groups);
+
+  // Close on navigation, outside click, and Escape.
+  useEffect(() => setOpen(null), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(null);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(null);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6" ref={ref}>
       {/* Branding */}
-      <div className="flex items-center gap-2.5">
+      <Link href="/admin" className="flex items-center gap-2.5">
         <span className="font-heading text-lg tracking-wide">ASTRO LAB</span>
         <span className="text-[10px] font-medium uppercase tracking-wider bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
           Admin
         </span>
-      </div>
+      </Link>
 
       {/* Desktop nav */}
       <nav className="hidden md:flex items-center gap-1">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="text-sm text-[#6b6560] hover:text-[#1a1a18] hover:bg-[#f5f3ef] px-3 py-1.5 rounded-lg transition-colors"
-          >
-            {link.label}
-          </Link>
-        ))}
-      </nav>
+        {groups.map((group) => {
+          const isActive = current === group.label;
+          const base = `text-sm px-3 py-1.5 rounded-lg transition-colors ${
+            isActive
+              ? "text-[#1a1a18] bg-[#f5f3ef] font-medium"
+              : "text-[#6b6560] hover:text-[#1a1a18] hover:bg-[#f5f3ef]"
+          }`;
 
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="md:hidden p-1.5 rounded-lg hover:bg-[#f5f3ef] transition-colors"
-        aria-label="Toggle navigation"
-      >
-        {open ? (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-            <line x1="3" y1="3" x2="15" y2="15" />
-            <line x1="15" y1="3" x2="3" y2="15" />
-          </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-            <line x1="3" y1="5" x2="15" y2="5" />
-            <line x1="3" y1="9" x2="15" y2="9" />
-            <line x1="3" y1="13" x2="15" y2="13" />
-          </svg>
-        )}
-      </button>
-
-      {/* Mobile dropdown */}
-      {open && (
-        <div className="md:hidden absolute top-14 left-0 right-0 bg-white border-b border-[#e8e5df] shadow-sm z-50">
-          <nav className="max-w-7xl mx-auto px-6 py-3 flex flex-col gap-0.5">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setOpen(false)}
-                className="text-sm text-[#6b6560] hover:text-[#1a1a18] hover:bg-[#f5f3ef] px-3 py-2 rounded-lg transition-colors"
-              >
-                {link.label}
+          if (group.items.length === 1) {
+            return (
+              <Link key={group.label} href={group.items[0].href} className={base}>
+                {group.label}
               </Link>
-            ))}
-          </nav>
-        </div>
-      )}
+            );
+          }
+
+          const isOpen = open === group.label;
+          return (
+            <div key={group.label} className="relative">
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : group.label)}
+                aria-expanded={isOpen}
+                aria-haspopup="menu"
+                className={`${base} inline-flex items-center gap-1`}
+              >
+                {group.label}
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" className={`transition-transform ${isOpen ? "rotate-180" : ""}`}>
+                  <path d="M2 3.5l3 3 3-3" />
+                </svg>
+              </button>
+              {isOpen && (
+                <div role="menu" className="absolute left-0 top-full mt-1 min-w-[180px] bg-white border border-[#e8e5df] rounded-xl shadow-sm py-1.5 z-50">
+                  {group.items.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      role="menuitem"
+                      className={`block text-sm px-3.5 py-2 transition-colors ${
+                        currentItem?.href === item.href
+                          ? "text-[#1a1a18] font-medium bg-[#f5f3ef]"
+                          : "text-[#6b6560] hover:text-[#1a1a18] hover:bg-[#f5f3ef]"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </nav>
     </div>
   );
 }

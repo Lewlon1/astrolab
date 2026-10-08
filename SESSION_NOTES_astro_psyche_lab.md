@@ -712,3 +712,112 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   `useLang`; button "Subscribe"/"Suscribirme", success "You're in! Keep an eye on your inbox for the next letter
   landing." The old "Love & Career Code / check your DMs" text was a leftover from a previous lead magnet.
   API error strings from `/api/leads` stay English (server-side).
+
+---
+
+## Session: admin simplification plan (2026-10-08)
+
+**Done:** plan only — `docs/superpowers/plans/2026-10-08-admin-simplification.md`. No code or DB changes.
+
+**Lessons learned**
+- There was no feature-flag system in the repo; the plan adds a tiny typed config (`lib/admin/features.ts`)
+  instead of a DB table, so hiding a tool never needs a migration.
+- Hide labs routes in their `layout.tsx` with `notFound()`, not just the nav — otherwise the URL still works.
+- Group admin by funnel stage (Clients / Content / Website / Insights), not by data type; the dashboard
+  never showed unpaid bookings, which is the fastest path to revenue.
+- Revision after owner answers: phone-first (bottom tab bar), Engagement promoted not retired.
+- Prod read-only check showed the real problem is habit, not navigation: `action_items` generated on only
+  3 days in 2 months, 0 ever marked done; `lead_events` = 0 (MailerLite/ManyChat never fed in); 6 bookings,
+  all unpaid. Check usage data before redesigning UI — it changed the plan's priority to the Today screen.
+- Lead Queue batches only generate when that page is opened, so a buried page = no batches at all.
+
+---
+
+## Session 1: admin flags + grouped nav (2026-10-08)
+
+**Files:** `lib/admin/features.ts` (+test), `components/admin/navConfig.ts` (+test), `components/admin/NavIcons.tsx` (new),
+`components/admin/AdminNav.tsx` (rewrite), `components/admin/AdminTabBar.tsx` (new), `app/admin/layout.tsx`,
+`app/admin/video-editor/layout.tsx`, `app/admin/photoshop/layout.tsx`,
+`docs/maintenance/2026-10-08-remove-test-bookings.sql` (new, NOT run). No DB changes. tsc, 77 tests, lint clean.
+
+**What changed**
+- Video Editor + Photoshop hidden: gone from nav and their layouts `notFound()` unless `NEXT_PUBLIC_ADMIN_LABS=1`
+  (build-time; set it on a preview deploy to bring them back). When on, they appear under Content.
+- Nav is 5 groups (Today / Clients / Content / Website / Insights). Desktop: dropdowns. Mobile: bottom tab bar with a
+  bottom sheet for multi-page groups; the old hamburger is gone.
+- Test-bookings cleanup SQL prepared for the owner (6 rows, all unpaid, no Stripe session). Cancel the two future ones
+  (23 + 28 Oct) in Cal.com first.
+
+**Lessons learned**
+- Playwright in the repo is newer than the preinstalled browser; launch with
+  `executablePath: /opt/pw-browsers/chromium-1194/chrome-linux/chrome` and run the script from scratchpad.
+- Admin pages can't be screenshotted in the sandbox (Supabase auth); render the nav on a throwaway route, then delete it.
+- `pkill -f "<pattern>"` inside a Bash call matches the call's own shell and kills it; kill by port instead.
+- MailerLite sync has never written anything to prod: 0 leads with `source = mailerlite`, 0 `lead_events`. Before
+  blaming free-plan limits, press Sync once and read the error it returns. developers.mailerlite.com is blocked from the
+  sandbox, so plan limits couldn't be checked against the official docs.
+- Not verified in a real logged-in session: the labs routes' 404 (middleware redirects to login first in the sandbox).
+- Owner asked Claude to run the test-bookings cleanup. Preview matched (6/6), but the `DELETE` via Supabase MCP
+  `execute_sql` timed out twice at 60 s with nothing deleted (count stayed 6, no stuck query in `pg_stat_activity`).
+  Likely the MCP's destructive-statement confirmation can't be answered from a cloud session. Run destructive SQL in
+  the Supabase SQL editor instead; always re-count after a timeout before retrying.
+
+---
+
+## Session 2: "Today" home screen (2026-10-08)
+
+**Files:** `app/admin/page.tsx`, `lib/dailyActions.ts` (new `getOrCreateTodayBatch()`), `app/api/admin/actions/route.ts`
+(now calls the helper, same response), `components/admin/lead-queue/ActionCard.tsx` (extracted from
+`DailyActionsPanel.tsx`, stacks buttons under text on phones), `components/admin/lead-queue/DailyActionsPanel.tsx`,
+`components/admin/today/TodayChecklist.tsx` (new), `components/admin/today/GetPaidCard.tsx` (new),
+`lib/admin/today.ts` (+test). No DB changes. tsc, 81 tests, lint clean.
+
+**What changed**
+- Opening `/admin` now generates today's Daily Actions batch (before: only opening Lead Queue did).
+- Home order: Get paid (bookings matching the Bookings "Needs attention" rule) → Today's actions with a progress bar,
+  grouped Follow up (tier 1) / Engage (tier 3, links to the reply assistant) / Also today (tiers 2+4) → metrics
+  ("Blog views: Coming soon" replaced by Paid bookings, 30 days) → recent leads + grouped quick actions → events.
+- Lead Queue cards got the same phone layout fix.
+
+**Deviation from plan**
+- No separate Engage card or `lib/engagementRotation.ts`: Lead Queue Tier 3 already picks 3 engagement accounts a day
+  in the DB and marking one done updates `engagement_accounts.last_engaged_at`. The home screen reuses that, so
+  engagement done-state is already DB-backed there. Task 4 shrinks to: make `/admin/engagement`'s list read the same
+  Tier 3 items instead of its own localStorage rotation.
+- "Get paid" uses the existing `needsAttention()` rule (pending, unmatched payment, paid-but-cancelled), not
+  "unpaid + accepted". Accepted-but-unpaid bookings don't show; that matches the Bookings page.
+
+**Lessons learned**
+- Check what an existing engine already stores before building a parallel feature — Tier 3 made a whole card redundant.
+- Stale `.next/types` from a deleted preview route breaks `tsc`; `rm -rf .next/types` after removing throwaway pages.
+- Card layouts with `flex-wrap` + `flex-1 min-w-0` text squeeze the text instead of wrapping the buttons on phones;
+  use `flex-col sm:flex-row`.
+- Owner reported the test-bookings cleanup as done, but prod still had 6 bookings at session start. Re-count after any
+  manual prod change.
+
+---
+
+## Session 3: Engagement page on the shared daily list (2026-10-08)
+
+**Files:** `app/admin/engagement/page.tsx`, `components/admin/EngagementClient.tsx`, `lib/admin/today.ts`
+(+ `engagementTasks()` and tests). No DB changes. tsc, 83 tests, lint clean.
+
+**What changed**
+- `/admin/engagement` "Today's engagement list" is now the Daily Actions Tier 3 items (same records as the home
+  screen's Engage section), joined to `engagement_accounts` for followers/niche. Done/Skip go through
+  `PATCH /api/admin/actions/[id]`, which stamps `last_engaged_at` — the field the rotation ranks on.
+- Removed: the day-of-year rotation, the localStorage done-state and the "Refresh list" button. Old localStorage
+  keys in Gabs's browser are now unused and harmless.
+- Opening the page generates today's batch if it doesn't exist yet (same helper as the home screen).
+- Reply assistant (right column) unchanged.
+
+**Behaviour changes to tell Gabs**
+- Engagement accounts per day: raised from 3 to 5 at owner request (`MAX_ENGAGEMENT_PER_DAY` in `lib/actionEngine.ts`);
+  takes effect from the next generated batch. Still competes with follow-ups for the 45-minute budget (5 × 3 min = 15 min). With 10 active accounts and yesterday's
+  held back a day, the list alternates between two sets of 5.
+- "Done" can't be undone (the actions API only accepts done/skipped), same as Lead Queue.
+- If follow-ups fill the 45-minute budget, there may be no engagement items that day; the page says so.
+
+**Lessons learned**
+- When replacing a component's data source, grep the whole file for the old variable — a stats bar at the bottom
+  still used `todaysAccounts` and only `tsc` caught it.

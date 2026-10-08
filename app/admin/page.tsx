@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import type { Lead, Event } from "@/types";
+import type { Lead, Event, ActionItem } from "@/types";
+import type { Booking } from "@/lib/payments/types";
+import { needsAttention } from "@/lib/payments/bookingView";
+import { getOrCreateTodayBatch } from "@/lib/dailyActions";
+import GetPaidCard from "@/components/admin/today/GetPaidCard";
+import TodayChecklist from "@/components/admin/today/TodayChecklist";
 import {
   timeAgo,
   leadStatusColors,
@@ -16,19 +21,31 @@ const eventTypeColors: Record<string, string> = {
   popup: "bg-coral",
 };
 
+// Grouped to match the nav (components/admin/navConfig.ts).
 const quickActions = [
-  { label: "Write a blog post", href: "/admin/blog/new" },
-  { label: "Edit services & prices", href: "/admin/services" },
-  { label: "Add a testimonial", href: "/admin/testimonials" },
-  { label: "Create an event", href: "/admin/events/new" },
-  { label: "Repurpose last post", href: "/admin/repurpose" },
+  { label: "Plan transit posts", href: "/admin/transits", group: "Content" },
+  { label: "Repurpose last post", href: "/admin/repurpose", group: "Content" },
+  { label: "Write a blog post", href: "/admin/blog/new", group: "Website" },
+  { label: "Edit services & prices", href: "/admin/services", group: "Website" },
+  { label: "Add a testimonial", href: "/admin/testimonials", group: "Website" },
+  { label: "Create an event", href: "/admin/events/new", group: "Website" },
 ];
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
+  const monthAgo = new Date();
+  monthAgo.setDate(monthAgo.getDate() - 30);
+
+  // Opening the home screen generates today's batch (previously only Lead Queue did).
+  // Any failure (e.g. a missing table) hides the checklist instead of breaking the page.
+  const todayItems: Promise<ActionItem[] | null> = getOrCreateTodayBatch(supabase)
+    .then((b) => b.items)
+    .catch(() => null);
 
   const [
     { count: leadsThisWeek },
@@ -36,6 +53,9 @@ export default async function AdminDashboardPage() {
     { data: recentLeads },
     { count: upcomingEventsCount },
     { data: upcomingEvents },
+    { data: bookings },
+    { count: paidBookings30d },
+    actionItems,
   ] = await Promise.all([
     supabase
       .from("leads")
@@ -59,12 +79,25 @@ export default async function AdminDashboardPage() {
       .order("date")
       .limit(3)
       .returns<Event[]>(),
+    supabase
+      .from("bookings")
+      .select("*")
+      .order("start_time", { ascending: true, nullsFirst: true })
+      .returns<Booking[]>(),
+    supabase
+      .from("bookings")
+      .select("*", { count: "exact", head: true })
+      .in("payment_status", ["paid", "manual"])
+      .gte("paid_at", monthAgo.toISOString()),
+    todayItems,
   ]);
+
+  const attentionBookings = (bookings ?? []).filter(needsAttention);
 
   const metrics = [
     { label: "Leads this week", value: leadsThisWeek ?? 0 },
     { label: "Total subscribers", value: totalLeads ?? 0 },
-    { label: "Blog views", value: "Coming soon", muted: true },
+    { label: "Paid bookings (30 days)", value: paidBookings30d ?? 0 },
     { label: "Upcoming events", value: upcomingEventsCount ?? 0 },
   ];
 
@@ -76,9 +109,13 @@ export default async function AdminDashboardPage() {
           Welcome back, Gabs
         </h1>
         <p className="text-[#6b6560] mt-1">
-          Here&apos;s what&apos;s happening this week
+          Work down this page and you&apos;re done for the day
         </p>
       </div>
+
+      <GetPaidCard bookings={attentionBookings} />
+
+      <TodayChecklist initialItems={actionItems} />
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -88,13 +125,7 @@ export default async function AdminDashboardPage() {
             className="bg-white border border-[#e8e5df] rounded-xl p-5"
           >
             <p className="text-sm text-[#6b6560]">{metric.label}</p>
-            <p
-              className={`text-2xl font-medium mt-1 ${
-                "muted" in metric && metric.muted
-                  ? "text-[#b8b0a4] text-base"
-                  : "text-[#1a1a18]"
-              }`}
-            >
+            <p className="text-2xl font-medium mt-1 text-[#1a1a18]">
               {metric.value}
             </p>
           </div>
@@ -165,18 +196,24 @@ export default async function AdminDashboardPage() {
           <h2 className="font-heading text-lg text-[#1a1a18] mb-4">
             Quick actions
           </h2>
-          <div className="space-y-2">
-            {quickActions.map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="flex items-center justify-between py-2.5 px-3 rounded-lg text-sm text-[#1a1a18] hover:bg-[#f5f3ef] transition-colors group"
-              >
-                <span>{action.label}</span>
-                <span className="text-[#b8b0a4] group-hover:text-[#6b6560] transition-colors">
-                  &rarr;
-                </span>
-              </Link>
+          <div className="space-y-1">
+            {quickActions.map((action, i) => (
+              <div key={action.href}>
+                {action.group !== quickActions[i - 1]?.group && (
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-[#b8b0a4] px-3 pt-2 pb-1">
+                    {action.group}
+                  </p>
+                )}
+                <Link
+                  href={action.href}
+                  className="flex items-center justify-between py-2.5 px-3 rounded-lg text-sm text-[#1a1a18] hover:bg-[#f5f3ef] transition-colors group"
+                >
+                  <span>{action.label}</span>
+                  <span className="text-[#b8b0a4] group-hover:text-[#6b6560] transition-colors">
+                    &rarr;
+                  </span>
+                </Link>
+              </div>
             ))}
           </div>
         </div>

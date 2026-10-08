@@ -7,7 +7,12 @@
  */
 
 import type { createClient } from "@/lib/supabase/server";
-import { computeSuppressedKeys, type EngineInput } from "@/lib/actionEngine";
+import {
+  BATCH_SIZE,
+  computeSuppressedKeys,
+  generateBatch,
+  type EngineInput,
+} from "@/lib/actionEngine";
 import { groupEventsByLead, loadWeights, scoreAndRank } from "@/lib/leadScoring";
 import type {
   ActionItem,
@@ -15,6 +20,7 @@ import type {
   Lead,
   LeadEvent,
   RitualCalendarItem,
+  TankStatus,
 } from "@/types";
 
 export type Supa = Awaited<ReturnType<typeof createClient>>;
@@ -141,4 +147,85 @@ export async function loadBatch(supabase: Supa, today: string) {
 
 export function sumMinutes(items: ActionItem[]): number {
   return items.reduce((sum, i) => sum + (i.est_minutes ?? 0), 0);
+}
+
+export interface TodayBatch {
+  date: string;
+  batch: number;
+  items: ActionItem[];
+  totalMinutes: number;
+  tank: TankStatus;
+  canRegenerate: boolean;
+  batchSize: number;
+}
+
+/**
+ * Today's batch, generating batch 1 on the first call of the day. Shared by
+ * GET /api/admin/actions and the admin home screen, so opening either one
+ * produces the day's actions. Idempotent per (generated_for, dedupe_key).
+ */
+export async function getOrCreateTodayBatch(supabase: Supa): Promise<TodayBatch> {
+  const today = todayInMadrid();
+  await expireStale(supabase, today);
+
+  const existing = await loadBatch(supabase, today);
+
+  // A batch already exists — return it untouched. This is the refresh path.
+  // The engine still runs, but only to recompute the tank status.
+  if (existing.all.length > 0) {
+    const input = await buildEngineInput(supabase, today);
+    const preview = generateBatch(input);
+
+    return {
+      date: today,
+      batch: existing.latestBatch,
+      items: existing.current,
+      totalMinutes: sumMinutes(existing.current),
+      tank: preview.tank,
+      canRegenerate:
+        existing.current.length > 0 &&
+        existing.current.every((i) => i.status === "done" || i.status === "skipped"),
+      batchSize: BATCH_SIZE,
+    };
+  }
+
+  // First request of the day — generate batch 1.
+  const input = await buildEngineInput(supabase, today);
+  const generated = generateBatch(input);
+
+  if (generated.items.length === 0) {
+    return {
+      date: today,
+      batch: 1,
+      items: [],
+      totalMinutes: 0,
+      tank: generated.tank,
+      canRegenerate: false,
+      batchSize: BATCH_SIZE,
+    };
+  }
+
+  const { error } = await supabase.from("action_items").upsert(
+    generated.items.map((i) => ({
+      ...i,
+      status: "pending",
+      generated_for: today,
+      batch: 1,
+    })),
+    { onConflict: "generated_for,dedupe_key", ignoreDuplicates: true }
+  );
+
+  if (error) throw new Error(error.message);
+
+  const saved = await loadBatch(supabase, today);
+
+  return {
+    date: today,
+    batch: saved.latestBatch,
+    items: saved.current,
+    totalMinutes: sumMinutes(saved.current),
+    tank: generated.tank,
+    canRegenerate: false,
+    batchSize: BATCH_SIZE,
+  };
 }
