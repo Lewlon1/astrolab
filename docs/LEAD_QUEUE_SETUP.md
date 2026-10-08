@@ -276,7 +276,7 @@ Open the **Daily actions** tab. The first load of the day generates batch 1.
 
 Expect it to look thin at first, and that's correct behaviour rather than a bug: Tier 1
 conversion actions only exist once there's behavioural history to rank on. On day one you
-will likely see the ritual fixture (if it's a Tuesday or Sunday), up to 3 engagement
+will likely see the ritual fixture (if it's a Tuesday or Sunday), up to 5 engagement
 actions, and some maintenance — with a banner saying so plainly.
 
 The banner is the honest part of the tool. When it says *"The high-value work is done for

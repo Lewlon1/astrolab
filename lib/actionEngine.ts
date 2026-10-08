@@ -24,7 +24,7 @@ import type {
 
 export const BATCH_SIZE = 10;
 export const TIME_BUDGET_MINUTES = 45;
-export const MAX_ENGAGEMENT_PER_DAY = 3;
+export const MAX_ENGAGEMENT_PER_DAY = 5;
 /** Two skips of the same lead-action suppress it for this long. */
 export const SUPPRESSION_DAYS = 7;
 /** A code delivered with no reply becomes a follow-up after this many days. */

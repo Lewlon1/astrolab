@@ -812,8 +812,9 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
 - Reply assistant (right column) unchanged.
 
 **Behaviour changes to tell Gabs**
-- 3 accounts a day (engine's `MAX_ENGAGEMENT_PER_DAY`), not 5. Raising it is a one-line change in `lib/actionEngine.ts`,
-  but it competes with follow-ups for the 45-minute budget.
+- Engagement accounts per day: raised from 3 to 5 at owner request (`MAX_ENGAGEMENT_PER_DAY` in `lib/actionEngine.ts`);
+  takes effect from the next generated batch. Still competes with follow-ups for the 45-minute budget (5 × 3 min = 15 min). With 10 active accounts and yesterday's
+  held back a day, the list alternates between two sets of 5.
 - "Done" can't be undone (the actions API only accepts done/skipped), same as Lead Queue.
 - If follow-ups fill the 45-minute budget, there may be no engagement items that day; the page says so.
 
