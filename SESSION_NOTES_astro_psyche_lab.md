@@ -712,3 +712,16 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   `useLang`; button "Subscribe"/"Suscribirme", success "You're in! Keep an eye on your inbox for the next letter
   landing." The old "Love & Career Code / check your DMs" text was a leftover from a previous lead magnet.
   API error strings from `/api/leads` stay English (server-side).
+
+---
+
+## Session: admin simplification plan (2026-10-08)
+
+**Done:** plan only — `docs/superpowers/plans/2026-10-08-admin-simplification.md`. No code or DB changes.
+
+**Lessons learned**
+- There was no feature-flag system in the repo; the plan adds a tiny typed config (`lib/admin/features.ts`)
+  instead of a DB table, so hiding a tool never needs a migration.
+- Hide labs routes in their `layout.tsx` with `notFound()`, not just the nav — otherwise the URL still works.
+- Group admin by funnel stage (Clients / Content / Website / Insights), not by data type; the dashboard
+  never showed unpaid bookings, which is the fastest path to revenue.
