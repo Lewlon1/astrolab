@@ -1,6 +1,6 @@
 # Admin simplification — implementation plan
 
-Date: 2026-10-08 · Branch: `claude/magical-goldberg-s42n1m` · Status: Tasks 1–3 implemented 2026-10-08 (sessions 1–2) · Revised 2026-10-08 after owner answers + prod read-only check
+Date: 2026-10-08 · Branch: `claude/magical-goldberg-s42n1m` · Status: Tasks 1–4 implemented 2026-10-08 (sessions 1–3) · Revised 2026-10-08 after owner answers + prod read-only check
 
 Goal: make `/admin` answer one question for Gabs every time she opens it —
 **"what do I do today that gets someone closer to paying?"** — and hide everything

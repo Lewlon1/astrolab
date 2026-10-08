@@ -794,3 +794,29 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   use `flex-col sm:flex-row`.
 - Owner reported the test-bookings cleanup as done, but prod still had 6 bookings at session start. Re-count after any
   manual prod change.
+
+---
+
+## Session 3: Engagement page on the shared daily list (2026-10-08)
+
+**Files:** `app/admin/engagement/page.tsx`, `components/admin/EngagementClient.tsx`, `lib/admin/today.ts`
+(+ `engagementTasks()` and tests). No DB changes. tsc, 83 tests, lint clean.
+
+**What changed**
+- `/admin/engagement` "Today's engagement list" is now the Daily Actions Tier 3 items (same records as the home
+  screen's Engage section), joined to `engagement_accounts` for followers/niche. Done/Skip go through
+  `PATCH /api/admin/actions/[id]`, which stamps `last_engaged_at` — the field the rotation ranks on.
+- Removed: the day-of-year rotation, the localStorage done-state and the "Refresh list" button. Old localStorage
+  keys in Gabs's browser are now unused and harmless.
+- Opening the page generates today's batch if it doesn't exist yet (same helper as the home screen).
+- Reply assistant (right column) unchanged.
+
+**Behaviour changes to tell Gabs**
+- 3 accounts a day (engine's `MAX_ENGAGEMENT_PER_DAY`), not 5. Raising it is a one-line change in `lib/actionEngine.ts`,
+  but it competes with follow-ups for the 45-minute budget.
+- "Done" can't be undone (the actions API only accepts done/skipped), same as Lead Queue.
+- If follow-ups fill the 45-minute budget, there may be no engagement items that day; the page says so.
+
+**Lessons learned**
+- When replacing a component's data source, grep the whole file for the old variable — a stats bar at the bottom
+  still used `todaysAccounts` and only `tsc` caught it.

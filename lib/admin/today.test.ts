@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ActionItem } from "@/types";
-import { splitToday } from "./today";
+import type { EngagementAccount } from "@/types";
+import { engagementTasks, splitToday } from "./today";
 
 let n = 0;
 function item(tier: 1 | 2 | 3 | 4, status: ActionItem["status"] = "pending"): ActionItem {
@@ -46,5 +47,31 @@ describe("splitToday", () => {
 
   it("handles an empty batch", () => {
     expect(splitToday([])).toMatchObject({ done: 0, total: 0, clients: [], engage: [], other: [] });
+  });
+});
+
+describe("engagementTasks", () => {
+  const account = (id: string): EngagementAccount => ({
+    id,
+    handle: `@${id}`,
+    platform: "instagram",
+    followers: null,
+    niche: null,
+    why_engage: null,
+    is_active: true,
+    created_at: "",
+  });
+
+  it("keeps only tier 3, joins accounts, and puts pending first", () => {
+    const done = { ...item(3, "done"), target_id: "acc1" };
+    const pending = { ...item(3), target_id: "acc2" };
+    const tasks = engagementTasks([done, item(1), pending, item(3, "expired")], [account("acc1"), account("acc2")]);
+    expect(tasks.map((t) => t.item.id)).toEqual([pending.id, done.id]);
+    expect(tasks[0].account?.handle).toBe("@acc2");
+  });
+
+  it("returns a null account when it no longer exists", () => {
+    const orphan = { ...item(3), target_id: "gone" };
+    expect(engagementTasks([orphan], [])[0].account).toBeNull();
   });
 });
