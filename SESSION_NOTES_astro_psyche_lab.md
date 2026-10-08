@@ -708,5 +708,7 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
 - The homepage order had changed since the plan was written (tarot is now directly after the hero), so
   "after the tarot" sits above the Jung ribbon. Check the live order before placing sections.
 - `LeadCaptureForm` is styled for dark backgrounds; a light placement needs a CSS variant, not a new form.
-- Known, untouched: the form's success text says "Check your DMs for your free Love & Career Code" and the
-  button says "Get my free code", which doesn't match the "new moon letter" promise. Needs owner copy.
+- Form copy fixed (owner-confirmed: a signup gets the newsletter, no code/DM): `LeadCaptureForm` is now EN/ES via
+  `useLang`; button "Subscribe"/"Suscribirme", success "You're in! Keep an eye on your inbox for the next letter
+  landing." The old "Love & Career Code / check your DMs" text was a leftover from a previous lead magnet.
+  API error strings from `/api/leads` stay English (server-side).
