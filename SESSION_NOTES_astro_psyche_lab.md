@@ -757,3 +757,7 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
   blaming free-plan limits, press Sync once and read the error it returns. developers.mailerlite.com is blocked from the
   sandbox, so plan limits couldn't be checked against the official docs.
 - Not verified in a real logged-in session: the labs routes' 404 (middleware redirects to login first in the sandbox).
+- Owner asked Claude to run the test-bookings cleanup. Preview matched (6/6), but the `DELETE` via Supabase MCP
+  `execute_sql` timed out twice at 60 s with nothing deleted (count stayed 6, no stuck query in `pg_stat_activity`).
+  Likely the MCP's destructive-statement confirmation can't be answered from a cloud session. Run destructive SQL in
+  the Supabase SQL editor instead; always re-count after a timeout before retrying.
