@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordLeadEvent } from "@/lib/lab/events";
 import { upsertLabSubscriber } from "@/lib/lab/mailerlite";
+import { nextTransitFields, seasonsForChart } from "@/lib/lab/nextTransit";
 import { clientIp, gateLimiter } from "@/lib/lab/rateLimit";
 import { toStoredChart } from "@/lib/lab/storedChart";
 import { validateGate } from "@/lib/lab/validate";
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
       zone: geo.tz,
     });
     const stored = toStoredChart(chart);
+    // Written only on the insert/update paths below, never to a claimed row.
+    const transit = nextTransitFields(seasonsForChart(stored));
     const admin = createAdminClient();
     let justInserted = false;
 
@@ -64,6 +67,8 @@ export async function POST(request: Request) {
       tz: geo.tz,
       birth_utc: chart.birthUtc.toISOString(),
       positions: stored,
+      next_transit: transit.next_transit,
+      transit_peak_date: transit.transit_peak_date,
       src: input.src,
       consent_at: new Date().toISOString(),
       consent_text_version: CONSENT_TEXT_VERSION,
@@ -126,7 +131,9 @@ export async function POST(request: Request) {
     const sun = stored.positions.find((p) => p.body === "Sun")?.sign ?? "";
     const moon = stored.positions.find((p) => p.body === "Moon")?.sign ?? "";
     // Failure does not fail the request (upsertLabSubscriber never throws).
-    if (!claimed) await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon });
+    if (!claimed) {
+      await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon, ...transit });
+    }
 
     const leadId = await recordLeadEvent(admin, {
       email: input.email,

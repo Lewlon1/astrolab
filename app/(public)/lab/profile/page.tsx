@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordLeadEvent } from "@/lib/lab/events";
 import { buildProfileView } from "@/lib/lab/profileView";
+import { seasonsForChart, serializeSeasons, type SerializedSeason } from "@/lib/lab/nextTransit";
 import type { LabProfileRow } from "@/lib/lab/types";
 import { CARDS } from "@/content/lab/cards";
 import { BOOKING_CTA, PROFILE, PROFILE_EXTRA, STANCE } from "@/content/lab/ui";
@@ -67,6 +68,17 @@ async function recordOpened(admin: Admin, profile: LabProfileRow): Promise<void>
   }
 }
 
+/** Next 12 months of transit seasons, or undefined (tracker hidden) if the stored chart can't be read. */
+function transitSeasons(profile: LabProfileRow): SerializedSeason[] | undefined {
+  try {
+    if (!profile.positions?.version) return undefined;
+    return serializeSeasons(seasonsForChart(profile.positions));
+  } catch (err) {
+    console.error("[lab] transit computation failed:", err instanceof Error ? err.name : "error");
+    return undefined;
+  }
+}
+
 export default async function LabProfilePage() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -94,6 +106,7 @@ export default async function LabProfilePage() {
   const view = buildProfileView(profile);
   const card = CARDS.find((c) => c.name === view.header.card) ?? null;
   const showHouse = view.hasTime;
+  const seasons = transitSeasons(profile);
 
   return (
     <div className="bg-cream2 text-deepBrown">
@@ -197,8 +210,7 @@ export default async function LabProfilePage() {
           </div>
         </section>
 
-        {/* Task 7: pass the computed transit seasons here. */}
-        <TransitTracker />
+        <TransitTracker seasons={seasons} />
 
         <section className={cx(SECTION, "rounded-[14px] border-[1.5px] border-deepBrown bg-sagePale p-6")} aria-labelledby="lab-booking">
           <h2 id="lab-booking" className={H2}>
