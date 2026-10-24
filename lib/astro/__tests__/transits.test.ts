@@ -110,4 +110,24 @@ describe("findTransits", () => {
     console.info("[test] findTransits 12 months, 5 points:", ms.toFixed(1), "ms");
     expect(ms).toBeLessThan(2000);
   });
+
+  it("keeps a slow-planet season's exactDates stable as `from` advances by a few months", () => {
+    // Neptune chains several passes (2027-06 to 2029-01 here) into one ~590-day season.
+    const natal = { ...none, Venus: longitudeOf("Neptune", new Date("2027-06-01T00:00:00Z")) };
+    const run = (from: string) => {
+      const f = new Date(from);
+      const to = new Date(f);
+      to.setUTCMonth(to.getUTCMonth() + 12);
+      return findTransits({ natal, from: f, to, planets: ["Neptune"], aspects: ["conjunction"] });
+    };
+    const key = (d: Date[]) => d.map((x) => x.toISOString());
+    const baseline = run("2027-03-01T00:00:00Z")[0];
+    expect(baseline.exactDates.length).toBeGreaterThanOrEqual(5);
+    // The last start is ~550 days after the first pass: beyond a 400-day lookback.
+    for (const from of ["2027-09-01", "2028-03-01", "2028-06-01", "2028-09-01", "2028-12-01"]) {
+      const seasons = run(`${from}T00:00:00Z`);
+      expect(seasons, from).toHaveLength(1);
+      expect(key(seasons[0].exactDates), from).toEqual(key(baseline.exactDates));
+    }
+  });
 });

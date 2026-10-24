@@ -46,8 +46,13 @@ export const PLANET_WEIGHT: Record<TransitBody, number> = { Pluto: 5, Neptune: 4
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
-/** Scan margin either side of the window, so a whole retrograde season around it is captured. */
-const MARGIN_DAYS = 400;
+/**
+ * Scan margins around the window, so a whole retrograde season around it is captured.
+ * Before `from` is wider (800 days) so chained Pluto/Neptune/Uranus seasons, which
+ * merge passes up to 300 days apart, keep their early passes as `from` advances.
+ */
+const MARGIN_BEFORE_DAYS = 800;
+const MARGIN_AFTER_DAYS = 400;
 /** Hits closer than this belong to the same season (retrograde passes). */
 const SEASON_GAP_MS = 300 * DAY_MS;
 /** A sign change only counts as a crossing near zero, not across the ±180 wrap. */
@@ -98,8 +103,8 @@ export function findTransits({
 }: FindTransitsOptions): TransitSeason[] {
   const fromMs = from.getTime();
   const toMs = to.getTime();
-  const scanStart = fromMs - MARGIN_DAYS * DAY_MS;
-  const days = Math.ceil((toMs + MARGIN_DAYS * DAY_MS - scanStart) / DAY_MS) + 1;
+  const scanStart = fromMs - MARGIN_BEFORE_DAYS * DAY_MS;
+  const days = Math.ceil((toMs + MARGIN_AFTER_DAYS * DAY_MS - scanStart) / DAY_MS) + 1;
   const times = Array.from({ length: days }, (_, i) => scanStart + i * DAY_MS);
 
   const points = NATAL_POINTS.filter((p) => typeof natal[p] === "number" && Number.isFinite(natal[p]));

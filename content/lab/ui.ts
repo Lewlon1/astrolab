@@ -226,6 +226,8 @@ export const BOOKING_URL = "https://cal.com/theastropsychelab";
 export const TRANSIT_UI = {
   heading: "Transit tracker",
   peaks: "Peaks",
+  /** Used instead of "Peaks" when the season's peak date has already passed. */
+  peaked: "Peaked",
   exactOn: "Exact on",
   /** Shown when a season has several exact dates (retrograde passes). */
   passesNote: "The planet crosses this point more than once as it turns retrograde and direct.",

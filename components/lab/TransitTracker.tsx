@@ -20,6 +20,10 @@ const FOLLOWING = 4;
 const DATE_FMT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const fmt = (iso: string) => DATE_FMT.format(new Date(iso));
 
+/** "Peaks" for a peak still ahead, "Peaked" once it has passed (the last pass of a finished season). */
+export const peakLabel = (peakIso: string, now: number = Date.now()) =>
+  new Date(peakIso).getTime() < now ? TRANSIT_UI.peaked : TRANSIT_UI.peaks;
+
 export default function TransitTracker({ seasons }: TransitTrackerProps) {
   if (!seasons) return null;
   const [next, ...rest] = seasons;
@@ -49,7 +53,7 @@ export default function TransitTracker({ seasons }: TransitTrackerProps) {
               >
                 <span className="font-fraunces text-[18px]">{transitCopy(s.planet, s.aspect, s.point).headline}</span>
                 <span className="text-[14px] text-midBrown">
-                  {TRANSIT_UI.peaks} <time dateTime={s.peak}>{fmt(s.peak)}</time>
+                  {peakLabel(s.peak)} <time dateTime={s.peak}>{fmt(s.peak)}</time>
                 </span>
               </li>
             ))}
@@ -66,9 +70,8 @@ function NextSeason({ season }: { season: SerializedSeason }) {
   return (
     <div className="mt-6">
       <p className={EYEBROW}>{PROFILE.sections.transit}</p>
-      <p className="mb-0 mt-2 font-fraunces text-[24px] font-medium leading-tight">{copy.headline}</p>
-      <p className="mb-0 mt-1">
-        {TRANSIT_UI.peaks} <time dateTime={season.peak}>{fmt(season.peak)}</time>
+      <p className="mb-0 mt-2">
+        {peakLabel(season.peak)} <time dateTime={season.peak}>{fmt(season.peak)}</time>
       </p>
       {several && (
         <div className="mt-3 text-[15px]">
