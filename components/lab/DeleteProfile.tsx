@@ -2,7 +2,7 @@
 
 // Two-step in-page delete. The delete route signs the user out, so we must not
 // router.refresh() afterwards: the page would redirect away from the success message.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DELETE, PROFILE_EXTRA } from "@/content/lab/ui";
 import { BTN, ERROR_LIGHT, FOCUS, cx } from "./classes";
@@ -12,6 +12,19 @@ type Step = "idle" | "confirm" | "working" | "done";
 export default function DeleteProfile() {
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState<string | null>(null);
+  const deleteBtnRef = useRef<HTMLButtonElement>(null);
+  const cancelBtnRef = useRef<HTMLButtonElement>(null);
+  const doneRef = useRef<HTMLDivElement>(null);
+  const prevStep = useRef<Step>("idle");
+
+  // Move focus with each step so it never drops to <body> when a control unmounts.
+  useEffect(() => {
+    const prev = prevStep.current;
+    prevStep.current = step;
+    if (step === "confirm" && prev !== "confirm") cancelBtnRef.current?.focus();
+    else if (step === "idle" && prev === "confirm") deleteBtnRef.current?.focus();
+    else if (step === "done") doneRef.current?.focus();
+  }, [step]);
 
   async function doDelete() {
     setError(null);
@@ -32,7 +45,7 @@ export default function DeleteProfile() {
 
   if (step === "done") {
     return (
-      <div role="status">
+      <div role="status" ref={doneRef} tabIndex={-1} className="outline-none">
         <p className="m-0 font-fraunces text-[20px]">{DELETE.done}</p>
         <p className="mt-3">
           <Link href="/" className={cx("underline underline-offset-4", FOCUS, "focus-visible:outline-coral2")}>
@@ -46,6 +59,7 @@ export default function DeleteProfile() {
   if (step === "idle") {
     return (
       <button
+        ref={deleteBtnRef}
         type="button"
         onClick={() => setStep("confirm")}
         className={cx("text-[14px] text-midBrown underline underline-offset-4 cursor-pointer bg-transparent border-0 p-0", FOCUS, "focus-visible:outline-coral2")}
@@ -76,6 +90,7 @@ export default function DeleteProfile() {
           {step === "working" ? PROFILE_EXTRA.deleteWorking : DELETE.confirm}
         </button>
         <button
+          ref={cancelBtnRef}
           type="button"
           onClick={() => setStep("idle")}
           disabled={step === "working"}

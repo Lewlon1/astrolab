@@ -59,11 +59,9 @@ export default function AddBirthTime() {
       <p id="lab-add-time-hint" className="m-0 text-[14px] text-midBrown">
         {PROFILE.risingNoTime} {PROFILE_EXTRA.timeHint}.
       </p>
-      {error && (
-        <p id="lab-add-time-err" role="alert" className={ERROR_LIGHT}>
-          {error}
-        </p>
-      )}
+      <p id="lab-add-time-err" role="alert" className={error ? ERROR_LIGHT : undefined}>
+        {error}
+      </p>
     </form>
   );
 }
