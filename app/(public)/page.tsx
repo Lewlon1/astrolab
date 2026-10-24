@@ -5,14 +5,15 @@ import JungRibbon from "@/components/JungRibbon";
 import Founder from "@/components/Founder";
 import TarotDeck from "@/components/TarotDeck";
 import MagazineDetail from "@/components/MagazineDetail";
+import ServicesIndex from "@/components/services/ServicesIndex";
 import Testimonials from "@/components/Testimonials";
+import LeadCaptureInline from "@/components/LeadCaptureInline";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
-import ServicesIndex from "@/components/services/ServicesIndex";
 import HomeCTA from "@/components/HomeCTA";
 import LabTeaser from "@/components/lab/LabTeaser";
 import TrackSection from "@/components/analytics/TrackSection";
-import { organizationJsonLd } from "@/lib/jsonld";
+import { organizationJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
 import type { Service, Testimonial, BlogPost } from "@/types";
 
@@ -52,11 +53,23 @@ export default async function HomePage() {
         }}
       />
 
+      {services && services.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(services.map(serviceJsonLd)),
+          }}
+        />
+      )}
+
       <TrackSection name="hero" index={0}>
         <Hero editorialDate={editorialDate} />
       </TrackSection>
       <TrackSection name="tarot" index={1}>
         <TarotDeck services={services ?? []} />
+      </TrackSection>
+      <TrackSection name="lead_inline" index={11}>
+        <LeadCaptureInline />
       </TrackSection>
       <TrackSection name="jung" index={2}>
         <JungRibbon />
@@ -73,19 +86,19 @@ export default async function HomePage() {
       <TrackSection name="services_index" index={6}>
         <ServicesIndex services={services ?? []} />
       </TrackSection>
-      <TrackSection name="lab_teaser" index={7}>
+      <TrackSection name="lab_teaser" index={12}>
         <LabTeaser />
       </TrackSection>
-      <TrackSection name="testimonials" index={8}>
+      <TrackSection name="testimonials" index={7}>
         <Testimonials testimonials={testimonials ?? []} />
       </TrackSection>
-      <TrackSection name="lead_capture" index={9}>
+      <TrackSection name="lead_capture" index={8}>
         <LeadCaptureSection />
       </TrackSection>
-      <TrackSection name="blog" index={10}>
+      <TrackSection name="blog" index={9}>
         <BlogPreview posts={posts ?? []} />
       </TrackSection>
-      <TrackSection name="home_cta" index={11}>
+      <TrackSection name="home_cta" index={10}>
         <HomeCTA />
       </TrackSection>
     </>

@@ -1,32 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import type { EngagementAccount } from "@/types";
+import { useState, useCallback } from "react";
+import type { EngagementTask } from "@/lib/admin/today";
 import Toast from "@/components/admin/ui/Toast";
 import Link from "next/link";
 
 interface EngagementClientProps {
-  accounts: EngagementAccount[];
+  /** Today's Tier 3 actions; null when the batch couldn't be loaded. */
+  tasks: EngagementTask[] | null;
+  activeCount: number;
 }
 
-function getDayOfYear(): number {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0);
-  const diff = now.getTime() - start.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
-}
-
-function getTodayKey(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function getDoneKey(accountId: string): string {
-  return `engagement-done-${getTodayKey()}-${accountId}`;
-}
-
-export default function EngagementClient({ accounts }: EngagementClientProps) {
-  const [extraOffset, setExtraOffset] = useState(0);
-  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
+export default function EngagementClient({ tasks, activeCount }: EngagementClientProps) {
+  const [list, setList] = useState(tasks ?? []);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [comment, setComment] = useState("");
   const [postContext, setPostContext] = useState("");
   const [suggestedReply, setSuggestedReply] = useState("");
@@ -36,43 +23,29 @@ export default function EngagementClient({ accounts }: EngagementClientProps) {
     type: "success" | "error";
   } | null>(null);
 
-  // Load done state from localStorage on mount
-  useEffect(() => {
-    const done = new Set<string>();
-    accounts.forEach((a) => {
-      if (localStorage.getItem(getDoneKey(a.id)) === "true") {
-        done.add(a.id);
-      }
-    });
-    setDoneIds(done);
-  }, [accounts]);
+  const doneCount = list.filter((t) => t.item.status === "done").length;
 
-  // Calculate which 5 accounts to show
-  const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(accounts.length / pageSize));
-  const basePage = getDayOfYear() % totalPages;
-  const currentPage = (basePage + extraOffset) % totalPages;
-  const startIdx = currentPage * pageSize;
-  const todaysAccounts = accounts.slice(startIdx, startIdx + pageSize);
-
-  const doneCount = todaysAccounts.filter((a) => doneIds.has(a.id)).length;
-
-  const toggleDone = useCallback(
-    (accountId: string) => {
-      setDoneIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(accountId)) {
-          next.delete(accountId);
-          localStorage.removeItem(getDoneKey(accountId));
-        } else {
-          next.add(accountId);
-          localStorage.setItem(getDoneKey(accountId), "true");
-        }
-        return next;
+  // Same endpoint as Lead Queue: "done" also stamps engagement_accounts.last_engaged_at,
+  // which is what the daily rotation ranks on.
+  const resolve = useCallback(async (id: string, status: "done" | "skipped") => {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/admin/actions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
       });
-    },
-    []
-  );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Update failed");
+      setList((prev) =>
+        prev.map((t) => (t.item.id === id ? { ...t, item: { ...t.item, status } } : t))
+      );
+    } catch (err) {
+      setToast({ message: err instanceof Error ? err.message : "Update failed", type: "error" });
+    } finally {
+      setBusyId(null);
+    }
+  }, []);
 
   const handleSuggestReply = useCallback(async () => {
     if (!comment.trim() || !postContext.trim() || generating) return;
@@ -119,21 +92,29 @@ export default function EngagementClient({ accounts }: EngagementClientProps) {
       )}
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left column — Today's engagement list */}
+        {/* Left column — Today's engagement list (Daily Actions Tier 3) */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-baseline justify-between gap-3">
             <h2 className="font-heading text-lg text-[#1a1a18]">
               Today&apos;s engagement list
             </h2>
-            <button
-              onClick={() => setExtraOffset((o) => o + 1)}
-              className="text-sm text-deep hover:underline"
-            >
-              Refresh list
-            </button>
+            {list.length > 0 && (
+              <span className="text-sm text-[#6b6560] shrink-0">
+                {doneCount} of {list.length} done
+              </span>
+            )}
           </div>
 
-          {todaysAccounts.length === 0 ? (
+          {tasks === null ? (
+            <div className="bg-white border border-[#e8e5df] rounded-xl p-6 text-center">
+              <p className="text-[#6b6560]">
+                Couldn&apos;t load today&apos;s list.{" "}
+                <Link href="/admin/lead-queue" className="text-deep hover:underline">
+                  Open Lead Queue
+                </Link>
+              </p>
+            </div>
+          ) : activeCount === 0 ? (
             <div className="bg-white border border-[#e8e5df] rounded-xl p-6 text-center">
               <p className="text-[#6b6560]">
                 No accounts yet.{" "}
@@ -146,52 +127,86 @@ export default function EngagementClient({ accounts }: EngagementClientProps) {
                 to get started.
               </p>
             </div>
+          ) : list.length === 0 ? (
+            <div className="bg-white border border-[#e8e5df] rounded-xl p-6 text-center">
+              <p className="text-[#6b6560]">
+                No engagement in today&apos;s actions — follow-ups filled the time budget.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
-              {todaysAccounts.map((account) => {
-                const isDone = doneIds.has(account.id);
+              {list.map(({ item, account }) => {
+                const isDone = item.status === "done";
+                const isSkipped = item.status === "skipped";
+                const busy = busyId === item.id;
                 return (
                   <div
-                    key={account.id}
+                    key={item.id}
                     className={`bg-white border rounded-xl p-4 transition-colors ${
                       isDone
                         ? "border-green-200 bg-green-50/30"
                         : "border-[#e8e5df]"
-                    }`}
+                    } ${isSkipped ? "opacity-60" : ""}`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-[#1a1a18]">
-                            {account.handle}
+                            {account?.handle ?? item.title}
                           </span>
-                          {account.followers && (
+                          {account?.followers && (
                             <span className="text-xs text-[#6b6560]">
                               {account.followers} followers
                             </span>
                           )}
-                          {account.niche && (
+                          {account?.niche && (
                             <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                               {account.niche}
                             </span>
                           )}
                         </div>
-                        {account.why_engage && (
-                          <p className="text-sm text-[#6b6560] mt-1">
-                            {account.why_engage}
-                          </p>
+                        {item.reason && (
+                          <p className="text-sm text-[#6b6560] mt-1">{item.reason}</p>
                         )}
                       </div>
-                      <button
-                        onClick={() => toggleDone(account.id)}
-                        className={`text-sm font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
-                          isDone
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : "bg-[#fafaf8] text-[#6b6560] border border-[#e8e5df] hover:bg-[#f5f3ef]"
-                        }`}
-                      >
-                        {isDone ? "Done ✓" : "Done"}
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0 justify-end">
+                        {item.link && (
+                          <a
+                            href={item.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-[#6b6560] hover:text-[#1a1a18] hover:bg-[#f5f3ef] px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Open &rarr;
+                          </a>
+                        )}
+                        {item.status === "pending" ? (
+                          <>
+                            <button
+                              onClick={() => resolve(item.id, "skipped")}
+                              disabled={busy}
+                              className="text-sm text-[#6b6560] hover:text-[#1a1a18] px-3 py-1.5 rounded-lg hover:bg-[#f5f3ef] transition-colors disabled:opacity-40"
+                            >
+                              Skip
+                            </button>
+                            <button
+                              onClick={() => resolve(item.id, "done")}
+                              disabled={busy}
+                              className="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors bg-[#fafaf8] text-[#6b6560] border border-[#e8e5df] hover:bg-[#f5f3ef] disabled:opacity-40"
+                            >
+                              {busy ? "…" : "Done"}
+                            </button>
+                          </>
+                        ) : (
+                          <span
+                            className={`text-sm font-medium px-3 py-1.5 rounded-lg ${
+                              isDone ? "bg-green-100 text-green-700" : "text-[#b8b0a4]"
+                            }`}
+                          >
+                            {isDone ? "Done ✓" : "Skipped"}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -294,15 +309,15 @@ export default function EngagementClient({ accounts }: EngagementClientProps) {
         <div className="flex items-center gap-6">
           <span className="text-sm text-[#1a1a18]">
             <span className="font-medium">Accounts engaged today:</span>{" "}
-            <span className={doneCount === todaysAccounts.length ? "text-green-600 font-medium" : "text-[#6b6560]"}>
-              {doneCount}/{todaysAccounts.length}
+            <span className={doneCount === list.length ? "text-green-600 font-medium" : "text-[#6b6560]"}>
+              {doneCount}/{list.length}
             </span>
           </span>
           <span className="text-sm text-[#6b6560]">
             Time spent: ~{doneCount * 3}m
           </span>
         </div>
-        {doneCount === todaysAccounts.length && todaysAccounts.length > 0 && (
+        {doneCount === list.length && list.length > 0 && (
           <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-green-700">
             All done for today
           </span>

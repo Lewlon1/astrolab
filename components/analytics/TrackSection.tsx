@@ -3,11 +3,16 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { trackSectionView, trackSectionDwell } from "@/lib/analytics/track";
 import { MIN_DWELL_MS } from "@/lib/analytics/constants";
+import {
+  isSectionVisible,
+  VISIBILITY_THRESHOLDS,
+} from "@/lib/analytics/visibility";
 
 /**
  * Wraps a landing-page section and measures how long it is actually read.
  *
- * - Fires `section_view` once, the first time the section is ≥50% visible.
+ * - Fires `section_view` once, the first time half the section — or half the
+ *   viewport, for sections taller than the viewport — is visible.
  * - Accumulates dwell time only while the section is on-screen AND the tab is
  *   foregrounded, emitting `section_dwell` (summed server-side) on each exit /
  *   tab-hide / unmount. Sub-`MIN_DWELL_MS` glimpses are ignored.
@@ -66,7 +71,13 @@ export default function TrackSection({
       (entries) => {
         for (const entry of entries) {
           const isVisible =
-            entry.isIntersecting && entry.intersectionRatio >= 0.5;
+            entry.isIntersecting &&
+            isSectionVisible({
+              intersectionHeight: entry.intersectionRect.height,
+              targetHeight: entry.boundingClientRect.height,
+              viewportHeight:
+                entry.rootBounds?.height ?? window.innerHeight,
+            });
           st.intersecting = isVisible;
           if (isVisible) {
             if (!st.viewed) {
@@ -79,7 +90,7 @@ export default function TrackSection({
           }
         }
       },
-      { threshold: [0, 0.5] }
+      { threshold: VISIBILITY_THRESHOLDS }
     );
     io.observe(el);
 

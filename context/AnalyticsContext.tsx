@@ -14,6 +14,7 @@ import {
   trackSessionEnd,
   flush,
 } from "@/lib/analytics/track";
+import { applyInternalParam } from "@/lib/analytics/internal";
 import type { AnalyticsEventType } from "@/types";
 
 type AnalyticsContextValue = {
@@ -45,6 +46,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   // mobile) and on unmount. An `ended` guard keeps it to a single session_end so
   // the dashboard's average-duration math isn't skewed by duplicates.
   useEffect(() => {
+    applyInternalParam(window.location.search);
     ensureSessionStarted();
 
     let visibleSince = document.visibilityState === "visible" ? Date.now() : 0;
@@ -102,6 +104,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       const props: Record<string, unknown> = {};
       if (el.dataset.serviceSlug) props.service_slug = el.dataset.serviceSlug;
       if (el.dataset.section) props.section = el.dataset.section;
+      if (el.dataset.placement) props.placement = el.dataset.placement;
       const href = (el as HTMLAnchorElement).href;
       if (href) props.href = href;
 

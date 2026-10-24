@@ -14,6 +14,7 @@ type Props = {
   analyticsName?: string;
   conversionName?: string;
   serviceSlug?: string;
+  placement?: "tarot" | "grid";
   /** Stripe Payment Link to send the client to once the Cal booking completes. */
   paymentUrl?: string;
 };
@@ -26,6 +27,7 @@ export default function CalBookButton({
   analyticsName,
   conversionName,
   serviceSlug,
+  placement,
   paymentUrl,
 }: Props) {
   useEffect(() => {
@@ -52,6 +54,7 @@ export default function CalBookButton({
       data-analytics={analyticsName}
       data-analytics-conversion={conversionName}
       data-service-slug={serviceSlug}
+      data-placement={placement}
       onClick={() => armPaymentRedirect(paymentUrl ?? null)}
       className={className}
       style={style}
