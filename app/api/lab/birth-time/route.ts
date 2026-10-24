@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateLabFields, transitFieldsForMailerLite } from "@/lib/lab/mailerlite";
 import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
-import { toStoredChart } from "@/lib/lab/storedChart";
+import { signFieldForMailerLite, toStoredChart } from "@/lib/lab/storedChart";
 import { badRequest, readJson } from "@/lib/lab/routeHelpers";
 import type { LabProfileRow } from "@/lib/lab/types";
 import { API, VALIDATION } from "@/content/lab/ui";
@@ -62,7 +62,12 @@ export async function POST(request: Request) {
       .eq("id", p.id);
     if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
     // Never throws; a MailerLite failure does not fail the request.
-    await updateLabFields(p.email, transitFieldsForMailerLite(transit));
+    // With a time the signs are settled, so replace any earlier "X or Y".
+    await updateLabFields(p.email, {
+      sun_sign: signFieldForMailerLite(stored, "Sun"),
+      moon_sign: signFieldForMailerLite(stored, "Moon"),
+      ...transitFieldsForMailerLite(transit),
+    });
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[lab] birth-time failed:", err instanceof Error ? err.message : "unknown");

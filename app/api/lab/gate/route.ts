@@ -8,7 +8,7 @@ import { recordLeadEvent } from "@/lib/lab/events";
 import { transitFieldsForMailerLite, upsertLabSubscriber } from "@/lib/lab/mailerlite";
 import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
 import { clientIp, gateLimiter } from "@/lib/lab/rateLimit";
-import { toStoredChart } from "@/lib/lab/storedChart";
+import { signFieldForMailerLite, toStoredChart } from "@/lib/lab/storedChart";
 import { validateGate } from "@/lib/lab/validate";
 import { badRequest, geocodeOrResponse, readJson } from "@/lib/lab/routeHelpers";
 import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     // same either way, so it doesn't reveal that the email exists.
     const claimed = row.user_id !== null;
     if (!claimed && !justInserted) {
-      const upd = await admin.from("lab_profiles").update(fields).eq("id", profileId);
+      const upd = await admin.from("lab_profiles").update(fields).eq("id", profileId).is("user_id", null);
       if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
     }
 
@@ -134,8 +134,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: API.otpFailed }, { status: 502 });
     }
 
-    const sun = stored.positions.find((p) => p.body === "Sun")?.sign ?? "";
-    const moon = stored.positions.find((p) => p.body === "Moon")?.sign ?? "";
+    // "X or Y" when the sign changes across the birth day: never send a guessed sign.
+    const sun = signFieldForMailerLite(stored, "Sun");
+    const moon = signFieldForMailerLite(stored, "Moon");
     // Failure does not fail the request (upsertLabSubscriber never throws).
     if (!claimed) {
       await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon, ...transitFieldsForMailerLite(transit) });

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { updates, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
+const { updates, isCalls, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
   updates: [] as unknown[],
+  isCalls: [] as unknown[][],
   signIn: vi.fn(async () => ({ error: null })),
   upsertSub: vi.fn(async () => "id"),
   recordEvt: vi.fn(async () => "lead1"),
@@ -19,7 +20,16 @@ vi.mock("@/lib/supabase/admin", () => ({
       q.maybeSingle = async () => ({ data: state.liveRow, error: null });
       q.update = (v: unknown) => {
         updates.push(v);
-        return { eq: async () => ({ error: null }) };
+        return {
+          eq: () => {
+            const r = Promise.resolve({ error: null }) as Promise<{ error: null }> & { is: (c: string, v: unknown) => Promise<{ error: null }> };
+            r.is = async (c, val) => {
+              isCalls.push([c, val]);
+              return { error: null };
+            };
+            return r;
+          },
+        };
       };
       q.insert = () => ({ select: () => ({ single: async () => ({ data: { id: "new" }, error: null }) }) });
       return q;
@@ -49,11 +59,11 @@ import { POST } from "./route";
 import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
 import { CARDS } from "@/content/lab/cards";
 
-const req = () =>
+const req = (date = "1990-06-15") =>
   new Request("http://localhost/api/lab/gate", {
     method: "POST",
     body: JSON.stringify({
-      email: "a@b.co", date: "1990-06-15", place: "London", card: CARDS[0].name,
+      email: "a@b.co", date, place: "London", card: CARDS[0].name,
       consent: true, consentVersion: CONSENT_TEXT_VERSION,
     }),
   });
@@ -61,6 +71,7 @@ const req = () =>
 describe("gate route", () => {
   beforeEach(() => {
     updates.length = 0;
+    isCalls.length = 0;
     state.transitThrows = false;
     vi.clearAllMocks();
   });
@@ -94,5 +105,22 @@ describe("gate route", () => {
       "a@b.co",
       expect.objectContaining({ next_transit: "", transit_peak_date: "" }),
     );
+  });
+
+  it("unclaimed update is guarded by user_id IS NULL so a concurrent claim is never overwritten", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    await POST(req());
+    expect(isCalls).toContainEqual(["user_id", null]);
+  });
+
+  it("sends 'X or Y' to MailerLite for a cusp Sun, a single sign otherwise", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    await POST(req("1990-06-21"));
+    const cusp = upsertSub.mock.calls[0] as unknown as [string, { sun_sign: string; moon_sign: string }];
+    expect(cusp[1].sun_sign).toBe("Gemini or Cancer");
+    upsertSub.mockClear();
+    await POST(req("1990-06-15"));
+    const plain = upsertSub.mock.calls[0] as unknown as [string, { sun_sign: string }];
+    expect(plain[1].sun_sign).toBe("Gemini");
   });
 });
