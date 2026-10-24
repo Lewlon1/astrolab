@@ -101,6 +101,16 @@
   width: 58%;
   height: auto;
 }
+/* Static, unflipped card face (profile page): the parent sets size and position. */
+.flat {
+  transform: none;
+}
+.staticCard {
+  position: relative;
+  aspect-ratio: 7 / 12;
+  width: 100%;
+}
+
 .roman {
   font-family: var(--font-fraunces), Georgia, serif;
   font-weight: 500;

@@ -192,3 +192,32 @@ export const SENT = {
     card: { label: "Your card", body: "Saved with your profile, so you can come back to it." },
   },
 } as const;
+
+/** Profile page extras: aria labels, table headings, form copy, links (new draft). */
+export const PROFILE_EXTRA = {
+  sunLabel: "Sun",
+  moonLabel: "Moon",
+  risingLabel: "Rising",
+  cardAlt: (card: string) => `Your card: ${card}`,
+  placementsIntro: "Six placements, each read as a prompt to notice rather than a cause.",
+  tableCaption: "Every position in your chart",
+  tableIntro: "Every position in your chart, by planet, sign and degree.",
+  colPlanet: "Planet",
+  colSign: "Sign",
+  colDegree: "Degree",
+  colHouse: "House",
+  degreeUnit: (d: number) => `${d}\u00b0`,
+  degreeUnknown: "Not shown",
+  timeLabel: "Birth time",
+  timeHint: "24-hour, like 14:30",
+  timeSaving: "Saving…",
+  timeSaveError: "We couldn't save your time. Please try again.",
+  bookingNote: "Booking opens in a new tab.",
+  privacyLink: "How we handle your data",
+  deleteWorking: "Deleting…",
+  deleteError: "We couldn't delete your profile. Please try again.",
+  homeLink: "Back to the homepage",
+} as const;
+
+/** Booking link target for the profile CTA. */
+export const BOOKING_URL = "https://cal.com/theastropsychelab";

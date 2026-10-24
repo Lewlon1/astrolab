@@ -4,7 +4,8 @@
 // buttons render as identical, disabled card backs, so server markup is stable.
 import type { Card } from "@/content/lab/cards";
 import { DRAW } from "@/content/lab/ui";
-import { MOTIF_COLORS, StarMotif, SunMotif } from "./motifs";
+import CardFace from "./CardFace";
+import { MOTIF_COLORS, SunMotif } from "./motifs";
 import styles from "./lab.module.css";
 
 type Props = {
@@ -40,17 +41,7 @@ export default function LabDeck({ hand, pickedIndex, onPick }: Props) {
               <div className={`${styles.face} ${styles.back}`}>
                 <SunMotif color={MOTIF_COLORS.gold2} rays={20} />
               </div>
-              {card && (
-                <div className={`${styles.face} ${styles.front}`} aria-hidden="true">
-                  <span className={styles.roman}>{card.numeral}</span>
-                  {card.motif === "sun" ? (
-                    <SunMotif color={MOTIF_COLORS.warmRust} rays={16} />
-                  ) : (
-                    <StarMotif color={MOTIF_COLORS.warmRust} />
-                  )}
-                  <span className={styles.name}>{card.name}</span>
-                </div>
-              )}
+              {card && <CardFace card={card} ariaHidden />}
             </div>
           </button>
         );
