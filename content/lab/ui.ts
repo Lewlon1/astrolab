@@ -128,3 +128,15 @@ export const KEYWORD_FRAME = (planet: string, sign: string, keyword: string) =>
 /** Note under an ambiguous placement on the profile (no birth time). */
 export const AMBIGUOUS_NOTE = (first: string) =>
   `Without a birth time we can't tell which sign this was in. The reading above uses ${first}. Add your time to settle it.`;
+
+/** API route messages and constants (new draft). */
+export const API = {
+  badRequest: "That request could not be read. Please try again.",
+  consentInvalid: "Please tick the consent box so we can store your birth data.",
+  geocodeUnavailable: "We couldn't look up that place right now. Try again in a minute.",
+  serverError: "Something went wrong on our side. Please try again in a moment.",
+  otpFailed: "We couldn't send the sign-in link. Try again in a minute.",
+  unauthorized: "Please sign in to continue.",
+  profileNotFound: "We couldn't find your profile.",
+  attribution: "© OpenStreetMap contributors",
+} as const;
