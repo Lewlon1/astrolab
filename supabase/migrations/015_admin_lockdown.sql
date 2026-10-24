@@ -11,7 +11,10 @@
 --      (same names, same commands),
 --   3. guards the admin analytics dashboard RPCs.
 --
--- Safe to re-run. Deploy the app code and run this together: until this has
+-- Safe to re-run (the admin seed only runs while admin_users is empty).
+-- The storage.objects policies live in 015b_admin_lockdown_storage.sql: run
+-- 015 first, then 015b (kept separate so an ownership error there cannot roll
+-- back this file). Deploy the app code and run this together: until this has
 -- run, the app fails closed (is_admin() missing => nobody is admin).
 -- ============================================
 
@@ -26,7 +29,16 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 -- 2. Seed: every auth user that exists before the Lab launches is an admin.
 --    Review the list in the dashboard after running, and delete any row that
 --    should not be an admin.
-INSERT INTO admin_users (user_id) SELECT id FROM auth.users ON CONFLICT DO NOTHING;
+--
+-- !! WARNING: the seed only runs while admin_users is EMPTY. Do not remove the
+-- !! NOT EXISTS guard. Once Lab magic-link sign-ups exist, re-running an
+-- !! unguarded seed would make every public user an admin. Add any later
+-- !! admins BY HAND, by user_id:
+-- !!   INSERT INTO admin_users (user_id) VALUES ('<auth.users.id>');
+INSERT INTO admin_users (user_id)
+SELECT id FROM auth.users
+WHERE NOT EXISTS (SELECT 1 FROM admin_users)
+ON CONFLICT DO NOTHING;
 
 -- Check the result:
 -- SELECT u.email FROM admin_users a JOIN auth.users u ON u.id = a.user_id;
@@ -124,28 +136,7 @@ DROP POLICY IF EXISTS "Admin: read bookings" ON bookings;
 CREATE POLICY "Admin: read bookings" ON bookings
   FOR SELECT USING (public.is_admin());
 
--- 6. Storage (migration 012): service-images bucket writes.
---    NOTE: on some Supabase projects, policy changes on storage.objects fail in
---    the SQL editor with "must be owner of table objects". If so, make the same
---    three changes via Dashboard -> Storage -> service-images -> Policies,
---    using `public.is_admin()` in the expressions below.
-DROP POLICY IF EXISTS "Admin: upload service images" ON storage.objects;
-CREATE POLICY "Admin: upload service images"
-  ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'service-images' AND public.is_admin());
-
-DROP POLICY IF EXISTS "Admin: update service images" ON storage.objects;
-CREATE POLICY "Admin: update service images"
-  ON storage.objects FOR UPDATE TO authenticated
-  USING (bucket_id = 'service-images' AND public.is_admin())
-  WITH CHECK (bucket_id = 'service-images' AND public.is_admin());
-
-DROP POLICY IF EXISTS "Admin: delete service images" ON storage.objects;
-CREATE POLICY "Admin: delete service images"
-  ON storage.objects FOR DELETE TO authenticated
-  USING (bucket_id = 'service-images' AND public.is_admin());
-
--- 7. Analytics dashboard RPCs (migration 010). Bodies are unchanged except for
+-- 6. Analytics dashboard RPCs (migration 010). Bodies are unchanged except for
 --    the `public.is_admin()` gate, so non-admins get empty/zero-row results.
 --    Signatures and grants are identical. analytics_touch_session (011) is
 --    deliberately NOT touched: anonymous visitors call it via POST /api/analytics.

@@ -25,7 +25,6 @@ export async function POST(
 ) {
   const auth = await requireAdminApi();
   if (auth instanceof NextResponse) return auth;
-  const { supabase } = auth;
 
   const body = await req.json().catch(() => null);
   const action = body?.action as string | undefined;
