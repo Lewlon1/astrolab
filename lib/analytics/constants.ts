@@ -26,6 +26,7 @@ export const SECTION_ORDER = [
   "tarot",
   "magazine",
   "services_index",
+  "lab_teaser",
   "testimonials",
   "lead_capture",
   "blog",

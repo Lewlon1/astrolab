@@ -176,7 +176,8 @@ export default function LabDraw({ src, authError }: Props) {
     setSent({
       email: values.email,
       hasTime: Boolean(values.time),
-      sunMoon: `${chip(RESULT.chipSun)} · ${chip(RESULT.chipMoon)}`,
+      // First Sun sign only (a cusp birth is explained in the reading); Moon keeps "X or Y".
+      sunMoon: `${reading.sun[0]} · ${reading.moon.join(" or ")}`,
       card: chip(RESULT.chipCard),
     });
     setStage("sent");
