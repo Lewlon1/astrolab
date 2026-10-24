@@ -109,3 +109,22 @@ export const BOOKING_CTA = {
   body: "Members get a Check-In with Gabs timed to the peak.",
   button: "Book a Check-In",
 } as const;
+
+/** Server-side validation messages (new draft). */
+export const VALIDATION = {
+  dateInvalid: "Enter your date of birth as YYYY-MM-DD.",
+  dateRange: "Your date of birth must be between 1900-01-01 and today.",
+  timeInvalid: "Enter your birth time as HH:MM (24-hour), or leave it blank.",
+  placeLength: "Enter a place between 2 and 120 characters, like a city and country.",
+  cardUnknown: "Pick one of the cards on the table.",
+  geocodeBusy: "Our place lookup is busy. Please try again in a few seconds.",
+  rateLimited: "Too many tries. Please wait a few minutes and try again.",
+} as const;
+
+/** Frame for keyword-only placements on the profile, so they read as a stance, not a trait claim. */
+export const KEYWORD_FRAME = (planet: string, sign: string, keyword: string) =>
+  `${planet} in ${sign} is read as: ${keyword}.`;
+
+/** Note under an ambiguous placement on the profile (no birth time). */
+export const AMBIGUOUS_NOTE = (first: string) =>
+  `Without a birth time we can't tell which sign this was in. The reading above uses ${first}. Add your time to settle it.`;

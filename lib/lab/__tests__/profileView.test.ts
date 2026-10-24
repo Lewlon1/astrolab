@@ -1,0 +1,36 @@
+import { describe, expect, it } from "vitest";
+import { buildProfileView } from "../profileView";
+import { fakeChart, fakeRow } from "./helpers";
+
+describe("buildProfileView", () => {
+  it("without a time: no Rising, no houses, ambiguous shown as 'X or Y'", () => {
+    const chart = fakeChart({ sun: "Leo", moon: "Gemini", ambiguous: { Moon: ["Gemini", "Cancer"] } });
+    const v = buildProfileView(fakeRow(chart));
+    expect(v.header).toEqual({ card: "The Tower", sun: "Leo", moon: "Gemini or Cancer", rising: null });
+    expect(v.coreNotes.map((n) => n.key)).toEqual(["Sun", "Moon", "Venus", "Saturn", "NorthNode"]);
+    const moon = v.coreNotes.find((n) => n.key === "Moon")!;
+    expect(moon.title).toBe("Moon: Gemini or Cancer");
+    expect(moon.note).toContain("Gemini");
+    expect(moon.astro).toContain("The Moon in Gemini");
+    expect(v.positions.every((p) => p.house === null)).toBe(true);
+    const moonRow = v.positions.find((p) => p.body === "Moon")!;
+    expect(moonRow.sign).toBe("Gemini or Cancer");
+    expect(moonRow.degree).toBeNull();
+    expect(v.positions.find((p) => p.body === "Sun")!.degree).toBe(15);
+  });
+
+  it("with a time: Rising and houses are present", () => {
+    const v = buildProfileView(fakeRow(fakeChart({ sun: "Leo", moon: "Pisces", hasTime: true })));
+    expect(v.header.rising).toBe("Cancer");
+    expect(v.coreNotes).toHaveLength(6);
+    expect(v.coreNotes[2].key).toBe("Rising");
+    expect(v.positions.every((p) => p.house === 3)).toBe(true);
+  });
+
+  it("frames keywords as stance language", () => {
+    const v = buildProfileView(fakeRow(fakeChart({ sun: "Leo", moon: "Pisces" })));
+    const mercury = v.positions.find((p) => p.body === "Mercury")!;
+    expect(mercury.keyword).toBe("Mercury in Aries is read as: thinks fast and speaks plainly.");
+    expect(v.positions.find((p) => p.body === "Sun")!.keyword).toBeNull();
+  });
+});
