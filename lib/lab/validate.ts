@@ -6,6 +6,11 @@ import { ERRORS, VALIDATION } from "@/content/lab/ui";
 export type LabSrc = "manychat" | "bio" | "ad" | "lora";
 const SRC_VALUES: readonly string[] = ["manychat", "bio", "ad", "lora"];
 
+/** Accept only the known traffic sources; anything else (including arrays from repeated query params) is null. */
+export function parseLabSrc(v: unknown): LabSrc | null {
+  return typeof v === "string" && SRC_VALUES.includes(v) ? (v as LabSrc) : null;
+}
+
 export type ComputeInput = {
   date: string;
   /** HH:MM or null when unknown */
@@ -64,8 +69,7 @@ export function validateCompute(body: unknown, now: Date = new Date()): Validate
   const card = str(b.card);
   if (!CARDS.some((c) => c.name === card)) return fail("card", VALIDATION.cardUnknown);
 
-  const srcRaw = str(b.src);
-  const src = SRC_VALUES.includes(srcRaw) ? (srcRaw as LabSrc) : null;
+  const src = parseLabSrc(b.src);
 
   return { ok: true, value: { date, time, place, card, src } };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateCompute, validateGate } from "../validate";
+import { parseLabSrc, validateCompute, validateGate } from "../validate";
 
 const now = new Date("2026-10-24T12:00:00Z");
 const good = { date: "1990-05-17", time: "08:30", place: "London, UK", card: "The Tower", src: "bio" };
@@ -49,5 +49,12 @@ describe("validateGate", () => {
     });
     const bad = validateGate({ ...good, email: "nope" }, now);
     expect(bad).toMatchObject({ ok: false, field: "email" });
+  });
+});
+
+describe("parseLabSrc", () => {
+  it("accepts only the known sources", () => {
+    for (const s of ["manychat", "bio", "ad", "lora"]) expect(parseLabSrc(s)).toBe(s);
+    for (const s of ["", "BIO", "x", undefined, null, ["bio"], 1]) expect(parseLabSrc(s)).toBeNull();
   });
 });

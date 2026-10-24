@@ -140,3 +140,55 @@ export const API = {
   profileNotFound: "We couldn't find your profile.",
   attribution: "© OpenStreetMap contributors",
 } as const;
+
+/** /lab page metadata (new draft). */
+export const LAB_META = {
+  title: "The Lab · Astropsyche Lab",
+  description:
+    "Draw one of three face-down major arcana cards, add your birth data, and see how the card meets your chart. A two-minute experiment from the Astropsyche Lab.",
+} as const;
+
+/** Banner shown when /auth/callback redirects back with ?auth=error (new draft). */
+export const AUTH_ERROR = "That sign-in link has expired. Enter your email again to get a new one.";
+
+/** Place-search attribution under the place field (new draft). */
+export const OSM_ATTRIBUTION = {
+  before: "Place search ",
+  linkLabel: "© OpenStreetMap contributors",
+  href: "https://www.openstreetmap.org/copyright",
+} as const;
+
+/** Extra notes on the instant reading (new draft). */
+export const READING_NOTES = {
+  approximateZone:
+    "We could only place your birth time zone approximately, so a position near a sign change may read differently in your full profile.",
+} as const;
+
+/** Gate field labels not covered by GATE (new draft). */
+export const GATE_EXTRA = {
+  consentLabel: "Consent",
+  submitting: "Sending your link…",
+} as const;
+
+/** Birth-form busy label (new draft). */
+export const BIRTH_EXTRA = {
+  submitting: "Reading your card and chart…",
+} as const;
+
+/** The "sent" state after a successful gate submit (new draft). No example transit here. */
+export const SENT = {
+  title: "Check your inbox",
+  body: (email: string) => `Check your inbox — we've sent a sign-in link to ${email}.`,
+  hint: "Open the link on this device to see your profile. It can take a minute to arrive.",
+  previewTitle: "What your profile holds",
+  tiles: {
+    sunMoon: { label: "Sun · Moon", body: "Your full chart, every planet read through the same three layers." },
+    risingWithTime: { label: "Rising", value: "From your birth time", body: "Calculated from your birth time and place." },
+    risingNoTime: {
+      label: "Rising",
+      value: "Add your birth time",
+      body: "Without a time, the profile skips houses and the rising sign rather than guessing.",
+    },
+    card: { label: "Your card", body: "Saved with your profile, so you can come back to it." },
+  },
+} as const;
