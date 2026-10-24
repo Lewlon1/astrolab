@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     });
     const stored = toStoredChart(chart);
     const admin = createAdminClient();
+    let justInserted = false;
 
     const fields = {
       card_drawn: input.card,
@@ -69,28 +70,44 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     };
 
-    // Upsert by email among live rows (the unique index is partial, so do it by hand).
-    const existing = await admin
-      .from("lab_profiles")
-      .select("id")
-      .eq("email", input.email)
-      .is("deleted_at", null)
-      .maybeSingle();
+    // Find the live row by email (the unique index is partial, so do it by hand).
+    const findLive = () =>
+      admin
+        .from("lab_profiles")
+        .select("id, user_id")
+        .eq("email", input.email)
+        .is("deleted_at", null)
+        .maybeSingle();
+    const existing = await findLive();
     if (existing.error) throw new Error(`profile lookup failed (code ${existing.error.code})`);
 
-    let profileId: string;
-    if (existing.data) {
-      profileId = (existing.data as { id: string }).id;
-      const upd = await admin.from("lab_profiles").update(fields).eq("id", profileId);
-      if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
-    } else {
+    let row = existing.data as { id: string; user_id: string | null } | null;
+    if (!row) {
       const ins = await admin
         .from("lab_profiles")
         .insert({ email: input.email, ...fields })
         .select("id")
         .single();
-      if (ins.error || !ins.data) throw new Error(`profile insert failed (code ${ins.error?.code})`);
-      profileId = (ins.data as { id: string }).id;
+      if (ins.error || !ins.data) {
+        // A concurrent first submit won the unique index: reuse its row.
+        if (ins.error?.code !== "23505") throw new Error(`profile insert failed (code ${ins.error?.code})`);
+        const again = await findLive();
+        if (again.error || !again.data) throw new Error(`profile re-select failed (code ${again.error?.code})`);
+        row = again.data as { id: string; user_id: string | null };
+      } else {
+        row = { id: (ins.data as { id: string }).id, user_id: null };
+        justInserted = true;
+      }
+    }
+    const profileId = row.id;
+    // A claimed row (user_id set) belongs to a verified user. Whoever merely knows
+    // the email must not overwrite their birth data, card, consent or MailerLite
+    // fields, so we skip every write and still send the link. The response is the
+    // same either way, so it doesn't reveal that the email exists.
+    const claimed = row.user_id !== null;
+    if (!claimed && !justInserted) {
+      const upd = await admin.from("lab_profiles").update(fields).eq("id", profileId);
+      if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
     }
 
     const supabase = await createClient();
@@ -109,14 +126,14 @@ export async function POST(request: Request) {
     const sun = stored.positions.find((p) => p.body === "Sun")?.sign ?? "";
     const moon = stored.positions.find((p) => p.body === "Moon")?.sign ?? "";
     // Failure does not fail the request (upsertLabSubscriber never throws).
-    await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon });
+    if (!claimed) await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon });
 
     const leadId = await recordLeadEvent(admin, {
       email: input.email,
       type: "lab_email_submitted",
       detail: { src: input.src, card: input.card, has_time: stored.hasTime },
     });
-    if (leadId) {
+    if (leadId && !claimed) {
       const link = await admin.from("lab_profiles").update({ lead_id: leadId }).eq("id", profileId);
       if (link.error) console.error("[lab] lead link failed, code", link.error.code);
     }

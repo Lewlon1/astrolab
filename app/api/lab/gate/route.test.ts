@@ -1,0 +1,74 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { updates, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
+  updates: [] as unknown[],
+  signIn: vi.fn(async () => ({ error: null })),
+  upsertSub: vi.fn(async () => "id"),
+  recordEvt: vi.fn(async () => "lead1"),
+  state: { liveRow: null as { id: string; user_id: string | null } | null },
+}));
+
+vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { signInWithOtp: signIn } }) }));
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: () => ({
+    from: () => {
+      const q: Record<string, unknown> = {};
+      q.select = () => q;
+      q.eq = () => q;
+      q.is = () => q;
+      q.maybeSingle = async () => ({ data: state.liveRow, error: null });
+      q.update = (v: unknown) => {
+        updates.push(v);
+        return { eq: async () => ({ error: null }) };
+      };
+      q.insert = () => ({ select: () => ({ single: async () => ({ data: { id: "new" }, error: null }) }) });
+      return q;
+    },
+  }),
+}));
+vi.mock("@/lib/lab/geocode", () => ({
+  GeocodeBusyError: class extends Error {},
+  GeocodeConfigError: class extends Error {},
+  geocode: async () => ({ lat: 51.5, lon: -0.1, displayName: "London", tz: "Europe/London" }),
+}));
+vi.mock("@/lib/lab/mailerlite", () => ({ upsertLabSubscriber: upsertSub }));
+vi.mock("@/lib/lab/events", () => ({ recordLeadEvent: recordEvt }));
+vi.mock("@/lib/lab/rateLimit", () => ({ gateLimiter: { allow: () => true }, clientIp: () => "1.1.1.1" }));
+
+import { POST } from "./route";
+import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
+import { CARDS } from "@/content/lab/cards";
+
+const req = () =>
+  new Request("http://localhost/api/lab/gate", {
+    method: "POST",
+    body: JSON.stringify({
+      email: "a@b.co", date: "1990-06-15", place: "London", card: CARDS[0].name,
+      consent: true, consentVersion: CONSENT_TEXT_VERSION,
+    }),
+  });
+
+describe("gate route", () => {
+  beforeEach(() => {
+    updates.length = 0;
+    vi.clearAllMocks();
+  });
+
+  it("claimed row: no field writes, no MailerLite, still sends link and ok", async () => {
+    state.liveRow = { id: "p1", user_id: "u1" };
+    const res = await POST(req());
+    expect(await res.json()).toEqual({ ok: true });
+    expect(updates).toHaveLength(0);
+    expect(upsertSub).not.toHaveBeenCalled();
+    expect(signIn).toHaveBeenCalledOnce();
+    expect(recordEvt).toHaveBeenCalledOnce();
+  });
+
+  it("unclaimed row: updates fields and syncs MailerLite", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    const res = await POST(req());
+    expect(await res.json()).toEqual({ ok: true });
+    expect(updates.length).toBeGreaterThan(0);
+    expect(upsertSub).toHaveBeenCalledOnce();
+  });
+});

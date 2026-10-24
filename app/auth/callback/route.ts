@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
+const OTP_TYPES: readonly string[] = ["magiclink", "email", "signup"];
 const DEFAULT_NEXT = "/lab/profile";
 
 function safeNext(next: string | null): string {
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) return fail();
-    } else if (tokenHash && type) {
+    } else if (tokenHash && type && OTP_TYPES.includes(type)) {
       const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as EmailOtpType });
       if (error) return fail();
     } else {
