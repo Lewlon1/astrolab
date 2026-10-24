@@ -75,4 +75,17 @@ describe("geocode", () => {
     const { admin } = fakeAdmin({});
     await expect(geocode("anywhere", { admin, sleep })).rejects.toThrow(/NOMINATIM_USER_AGENT/);
   });
+
+  it("still calls Nominatim when the admin client cannot be constructed", async () => {
+    const saved = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    try {
+      const f = vi.fn().mockResolvedValue(ok([{ lat: "48.8566", lon: "2.3522", display_name: "Paris, France" }]));
+      const r = await geocode("Paris", { fetch: f as unknown as typeof fetch, sleep, now: () => 5e12 });
+      expect(r).toMatchObject({ lat: 48.8566, lon: 2.3522, displayName: "Paris, France" });
+      expect(f).toHaveBeenCalledOnce();
+    } finally {
+      if (saved !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = saved;
+    }
+  });
 });

@@ -45,13 +45,23 @@ const realSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export async function geocode(query: string, deps: GeocodeDeps = {}): Promise<GeocodeResult | null> {
   const key = normaliseQuery(query);
   if (!key) return null;
-  const admin = deps.admin ?? createAdminClient();
+  // A missing service-role key (or any client construction failure) is a cache
+  // failure: skip the cache and the slot RPC, still call Nominatim.
+  let admin: SupabaseClient | null = deps.admin ?? null;
+  if (!admin) {
+    try {
+      admin = createAdminClient();
+    } catch {
+      admin = null;
+    }
+  }
   const doFetch = deps.fetch ?? fetch;
   const sleep = deps.sleep ?? realSleep;
   const now = deps.now ?? Date.now;
 
   // 1. Cache
   try {
+    if (!admin) throw new Error("no admin client");
     const { data } = await admin
       .from("lab_geocode_cache")
       .select("lat, lon, display_name, tz")
@@ -74,7 +84,7 @@ export async function geocode(query: string, deps: GeocodeDeps = {}): Promise<Ge
   if (!userAgent) throw new GeocodeConfigError("NOMINATIM_USER_AGENT is not set.");
 
   // 3. Cross-instance slot, one retry
-  if (!(await takeSlot(admin))) {
+  if (admin && !(await takeSlot(admin))) {
     await sleep(SLOT_MS);
     if (!(await takeSlot(admin))) throw new GeocodeBusyError();
   }
@@ -101,6 +111,7 @@ export async function geocode(query: string, deps: GeocodeDeps = {}): Promise<Ge
   const tz = zoneFor(lat, lon);
 
   try {
+    if (!admin) throw new Error("no admin client");
     await admin
       .from("lab_geocode_cache")
       .upsert({ query: key, lat, lon, display_name: displayName, tz }, { onConflict: "query" });
