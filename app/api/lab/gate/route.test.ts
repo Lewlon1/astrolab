@@ -5,7 +5,7 @@ const { updates, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
   signIn: vi.fn(async () => ({ error: null })),
   upsertSub: vi.fn(async () => "id"),
   recordEvt: vi.fn(async () => "lead1"),
-  state: { liveRow: null as { id: string; user_id: string | null } | null },
+  state: { liveRow: null as { id: string; user_id: string | null } | null, transitThrows: false },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { signInWithOtp: signIn } }) }));
@@ -31,7 +31,17 @@ vi.mock("@/lib/lab/geocode", () => ({
   GeocodeConfigError: class extends Error {},
   geocode: async () => ({ lat: 51.5, lon: -0.1, displayName: "London", tz: "Europe/London" }),
 }));
-vi.mock("@/lib/lab/mailerlite", () => ({ upsertLabSubscriber: upsertSub }));
+vi.mock("@/lib/lab/mailerlite", async (orig) => ({ ...(await orig<typeof import("@/lib/lab/mailerlite")>()), upsertLabSubscriber: upsertSub }));
+vi.mock("@/lib/lab/nextTransit", async (orig) => {
+  const actual = await orig<typeof import("@/lib/lab/nextTransit")>();
+  return {
+    ...actual,
+    seasonsForChart: (...args: Parameters<typeof actual.seasonsForChart>) => {
+      if (state.transitThrows) throw new Error("boom");
+      return actual.seasonsForChart(...args);
+    },
+  };
+});
 vi.mock("@/lib/lab/events", () => ({ recordLeadEvent: recordEvt }));
 vi.mock("@/lib/lab/rateLimit", () => ({ gateLimiter: { allow: () => true }, clientIp: () => "1.1.1.1" }));
 
@@ -51,6 +61,7 @@ const req = () =>
 describe("gate route", () => {
   beforeEach(() => {
     updates.length = 0;
+    state.transitThrows = false;
     vi.clearAllMocks();
   });
 
@@ -70,5 +81,18 @@ describe("gate route", () => {
     expect(await res.json()).toEqual({ ok: true });
     expect(updates.length).toBeGreaterThan(0);
     expect(upsertSub).toHaveBeenCalledOnce();
+  });
+
+  it("a transit computation failure does not block signup: null transit fields, link still sent", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    state.transitThrows = true;
+    const res = await POST(req());
+    expect(await res.json()).toEqual({ ok: true });
+    expect(updates[0]).toMatchObject({ next_transit: null, transit_peak_date: null });
+    expect(signIn).toHaveBeenCalledOnce();
+    expect(upsertSub).toHaveBeenCalledWith(
+      "a@b.co",
+      expect.objectContaining({ next_transit: "", transit_peak_date: "" }),
+    );
   });
 });

@@ -4,8 +4,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAuthorizedCron } from "@/lib/lab/cronAuth";
-import { updateLabFields } from "@/lib/lab/mailerlite";
-import { nextTransitFields, seasonsForChart } from "@/lib/lab/nextTransit";
+import { transitFieldsForMailerLite, updateLabFields } from "@/lib/lab/mailerlite";
+import { nextTransitFields, seasonsForChart, transitFieldsUnchanged } from "@/lib/lab/nextTransit";
 import type { LabProfileRow } from "@/lib/lab/types";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ const MAILERLITE_GAP_MS = 600;
 /** Stop cleanly before maxDuration rather than being cut off mid-write. */
 const BUDGET_MS = 280_000;
 
-type Row = Pick<LabProfileRow, "id" | "email" | "positions">;
+type Row = Pick<LabProfileRow, "id" | "email" | "positions" | "next_transit" | "transit_peak_date">;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       // Keyset paging by id: stable while we update the rows we've read.
       let q = admin
         .from("lab_profiles")
-        .select("id, email, positions")
+        .select("id, email, positions, next_transit, transit_peak_date")
         .is("deleted_at", null)
         .order("id", { ascending: true })
         .limit(PAGE_SIZE);
@@ -75,6 +75,9 @@ export async function GET(request: Request) {
           continue;
         }
 
+        // Skip the DB write and the MailerLite call when nothing changed.
+        if (transitFieldsUnchanged(row, fields)) continue;
+
         const upd = await admin
           .from("lab_profiles")
           .update(fields)
@@ -86,12 +89,12 @@ export async function GET(request: Request) {
         }
         updated++;
 
-        // MailerLite drops null fields, so there is nothing to send without a season.
-        if (!fields.next_transit) continue;
+        // No season: send "" for both so MailerLite's old values are cleared
+        // (MailerLite's handling of "" is unverified against the live API).
         const wait = lastMailerlite + MAILERLITE_GAP_MS - Date.now();
         if (wait > 0) await sleep(wait);
         lastMailerlite = Date.now();
-        const id = await updateLabFields(row.email, fields);
+        const id = await updateLabFields(row.email, transitFieldsForMailerLite(fields));
         if (!id) mailerliteFailures++;
       }
 

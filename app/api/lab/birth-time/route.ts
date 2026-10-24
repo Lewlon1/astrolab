@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { computeChart } from "@/lib/astro";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { updateLabFields, transitFieldsForMailerLite } from "@/lib/lab/mailerlite";
+import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
 import { toStoredChart } from "@/lib/lab/storedChart";
 import { badRequest, readJson } from "@/lib/lab/routeHelpers";
 import type { LabProfileRow } from "@/lib/lab/types";
@@ -30,25 +32,37 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const found = await admin
       .from("lab_profiles")
-      .select("id, birth_date, lat, lon, tz")
+      .select("id, email, birth_date, lat, lon, tz")
       .eq("user_id", user.id)
       .is("deleted_at", null)
       .maybeSingle();
     if (found.error) throw new Error(`profile lookup failed (code ${found.error.code})`);
     if (!found.data) return NextResponse.json({ error: API.profileNotFound }, { status: 404 });
-    const p = found.data as Pick<LabProfileRow, "id" | "birth_date" | "lat" | "lon" | "tz">;
+    const p = found.data as Pick<LabProfileRow, "id" | "email" | "birth_date" | "lat" | "lon" | "tz">;
 
     const chart = computeChart({ dateISO: p.birth_date, timeHHMM: hhmm, lat: p.lat, lon: p.lon, zone: p.tz });
+    const stored = toStoredChart(chart);
+    // The time can change the Rising point and so the next transit. A failure here
+    // must not lose the time change: keep going with null fields.
+    let transit: NextTransitFields = { next_transit: null, transit_peak_date: null };
+    try {
+      transit = nextTransitFields(seasonsForChart(stored));
+    } catch (err) {
+      console.error("[lab] birth-time transit computation failed:", err instanceof Error ? err.name : "error");
+    }
     const upd = await admin
       .from("lab_profiles")
       .update({
         birth_time: hhmm,
         birth_utc: chart.birthUtc.toISOString(),
-        positions: toStoredChart(chart),
+        positions: stored,
+        ...transit,
         updated_at: new Date().toISOString(),
       })
       .eq("id", p.id);
     if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
+    // Never throws; a MailerLite failure does not fail the request.
+    await updateLabFields(p.email, transitFieldsForMailerLite(transit));
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[lab] birth-time failed:", err instanceof Error ? err.message : "unknown");

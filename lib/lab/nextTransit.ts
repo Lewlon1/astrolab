@@ -37,14 +37,26 @@ export function seasonsForChart(chart: StoredChart, now: Date = new Date()): Tra
 
 export type NextTransitFields = { next_transit: string | null; transit_peak_date: string | null };
 
-/** The first season (already sorted by significance) as the headline and its peak as YYYY-MM-DD (UTC). */
-export function nextTransitFields(seasons: readonly TransitSeason[]): NextTransitFields {
-  const next = seasons[0];
+/**
+ * The next season as the headline and its peak as YYYY-MM-DD (UTC). Seasons are
+ * sorted by peak; prefer the first whose peak is on or after `now` (a season
+ * already in orb can have a past peak), falling back to the first season.
+ */
+export function nextTransitFields(seasons: readonly TransitSeason[], now: Date = new Date()): NextTransitFields {
+  const next = seasons.find((s) => s.peak.getTime() >= now.getTime()) ?? seasons[0];
   if (!next) return { next_transit: null, transit_peak_date: null };
   return {
     next_transit: transitCopy(next.planet, next.aspect, next.point).headline,
     transit_peak_date: next.peak.toISOString().slice(0, 10),
   };
+}
+
+/** True when a stored row already holds exactly these transit fields. */
+export function transitFieldsUnchanged(
+  stored: { next_transit?: string | null; transit_peak_date?: string | null },
+  next: NextTransitFields,
+): boolean {
+  return (stored.next_transit ?? null) === next.next_transit && (stored.transit_peak_date ?? null) === next.transit_peak_date;
 }
 
 /** JSON-safe season for client props: dates as ISO strings. */

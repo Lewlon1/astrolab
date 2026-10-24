@@ -5,8 +5,8 @@ import { computeChart } from "@/lib/astro";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordLeadEvent } from "@/lib/lab/events";
-import { upsertLabSubscriber } from "@/lib/lab/mailerlite";
-import { nextTransitFields, seasonsForChart } from "@/lib/lab/nextTransit";
+import { transitFieldsForMailerLite, upsertLabSubscriber } from "@/lib/lab/mailerlite";
+import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
 import { clientIp, gateLimiter } from "@/lib/lab/rateLimit";
 import { toStoredChart } from "@/lib/lab/storedChart";
 import { validateGate } from "@/lib/lab/validate";
@@ -53,7 +53,13 @@ export async function POST(request: Request) {
     });
     const stored = toStoredChart(chart);
     // Written only on the insert/update paths below, never to a claimed row.
-    const transit = nextTransitFields(seasonsForChart(stored));
+    // A transit failure must never block signup: fall back to null fields.
+    let transit: NextTransitFields = { next_transit: null, transit_peak_date: null };
+    try {
+      transit = nextTransitFields(seasonsForChart(stored));
+    } catch (err) {
+      console.error("[lab] gate transit computation failed:", err instanceof Error ? err.name : "error");
+    }
     const admin = createAdminClient();
     let justInserted = false;
 
@@ -132,7 +138,7 @@ export async function POST(request: Request) {
     const moon = stored.positions.find((p) => p.body === "Moon")?.sign ?? "";
     // Failure does not fail the request (upsertLabSubscriber never throws).
     if (!claimed) {
-      await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon, ...transit });
+      await upsertLabSubscriber(input.email, { lab_card: input.card, sun_sign: sun, moon_sign: moon, ...transitFieldsForMailerLite(transit) });
     }
 
     const leadId = await recordLeadEvent(admin, {

@@ -40,12 +40,29 @@ async function call(path: string, init: { method: "GET" | "POST"; body?: unknown
   }
 }
 
-function cleanFields(fields: Partial<LabFields>): Record<string, string> {
+/** Fields where "" is a deliberate clear rather than "nothing to send". */
+const CLEARABLE: ReadonlySet<string> = new Set(["next_transit", "transit_peak_date"]);
+
+/**
+ * Drops null, undefined and empty values, except the transit fields, where ""
+ * is kept so a profile with no season clears the previous value. Whether
+ * MailerLite treats "" as clearing a custom field is unverified against the live API.
+ */
+export function cleanFields(fields: Partial<LabFields>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(fields)) {
-    if (typeof v === "string" && v) out[k] = v;
+    if (typeof v !== "string") continue;
+    if (v || CLEARABLE.has(k)) out[k] = v;
   }
   return out;
+}
+
+/** Transit fields for a MailerLite update: null becomes "" so a stale value is cleared, not left behind. */
+export function transitFieldsForMailerLite(f: {
+  next_transit: string | null;
+  transit_peak_date: string | null;
+}): Pick<LabFields, "next_transit" | "transit_peak_date"> {
+  return { next_transit: f.next_transit ?? "", transit_peak_date: f.transit_peak_date ?? "" };
 }
 
 /** POST /subscribers upserts. Adds the Lab group when MAILERLITE_LAB_GROUP_ID is set. Returns the subscriber id or null. */
