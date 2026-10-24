@@ -46,6 +46,7 @@ export async function POST() {
         birth_utc: "1970-01-01T00:00:00Z",
         card_drawn: "",
         positions: {},
+        src: null,
         next_transit: null,
         transit_peak_date: null,
         updated_at: now,
