@@ -9,6 +9,7 @@ import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
 import { AUTH_ERROR, BIRTH, DRAW, ERRORS, HERO, RESULT, STANCE, STEP_TITLES } from "@/content/lab/ui";
 import type { LabSrc } from "@/lib/lab/validate";
 import type { InstantReading } from "@/lib/lab/reading";
+import { signChip } from "@/content/lab/reading";
 import { drawCards } from "@/lib/lab/deck";
 import { track } from "@/lib/analytics/track";
 import { trackLead } from "@/lib/fbpixel";
@@ -176,8 +177,8 @@ export default function LabDraw({ src, authError }: Props) {
     setSent({
       email: values.email,
       hasTime: Boolean(values.time),
-      // First Sun sign only (a cusp birth is explained in the reading); Moon keeps "X or Y".
-      sunMoon: `${reading.sun[0]} · ${reading.moon.join(" or ")}`,
+      // Ambiguous Sun or Moon show "X or Y": nothing is guessed.
+      sunMoon: `${signChip(reading.sun)} · ${signChip(reading.moon)}`,
       card: chip(RESULT.chipCard),
     });
     setStage("sent");
@@ -254,6 +255,7 @@ export default function LabDraw({ src, authError }: Props) {
 
       {atLeast(stage, "gate") && birth && (
         <Gate
+          key={birth.time ?? ""}
           ref={sentRef}
           defaultTime={birth.time}
           onSubmit={handleGate}

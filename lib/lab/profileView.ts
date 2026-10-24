@@ -110,7 +110,7 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
         sign: signChip(signs),
         degree: ambiguous ? null : Math.floor(p.degree),
         house: hasTime && typeof p.house === "number" ? p.house : null,
-        keyword: isKeywordKey(body) ? KEYWORD_FRAME(title, signs[0], KEYWORDS[body][signs[0]]) : null,
+        keyword: isKeywordKey(body) && !ambiguous ? KEYWORD_FRAME(title, signs[0], KEYWORDS[body][signs[0]]) : null,
       },
     ];
   });

@@ -32,6 +32,8 @@ describe("buildProfileView", () => {
     const mercury = v.positions.find((p) => p.body === "Mercury")!;
     expect(mercury.keyword).toBe("Mercury in Aries is read as: thinks fast and speaks plainly.");
     expect(v.positions.find((p) => p.body === "Sun")!.keyword).toBeNull();
+    const amb = buildProfileView(fakeRow(fakeChart({ sun: "Leo", moon: "Gemini", ambiguous: { Mercury: ["Aries", "Taurus"] } })));
+    expect(amb.positions.find((p) => p.body === "Mercury")!.keyword).toBeNull();
   });
 
   it("floors degrees so 29.9 shows as 29", () => {
