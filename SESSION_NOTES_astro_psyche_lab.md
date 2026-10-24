@@ -762,3 +762,17 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Error logging: Postgres and library messages can embed the offending value (an email in a unique-violation). Log codes and names, build messages yourself.
 - A regression test is only worth keeping if it fails without the fix; the first draft of the lookback test passed at both 400 and 800 days. Check by reverting the fix.
 - A mock of a module a route imports will silently drop any new export the route starts using; the gate test needed `importOriginal` after the MailerLite helper was added.
+
+### Final review additions (2026-10-24)
+
+- **Supabase email templates:** set "Magic Link" and "Confirm signup" to `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/lab/profile`. PKCE `?code=` links fail when opened in another browser (Instagram in-app, then Mail). Smoke-test cross-device.
+- **SMTP:** configure custom SMTP and raise the Auth email rate limit before launch (default SMTP allows only a handful per hour).
+- **Merge = launch:** hold the production deploy until 015/015b/016 have run, or the /lab gate returns 500 and /lab/profile errors.
+- **015b is a go/no-go line:** confirm the storage policies applied before enabling sign-ups.
+- **After 015, run:** `select tablename, policyname, roles, qual from pg_policies where qual ilike '%authenticated%' or 'authenticated' = any(roles);` Only 015b's storage policies (which also require is_admin()) should remain.
+- **Open item:** the cron restarts from the lowest id each month; add `transits_refreshed_at` ordering or a cursor before about 400 profiles.
+- **Open item:** `trackLead` sends content_name "newsletter_signup" for Lab leads.
+- **Open item (legal):** single vs double opt-in, given anyone can submit any address.
+- **Product question (unchanged):** null Moon transits when birth time is unknown.
+- **Delete now scrubs:** the soft-delete also tombstones email (`deleted+<id>@invalid`) and every NOT NULL birth column; MailerLite is forgotten first. Lead/event history and the auth account are kept, and the delete and privacy copy say so.
+- **MailerLite signs:** `sun_sign` and `moon_sign` send "X or Y" when ambiguous (gate), and the birth-time route syncs the settled signs.

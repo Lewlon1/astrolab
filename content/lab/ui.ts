@@ -97,7 +97,7 @@ export const PROFILE = {
 export const DELETE = {
   button: "Delete my profile",
   title: "Delete your Lab profile?",
-  body: "This removes your email, birth data, chart and card, and stops the monthly notes. It cannot be undone.",
+  body: "This erases your birth data, chart and card from your profile, replaces your email there with a placeholder, and removes you from our monthly notes list. We keep a record that you signed up and your sign-in account, but nothing that describes your chart. It cannot be undone.",
   confirm: "Yes, delete everything",
   cancel: "Keep my profile",
   done: "Your profile has been deleted.",
@@ -217,6 +217,8 @@ export const PROFILE_EXTRA = {
   deleteWorking: "Deleting…",
   deleteError: "We couldn't delete your profile. Please try again.",
   homeLink: "Back to the homepage",
+  errorRetry: "Try again",
+  errorBack: "Back to the Lab Draw",
 } as const;
 
 /** Booking link target for the profile CTA. */
