@@ -10,6 +10,7 @@ import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
 import ServicesIndex from "@/components/services/ServicesIndex";
 import HomeCTA from "@/components/HomeCTA";
+import LabTeaser from "@/components/lab/LabTeaser";
 import TrackSection from "@/components/analytics/TrackSection";
 import { organizationJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
@@ -72,16 +73,19 @@ export default async function HomePage() {
       <TrackSection name="services_index" index={6}>
         <ServicesIndex services={services ?? []} />
       </TrackSection>
-      <TrackSection name="testimonials" index={7}>
+      <TrackSection name="lab_teaser" index={7}>
+        <LabTeaser />
+      </TrackSection>
+      <TrackSection name="testimonials" index={8}>
         <Testimonials testimonials={testimonials ?? []} />
       </TrackSection>
-      <TrackSection name="lead_capture" index={8}>
+      <TrackSection name="lead_capture" index={9}>
         <LeadCaptureSection />
       </TrackSection>
-      <TrackSection name="blog" index={9}>
+      <TrackSection name="blog" index={10}>
         <BlogPreview posts={posts ?? []} />
       </TrackSection>
-      <TrackSection name="home_cta" index={10}>
+      <TrackSection name="home_cta" index={11}>
         <HomeCTA />
       </TrackSection>
     </>
