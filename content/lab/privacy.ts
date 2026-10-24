@@ -37,7 +37,7 @@ export const LAB_PRIVACY_SECTION = {
     },
     {
       title: "How to delete",
-      body: "Use the delete button on your profile page, or email us and we will remove your profile and stop the monthly notes.",
+      body: "Use the delete button on your profile page, or email us. Deleting erases your birth data, chart, card and email from your profile and removes you from the monthly notes list. We keep the record that you signed up (our lead and event history) and your sign-in account, which holds only your email address. Email us if you want those removed too.",
     },
   ],
 } as const;
