@@ -30,7 +30,7 @@ export type PositionRow = {
   title: string;
   /** "Leo" or "Leo or Virgo" */
   sign: string;
-  /** Whole degrees; null when ambiguous. */
+  /** Whole degrees, floored (0-29); null when ambiguous. */
   degree: number | null;
   /** Null without a birth time. */
   house: number | null;
@@ -108,7 +108,7 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
         body,
         title,
         sign: signChip(signs),
-        degree: ambiguous ? null : Math.round(p.degree),
+        degree: ambiguous ? null : Math.floor(p.degree),
         house: hasTime && typeof p.house === "number" ? p.house : null,
         keyword: isKeywordKey(body) ? KEYWORD_FRAME(title, signs[0], KEYWORDS[body][signs[0]]) : null,
       },

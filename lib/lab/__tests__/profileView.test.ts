@@ -16,7 +16,7 @@ describe("buildProfileView", () => {
     const moonRow = v.positions.find((p) => p.body === "Moon")!;
     expect(moonRow.sign).toBe("Gemini or Cancer");
     expect(moonRow.degree).toBeNull();
-    expect(v.positions.find((p) => p.body === "Sun")!.degree).toBe(15);
+    expect(v.positions.find((p) => p.body === "Sun")!.degree).toBe(14);
   });
 
   it("with a time: Rising and houses are present", () => {
@@ -32,5 +32,12 @@ describe("buildProfileView", () => {
     const mercury = v.positions.find((p) => p.body === "Mercury")!;
     expect(mercury.keyword).toBe("Mercury in Aries is read as: thinks fast and speaks plainly.");
     expect(v.positions.find((p) => p.body === "Sun")!.keyword).toBeNull();
+  });
+
+  it("floors degrees so 29.9 shows as 29", () => {
+    const chart = fakeChart({ sun: "Leo", moon: "Pisces" });
+    chart.positions.find((p) => p.body === "Sun")!.degree = 29.9;
+    const v = buildProfileView(fakeRow(chart));
+    expect(v.positions.find((p) => p.body === "Sun")!.degree).toBe(29);
   });
 });

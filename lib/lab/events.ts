@@ -5,10 +5,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export const LAB_LEAD_EVENTS = ["lab_email_submitted", "lab_profile_opened", "lab_booking_clicked"] as const;
 export type LabLeadEvent = (typeof LAB_LEAD_EVENTS)[number];
 
+class LeadEventError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+  }
+}
+
 /**
  * Find or create the lead for `email` (source 'lab'), then log the event.
  * Never throws; returns the lead id, or null if it could not be resolved.
- * Logs error messages only, never the email or event detail.
+ * Logs fixed strings and error codes only, never the email or event detail.
  */
 export async function recordLeadEvent(
   admin: SupabaseClient,
@@ -19,20 +25,21 @@ export async function recordLeadEvent(
     const up = await admin
       .from("leads")
       .upsert({ email, source: "lab" }, { onConflict: "email", ignoreDuplicates: true });
-    if (up.error) throw new Error(up.error.message);
+    if (up.error) throw new LeadEventError("lead upsert failed", up.error.code);
 
     const sel = await admin.from("leads").select("id").eq("email", email).maybeSingle();
-    if (sel.error) throw new Error(sel.error.message);
+    if (sel.error) throw new LeadEventError("lead lookup failed", sel.error.code);
     const leadId = (sel.data as { id?: string } | null)?.id ?? null;
     if (!leadId) return null;
 
     const ins = await admin
       .from("lead_events")
       .insert({ lead_id: leadId, type: evt.type, detail: evt.detail ?? {}, source: "website" });
-    if (ins.error) console.error("[lab] lead event insert failed:", ins.error.message);
+    if (ins.error) console.error("[lab] lead event insert failed, code", ins.error.code);
     return leadId;
   } catch (err) {
-    console.error("[lab] recordLeadEvent failed:", err instanceof Error ? err.message : "unknown error");
+    // Fixed string + code only: Postgres messages can embed the email.
+    console.error("[lab] recordLeadEvent failed:", err instanceof LeadEventError ? `${err.message} (code ${err.code})` : "unexpected error");
     return null;
   }
 }

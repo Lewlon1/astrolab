@@ -51,7 +51,15 @@ CREATE POLICY "Lab: owner reads own profile" ON lab_profiles
 
 DROP POLICY IF EXISTS "Lab: owner updates own profile" ON lab_profiles;
 CREATE POLICY "Lab: owner updates own profile" ON lab_profiles
-  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  FOR UPDATE USING (auth.uid() = user_id AND deleted_at IS NULL) WITH CHECK (auth.uid() = user_id);
+
+-- Every write goes through service-role API routes. The own-update policy above
+-- is kept for spec parity, but with no column-level UPDATE grant it cannot be
+-- used through PostgREST (otherwise a user could PATCH email, lead_id, consent_*,
+-- deleted_at or positions). A future client-editable column needs an explicit
+-- column-level GRANT UPDATE (col) ON lab_profiles TO authenticated.
+REVOKE UPDATE ON lab_profiles FROM anon, authenticated;
+REVOKE INSERT, DELETE ON lab_profiles FROM anon, authenticated;
 
 DROP POLICY IF EXISTS "Lab: admin reads all profiles" ON lab_profiles;
 CREATE POLICY "Lab: admin reads all profiles" ON lab_profiles
@@ -67,6 +75,7 @@ CREATE TABLE IF NOT EXISTS lab_geocode_cache (
   created_at   timestamptz DEFAULT now()
 );
 ALTER TABLE lab_geocode_cache ENABLE ROW LEVEL SECURITY;
+REVOKE INSERT, UPDATE, DELETE ON lab_geocode_cache FROM anon, authenticated;
 
 -- 3. lab_throttle + lab_take_slot(). RLS on, no policies.
 CREATE TABLE IF NOT EXISTS lab_throttle (
@@ -74,6 +83,7 @@ CREATE TABLE IF NOT EXISTS lab_throttle (
   last_at timestamptz NOT NULL
 );
 ALTER TABLE lab_throttle ENABLE ROW LEVEL SECURITY;
+REVOKE INSERT, UPDATE, DELETE ON lab_throttle FROM anon, authenticated;
 
 -- Atomically claims the slot for `p_key` if the last claim is older than
 -- p_interval_ms. Returns true when the caller took the slot.
