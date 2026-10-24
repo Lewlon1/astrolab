@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import {
   groupEventsByLead,
   loadWeights,
@@ -17,19 +17,10 @@ import type { Lead, LeadEvent, ScoringWeight } from "@/types";
 
 export const dynamic = "force-dynamic";
 
-async function requireAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return { supabase, user };
-}
-
 export async function GET(req: NextRequest) {
-  const { supabase, user } = await requireAdmin();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase } = auth;
 
   const language = req.nextUrl.searchParams.get("language");
   const stage = req.nextUrl.searchParams.get("stage");
@@ -82,10 +73,9 @@ export async function GET(req: NextRequest) {
 
 /** Update scoring weights from the config panel. */
 export async function PATCH(req: NextRequest) {
-  const { supabase, user } = await requireAdmin();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase } = auth;
 
   const body = await req.json().catch(() => null);
   const updates = body?.weights as Record<string, number> | undefined;
@@ -120,10 +110,9 @@ export async function PATCH(req: NextRequest) {
 
 /** Mark a lead actioned from the queue drawer. */
 export async function POST(req: NextRequest) {
-  const { supabase, user } = await requireAdmin();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase } = auth;
 
   const body = await req.json().catch(() => null);
   const leadId = body?.leadId as string | undefined;

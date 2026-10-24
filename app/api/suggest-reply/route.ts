@@ -1,7 +1,11 @@
+import { requireAdminApi } from "@/lib/auth/admin";
 import { NextResponse } from "next/server";
 import { invokeModel, MODELS } from "@/lib/bedrock";
 
 export async function POST(request: Request) {
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+
   const body = await request.json();
   const { comment, postContext } = body;
 

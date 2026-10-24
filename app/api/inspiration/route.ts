@@ -1,8 +1,12 @@
+import { requireAdminApi } from "@/lib/auth/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { braveSearchMultiple } from "@/lib/brave-search";
 import { invokeModelJSON, MODELS } from "@/lib/bedrock";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = await req.json();
     const nicheFilter = body.niche || "all";

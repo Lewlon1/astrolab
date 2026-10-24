@@ -1,9 +1,13 @@
+import { requireAdminApi } from "@/lib/auth/admin";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { invokeModelJSON, MODELS } from "@/lib/bedrock";
 import type { RepurposeResponse } from "@/types";
 
 export async function POST(request: Request) {
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+
   const body = await request.json();
   const { blog_post_id } = body;
 
