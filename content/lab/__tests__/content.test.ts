@@ -134,7 +134,7 @@ describe("reading templates", () => {
 
 describe("privacy", () => {
   it("has the version and consent link label", () => {
-    expect(privacy.CONSENT_TEXT_VERSION).toBe("2026-10-24.v1");
+    expect(privacy.CONSENT_TEXT_VERSION).toBe("2026-10-25.v1");
     expect(privacy.CONSENT_TEXT.linkLabel).toBe("Privacy notice");
     expect(privacy.LAB_PRIVACY_SECTION.items.length).toBeGreaterThanOrEqual(5);
   });

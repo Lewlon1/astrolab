@@ -7,6 +7,7 @@ import { updateLabFields, transitFieldsForMailerLite } from "@/lib/lab/mailerlit
 import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
 import { signFieldForMailerLite, toStoredChart } from "@/lib/lab/storedChart";
 import { badRequest, readJson } from "@/lib/lab/routeHelpers";
+import { readLabCookie, resolveLabViewer } from "@/lib/lab/viewer";
 import type { LabProfileRow } from "@/lib/lab/types";
 import { API, VALIDATION } from "@/content/lab/ui";
 
@@ -25,20 +26,15 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
-
     const admin = createAdminClient();
-    const found = await admin
-      .from("lab_profiles")
-      .select("id, email, birth_date, lat, lon, tz")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (found.error) throw new Error(`profile lookup failed (code ${found.error.code})`);
-    if (!found.data) return NextResponse.json({ error: API.profileNotFound }, { status: 404 });
-    const p = found.data as Pick<LabProfileRow, "id" | "email" | "birth_date" | "lat" | "lon" | "tz">;
+    const viewer = await resolveLabViewer<Pick<LabProfileRow, "id" | "email" | "birth_date" | "lat" | "lon" | "tz">>({
+      supabase,
+      admin,
+      cookieValue: await readLabCookie(),
+      columns: "id, email, birth_date, lat, lon, tz",
+    });
+    if (!viewer) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
+    const p = viewer.row;
 
     const chart = computeChart({ dateISO: p.birth_date, timeHHMM: hhmm, lat: p.lat, lon: p.lon, zone: p.tz });
     const stored = toStoredChart(chart);

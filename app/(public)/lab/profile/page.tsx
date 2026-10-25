@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordLeadEvent } from "@/lib/lab/events";
+import { readLabCookie, resolveLabViewer } from "@/lib/lab/viewer";
 import { buildProfileView } from "@/lib/lab/profileView";
 import { seasonsForChart, serializeSeasons, type SerializedSeason } from "@/lib/lab/nextTransit";
 import type { LabProfileRow } from "@/lib/lab/types";
 import { CARDS } from "@/content/lab/cards";
-import { BOOKING_CTA, PROFILE, PROFILE_EXTRA, STANCE } from "@/content/lab/ui";
+import { BOOKING_CTA, PROFILE, PROFILE_EXTRA, PROFILE_UNVERIFIED, STANCE } from "@/content/lab/ui";
 import AddBirthTime from "@/components/lab/AddBirthTime";
 import BookingCta from "@/components/lab/BookingCta";
 import CardFace from "@/components/lab/CardFace";
@@ -29,17 +30,6 @@ type Admin = ReturnType<typeof createAdminClient>;
 
 const H2 = "m-0 font-fraunces text-[26px] font-medium leading-tight !text-deepBrown";
 const SECTION = "mt-12";
-
-async function loadLive(admin: Admin, userId: string): Promise<LabProfileRow | null> {
-  const res = await admin
-    .from("lab_profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .is("deleted_at", null)
-    .maybeSingle();
-  if (res.error) throw new Error(`profile lookup failed (code ${res.error.code})`);
-  return (res.data as LabProfileRow | null) ?? null;
-}
 
 /** Record lab_profile_opened at most once per 24h per lead. Never throws. */
 async function recordOpened(admin: Admin, profile: LabProfileRow): Promise<void> {
@@ -79,27 +69,19 @@ function transitSeasons(profile: LabProfileRow): SerializedSeason[] | undefined 
   }
 }
 
-export default async function LabProfilePage() {
+export default async function LabProfilePage({ searchParams }: { searchParams: { mail?: string } }) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-  if (!user) redirect("/lab");
-
   const admin = createAdminClient();
-  let profile = await loadLive(admin, user.id);
-
-  // Fallback: link an unclaimed profile by (lower-cased) email, then reload.
-  if (!profile && user.email) {
-    const link = await admin
-      .from("lab_profiles")
-      .update({ user_id: user.id })
-      .eq("email", user.email.toLowerCase())
-      .is("user_id", null)
-      .is("deleted_at", null);
-    if (link.error) console.error("[lab] profile link failed, code", link.error.code);
-    profile = await loadLive(admin, user.id);
-  }
-  if (!profile) redirect("/lab");
+  // A signed-in user, or the signed cookie set when the profile was created (unverified email).
+  const viewer = await resolveLabViewer<LabProfileRow>({
+    supabase,
+    admin,
+    cookieValue: await readLabCookie(),
+    columns: "*",
+  });
+  if (!viewer) redirect("/lab");
+  const profile = viewer.row;
+  const unverified = viewer.via === "cookie";
 
   await recordOpened(admin, profile);
 
@@ -111,6 +93,14 @@ export default async function LabProfilePage() {
   return (
     <div className="bg-cream2 text-deepBrown">
       <div className="mx-auto max-w-[720px] px-4 pb-16 pt-10 text-[16px] leading-[1.6] sm:px-6">
+        {unverified && (
+          <aside role="status" className="mb-8 rounded-[14px] border-[1.5px] border-gold2 bg-sagePale p-4 text-[15px]">
+            <p className="m-0 font-medium">{PROFILE_UNVERIFIED.title}</p>
+            <p className="mb-0 mt-1 text-midBrown">
+              {searchParams.mail === "failed" ? PROFILE_UNVERIFIED.mailFailed : PROFILE_UNVERIFIED.body}
+            </p>
+          </aside>
+        )}
         <header>
           <p className={EYEBROW}>{PROFILE.sections.card}</p>
           <h1 className="mb-0 mt-2 font-fraunces text-[clamp(30px,6vw,40px)] font-medium leading-tight !text-deepBrown">

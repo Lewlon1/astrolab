@@ -167,7 +167,7 @@ export const READING_NOTES = {
 /** Gate field labels not covered by GATE (new draft). */
 export const GATE_EXTRA = {
   consentLabel: "Consent",
-  submitting: "Sending your link…",
+  submitting: "Opening your profile…",
 } as const;
 
 /** Birth-form busy label (new draft). */
@@ -180,6 +180,14 @@ export const BIRTH_EXTRA = {
 export const PLACE_PICK = {
   title: "Which one is it?",
   hint: "That name matches more than one place. Pick the one you were born in.",
+} as const;
+
+/** Banner on the profile while the email is not yet verified (new draft). */
+export const PROFILE_UNVERIFIED = {
+  title: "Your profile is open on this device.",
+  body: "We've emailed you a sign-in link. Open it to keep this profile and come back on any device. Without it, this profile stays on this browser for 7 days.",
+  mailFailed:
+    "We couldn't send your sign-in link just now, so this profile stays on this browser for 7 days. Enter your details again from the Lab page later to get a link.",
 } as const;
 
 /** Under the reading: which place the chart was built for, and a way to fix it (new draft). */

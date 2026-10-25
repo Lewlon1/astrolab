@@ -1,9 +1,10 @@
-// POST /api/lab/event: record a post-email funnel event for the signed-in user. Responds 204.
+// POST /api/lab/event: record a post-email funnel event for the viewer (signed-in or session cookie). Responds 204.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { recordLeadEvent } from "@/lib/lab/events";
 import { badRequest, readJson } from "@/lib/lab/routeHelpers";
+import { readLabCookie, resolveLabViewer } from "@/lib/lab/viewer";
 import type { StoredChart } from "@/lib/lab/types";
 import { API } from "@/content/lab/ui";
 
@@ -17,20 +18,15 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
-
     const admin = createAdminClient();
-    const found = await admin
-      .from("lab_profiles")
-      .select("email, card_drawn, src, positions")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (found.error) throw new Error(`profile lookup failed (code ${found.error.code})`);
-    if (!found.data) return NextResponse.json({ error: API.profileNotFound }, { status: 404 });
-    const p = found.data as { email: string; card_drawn: string; src: string | null; positions: StoredChart };
+    const viewer = await resolveLabViewer<{ id: string; email: string; card_drawn: string; src: string | null; positions: StoredChart }>({
+      supabase,
+      admin,
+      cookieValue: await readLabCookie(),
+      columns: "id, email, card_drawn, src, positions",
+    });
+    if (!viewer) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
+    const p = viewer.row;
 
     await recordLeadEvent(admin, {
       email: p.email,

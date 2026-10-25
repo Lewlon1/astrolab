@@ -2,7 +2,7 @@
 // NEEDS LEGAL REVIEW before launch: the privacy section below is draft wording, not legal advice.
 
 /** Bump this whenever CONSENT_TEXT or LAB_PRIVACY_SECTION changes meaning. Stored with each consent. */
-export const CONSENT_TEXT_VERSION = "2026-10-24.v1";
+export const CONSENT_TEXT_VERSION = "2026-10-25.v1";
 
 /** The consent sentence. The UI renders "Privacy notice" as a link to the Lab section of the privacy page. */
 export const CONSENT_TEXT = {
@@ -30,6 +30,10 @@ export const LAB_PRIVACY_SECTION = {
     {
       title: "Where",
       body: "In our database provider (Supabase). Access is limited to the people who run the Lab.",
+    },
+    {
+      title: "A cookie on your device",
+      body: "When you create a profile we set one cookie, \"lab_profile\", so your profile opens straight away in the browser you used, before you confirm your email. It holds a signed reference to your profile, not your birth data, and expires after 7 days or when you delete your profile. Once you open the sign-in link we email you, your account sign-in takes over.",
     },
     {
       title: "How long",

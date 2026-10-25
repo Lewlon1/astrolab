@@ -3,6 +3,7 @@
 // The Lab Draw funnel: draw -> birth -> reading -> gate -> sent (prototype steps 01-04).
 // Page views and session start come from AnalyticsProvider in the (public) layout;
 // this component only fires the three pre-email interaction events.
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CARDS, type Card } from "@/content/lab/cards";
 import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
@@ -81,6 +82,7 @@ function StepHead({ n, id, title, asHeading = true }: { n: string; id?: string; 
 
 export default function LabDraw({ src, authError }: Props) {
   const { marketingAllowed } = useConsent();
+  const router = useRouter();
 
   const [stage, setStage] = useState<Stage>("draw");
   const [hand, setHand] = useState<Card[] | null>(null);
@@ -175,7 +177,7 @@ export default function LabDraw({ src, authError }: Props) {
     if (!card || !birth || !reading) return;
     setGateBusy(true);
     setGateError(null);
-    const r = await postJson<{ ok: true }>("/api/lab/gate", {
+    const r = await postJson<{ ok: true; profile?: boolean; emailSent?: boolean }>("/api/lab/gate", {
       email: values.email,
       time: values.time || undefined,
       consent: true,
@@ -186,12 +188,18 @@ export default function LabDraw({ src, authError }: Props) {
       geo: place ? { lat: place.lat, lon: place.lon, displayName: place.displayName } : undefined,
       src,
     });
-    setGateBusy(false);
     if (!r.ok) {
+      setGateBusy(false);
       setGateError(r.error);
       return;
     }
     if (marketingAllowed) trackLead(values.email);
+    // The profile is ready now: open it in this tab. Keep the form busy while the page loads.
+    if (r.data.profile) {
+      router.push(r.data.emailSent === false ? "/lab/profile?mail=failed" : "/lab/profile");
+      return;
+    }
+    setGateBusy(false);
     const chip = (label: string) => reading.chips.find((c) => c.label === label)?.value ?? "";
     setSent({
       email: values.email,

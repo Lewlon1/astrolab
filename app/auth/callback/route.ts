@@ -27,10 +27,16 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      if (error) return fail();
+      if (error) {
+        console.error("[lab] code exchange failed:", error.code ?? error.name);
+        return fail();
+      }
     } else if (tokenHash && type && OTP_TYPES.includes(type)) {
       const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as EmailOtpType });
-      if (error) return fail();
+      if (error) {
+        console.error("[lab] token verify failed:", error.code ?? error.name);
+        return fail();
+      }
     } else {
       return fail();
     }

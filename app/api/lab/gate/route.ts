@@ -8,6 +8,7 @@ import { recordLeadEvent } from "@/lib/lab/events";
 import { transitFieldsForMailerLite, upsertLabSubscriber } from "@/lib/lab/mailerlite";
 import { nextTransitFields, seasonsForChart, type NextTransitFields } from "@/lib/lab/nextTransit";
 import { clientIp, gateLimiter } from "@/lib/lab/rateLimit";
+import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/lab/session";
 import { signFieldForMailerLite, toStoredChart } from "@/lib/lab/storedChart";
 import { validateGate } from "@/lib/lab/validate";
 import { badRequest, geocodeOrResponse, readJson } from "@/lib/lab/routeHelpers";
@@ -129,9 +130,13 @@ export async function POST(request: Request) {
         shouldCreateUser: true,
       },
     });
+    // The visitor sees their profile straight away through the session cookie, so
+    // a failed email is not fatal for an unclaimed profile: they can ask again later.
+    // A claimed profile (or no LAB_SESSION_SECRET) has no cookie and still gets the error.
+    const sessionValue = claimed ? null : signSession(profileId);
     if (otpError) {
       console.error("[lab] signInWithOtp failed, status", otpError.status);
-      return NextResponse.json({ error: API.otpFailed }, { status: 502 });
+      if (!sessionValue) return NextResponse.json({ error: API.otpFailed }, { status: 502 });
     }
 
     // "X or Y" when the sign changes across the birth day: never send a guessed sign.
@@ -152,7 +157,11 @@ export async function POST(request: Request) {
       if (link.error) console.error("[lab] lead link failed, code", link.error.code);
     }
 
-    return NextResponse.json({ ok: true });
+    // `profile`: the cookie was set, so the client can open /lab/profile now.
+    // `emailSent`: false when the sign-in email could not be sent.
+    const res = NextResponse.json({ ok: true, profile: sessionValue !== null, emailSent: !otpError });
+    if (sessionValue) res.cookies.set(SESSION_COOKIE, sessionValue, sessionCookieOptions());
+    return res;
   } catch (err) {
     console.error("[lab] gate failed:", err instanceof Error ? err.message : "unknown");
     return NextResponse.json({ error: API.serverError }, { status: 500 });

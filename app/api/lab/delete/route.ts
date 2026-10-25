@@ -1,8 +1,10 @@
-// POST /api/lab/delete: soft-delete the signed-in user's profile and forget them in MailerLite.
+// POST /api/lab/delete: soft-delete the viewer's profile (signed-in or session cookie) and forget them in MailerLite.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { forgetSubscriber } from "@/lib/lab/mailerlite";
+import { SESSION_COOKIE, sessionCookieOptions } from "@/lib/lab/session";
+import { readLabCookie, resolveLabViewer } from "@/lib/lab/viewer";
 import { API } from "@/content/lab/ui";
 
 export const dynamic = "force-dynamic";
@@ -10,20 +12,15 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
-
     const admin = createAdminClient();
-    const found = await admin
-      .from("lab_profiles")
-      .select("id, email")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (found.error) throw new Error(`profile lookup failed (code ${found.error.code})`);
-    if (!found.data) return NextResponse.json({ error: API.profileNotFound }, { status: 404 });
-    const profile = found.data as { id: string; email: string };
+    const viewer = await resolveLabViewer<{ id: string; email: string }>({
+      supabase,
+      admin,
+      cookieValue: await readLabCookie(),
+      columns: "id, email",
+    });
+    if (!viewer) return NextResponse.json({ error: API.unauthorized }, { status: 401 });
+    const profile = viewer.row;
 
     // MailerLite first: forgetting needs the real address, which is scrubbed below.
     const mailerlite = await forgetSubscriber(profile.email);
@@ -54,8 +51,10 @@ export async function POST() {
       .eq("id", profile.id);
     if (upd.error) throw new Error(`profile delete failed (code ${upd.error.code})`);
 
-    await supabase.auth.signOut();
-    return NextResponse.json({ ok: true, mailerlite });
+    if (viewer.via === "session") await supabase.auth.signOut();
+    const res = NextResponse.json({ ok: true, mailerlite });
+    res.cookies.set(SESSION_COOKIE, "", sessionCookieOptions(0));
+    return res;
   } catch (err) {
     console.error("[lab] delete failed:", err instanceof Error ? err.message : "unknown");
     return NextResponse.json({ error: API.serverError }, { status: 500 });
