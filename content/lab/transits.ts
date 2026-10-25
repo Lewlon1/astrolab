@@ -56,6 +56,28 @@ export const ASPECT_PHRASES: Record<TransitAspect, { verb: string; tone: string 
   trine: { verb: "trines", tone: "an easy flow, when the two themes support each other" },
 };
 
+/** Short season names for the profile timeline. */
+export const SEASON_NAMES: Record<TransitPlanet, string> = {
+  Jupiter: "Room to grow",
+  Saturn: "Testing what you've built",
+  Uranus: "Shake-ups and new freedom",
+  Neptune: "Blurred edges",
+  Pluto: "Deep change",
+};
+
+/** The natal point in a few plain words, for the timeline. */
+export const POINT_SHORT: Record<TransitPoint, string> = {
+  Sun: "who you are",
+  Moon: "what helps you settle",
+  Rising: "how you show up",
+  Venus: "what you value",
+  Saturn: "your commitments",
+};
+
+/** e.g. "Testing what you've built · who you are" */
+export const transitTheme = (planet: TransitPlanet, point: TransitPoint) =>
+  `${SEASON_NAMES[planet]} · ${POINT_SHORT[point]}`;
+
 /**
  * Compose the three-layer copy for one transit.
  * @param planet the transiting planet

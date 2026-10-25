@@ -6,11 +6,16 @@ import { SIGNS, COMPATIBLE_ELEMENT, elementOf } from "../signs";
 import { THEMES } from "../themes";
 import { KEYWORDS, PLACEMENTS, PLACEMENT_TITLES } from "../placements";
 import {
+  POINT_SHORT,
+  SEASON_NAMES,
   TRANSIT_ASPECTS,
   TRANSIT_PLANETS,
   TRANSIT_POINTS,
   transitCopy,
+  transitTheme,
 } from "../transits";
+import { LENS, LENS_PLACEHOLDERS, lensText } from "../lens";
+import { LAB_OFFERS, OFFERS_UI } from "../offers";
 import {
   cuspNote,
   headline,
@@ -101,6 +106,46 @@ describe("transits", () => {
   });
 });
 
+describe("transit themes", () => {
+  it("names every planet and point", () => {
+    for (const p of TRANSIT_PLANETS) expect(SEASON_NAMES[p].length).toBeGreaterThan(3);
+    for (const pt of TRANSIT_POINTS) expect(POINT_SHORT[pt].length).toBeGreaterThan(3);
+    expect(transitTheme("Saturn", "Sun")).toBe("Testing what you've built · who you are");
+  });
+});
+
+describe("lens", () => {
+  const themes = Object.keys(THEMES) as (keyof typeof LENS)[];
+  it("has a question, a chart question and Sun/Moon/Rising lines for all 8 themes", () => {
+    expect(Object.keys(LENS).sort()).toEqual([...themes].sort());
+    for (const t of themes)
+      for (const k of ["question", "chartQuestion", "Sun", "Moon", "Rising"] as const) expect(LENS[t][k].length, `${t}.${k}`).toBeGreaterThan(20);
+  });
+  it("uses only known placeholders, and placement lines name their sign", () => {
+    for (const t of themes) {
+      for (const v of Object.values(LENS[t])) {
+        for (const name of (v.match(/\{\w+\}/g) ?? []).map((m) => m.slice(1, -1))) expect(LENS_PLACEHOLDERS as readonly string[]).toContain(name);
+      }
+      for (const k of ["Sun", "Moon", "Rising"] as const) expect(LENS[t][k]).toContain("{sign}");
+    }
+  });
+  it("lensText fills placeholders and leaves unknown ones visible", () => {
+    expect(lensText("{card} and {sign}", { card: "The Star", sign: "Leo" })).toBe("The Star and Leo");
+    expect(lensText("{sun} and {other}", { sun: "Leo" })).toBe("Leo and {other}");
+  });
+});
+
+describe("offers", () => {
+  it("has exactly one primary offer and unique slugs", () => {
+    expect(LAB_OFFERS.filter((o) => o.role === "primary")).toHaveLength(1);
+    expect(new Set(LAB_OFFERS.map((o) => o.slug)).size).toBe(LAB_OFFERS.length);
+  });
+  it("labels buttons with the price when there is one", () => {
+    expect(OFFERS_UI.book("Astro Psyche Blend", "65€")).toBe("Book Astro Psyche Blend · 65€");
+    expect(OFFERS_UI.book("a session", null)).toBe("Book a session");
+  });
+});
+
 describe("reading templates", () => {
   const card = (name: string) => CARDS.find((c) => c.name === name)!;
   it("reproduces the prototype sentences", () => {
@@ -154,7 +199,8 @@ describe("all content files", () => {
   it("contains no causal phrasing", () => {
     const all = [
       ...strings(CARDS), ...strings(SIGNS), ...strings(THEMES), ...strings(PLACEMENTS), ...strings(KEYWORDS),
-      ...strings(privacy.LAB_PRIVACY_SECTION), ...strings(ui),
+      ...strings(privacy.LAB_PRIVACY_SECTION), ...strings(ui), ...strings(LENS), ...strings(LAB_OFFERS),
+      ...strings(OFFERS_UI), ...strings(SEASON_NAMES), ...strings(POINT_SHORT),
     ];
     for (const p of TRANSIT_PLANETS)
       for (const a of TRANSIT_ASPECTS)

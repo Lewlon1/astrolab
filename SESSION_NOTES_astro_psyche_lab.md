@@ -996,3 +996,12 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - **Rollback SQL:** `docs/maintenance/2026-10-25-lab-draw-rollback.sql`. Every statement is commented out on purpose. Keeping 015/015b is recommended even if the Lab is cancelled. Do not revert 015 while any non-admin auth user exists: reverting restores "any signed-in user is an admin", and every Lab sign-up would inherit it. Note that the in-app delete keeps the auth account.
 - **017** adds `lab_geocode_cache.candidates` (jsonb). Without it, place lookups still work but are not cached.
 - **Birth-place matching:** ambiguous names (Santiago, Córdoba, Valencia) now return up to five candidates for the visitor to pick; the chosen place is sent back to the gate so the saved profile matches the reading. Spanish names resolve through Nominatim (`Accept-Language: es,en`). Needs `NOMINATIM_USER_AGENT`.
+
+### Profile redesign: the card as a lens, built to convert (2026-10-25)
+
+- **Goal:** the free profile explains the Lab and turns profile creators into paying clients. Every section opens with its Lab layer (card, chart, test) and closes with the question a session would take further.
+- **Deliberate departure from the spec's Phase 5/6 layout** (six placement notes; next transit plus four more). The page now shows the card and its theme; Sun, Moon and Rising read through that theme (`content/lab/lens.ts`); the theme's three-layer experiment; the next two transit seasons as a minimal timeline; a ladder of offers; and the full chart collapsed. Venus, Saturn and North Node notes are off the page (content kept).
+- **Offers:** Astro Psyche Blend (primary), Cosmic Quick Hit and Stellar Insights, read live from `services` by slug (`content/lab/offers.ts`, `lib/lab/offers.ts`). If `services` can't be read, one generic booking link shows. Membership is a "coming soon" line with no button until it exists.
+- **Measuring conversion:** `lab_booking_clicked` lead events now carry `service` and `placement` (`chart`, `transits` or `offers`).
+- **Copy:** all new lines are drafts for Gabs (lens lines, season names, offer pitches, layer lines).
+- **Dev gotcha:** two `next dev` servers in the same folder share `.next` and serve 404s. Run one at a time.

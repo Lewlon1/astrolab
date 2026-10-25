@@ -1,100 +1,66 @@
-// Transit tracker on the profile page: the next significant season in full
-// (headline, peak, every exact pass, then the three-layer note), followed by the
-// next four. Seasons are computed server-side; dates arrive as ISO strings.
-// Server-safe (no hooks).
+// "Your next two seasons" on the profile: a minimal timeline of transit themes,
+// each with its date window and one line. Seasons arrive pre-selected and
+// serialized (dates as ISO strings). Server-safe (no hooks).
 import type { SerializedSeason } from "@/lib/lab/nextTransit";
-import { transitCopy } from "@/content/lab/transits";
-import { PROFILE, TRANSIT_UI } from "@/content/lab/ui";
-import LabNote from "./LabNote";
-import { EYEBROW } from "./classes";
+import { transitCopy, transitTheme } from "@/content/lab/transits";
+import { PROFILE, PROFILE_FLOW } from "@/content/lab/ui";
+import { EYEBROW, cx } from "./classes";
 
 export type TransitTrackerProps = {
-  /** Sorted by significance. Undefined renders nothing; an empty list shows the empty state. */
+  /** The upcoming seasons, in order. Undefined renders nothing; an empty list shows the empty state. */
   seasons?: readonly SerializedSeason[];
+  /** Rendered under the timeline: the link onwards to a session. */
+  children?: React.ReactNode;
 };
 
 const H2 = "m-0 font-fraunces text-[26px] font-medium leading-tight !text-deepBrown";
-const FOLLOWING = 4;
 
 // UTC on both sides so server and client render the same day.
-const DATE_FMT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const DATE_FMT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 const fmt = (iso: string) => DATE_FMT.format(new Date(iso));
 
-/** "Peaks" for a peak still ahead, "Peaked" once it has passed (the last pass of a finished season). */
-export const peakLabel = (peakIso: string, now: number = Date.now()) =>
-  new Date(peakIso).getTime() < now ? TRANSIT_UI.peaked : TRANSIT_UI.peaks;
+/** True when the season has started by `now`. */
+export const isUnderway = (season: Pick<SerializedSeason, "start">, now: number = Date.now()) =>
+  new Date(season.start).getTime() <= now;
 
-export default function TransitTracker({ seasons }: TransitTrackerProps) {
+export default function TransitTracker({ seasons, children }: TransitTrackerProps) {
   if (!seasons) return null;
-  const [next, ...rest] = seasons;
-  const following = rest.slice(0, FOLLOWING);
 
   return (
-    <section className="mt-12" aria-labelledby="lab-transits">
-      <h2 id="lab-transits" className={H2}>
-        {TRANSIT_UI.heading}
+    <section className="mt-14" aria-labelledby="lab-transits">
+      <p className={EYEBROW}>{PROFILE_FLOW.upcomingLabel}</p>
+      <h2 id="lab-transits" className={cx(H2, "mt-2")}>
+        {PROFILE_FLOW.upcomingTitle}
       </h2>
-      <p className="mb-0 mt-2 text-midBrown">{PROFILE.transitIntro}</p>
+      <p className="mb-0 mt-2 text-midBrown">{PROFILE_FLOW.upcomingLine}</p>
 
-      {!next ? (
+      {seasons.length === 0 ? (
         <p className="mb-0 mt-6">{PROFILE.transitNone}</p>
       ) : (
-        <NextSeason season={next} />
-      )}
-
-      {following.length > 0 && (
-        <div className="mt-8">
-          <h3 className={EYEBROW}>{TRANSIT_UI.alsoComing}</h3>
-          <ul className="m-0 mt-3 list-none divide-y divide-cardBorder/60 rounded-[14px] border-[1.5px] border-deepBrown p-0">
-            {following.map((s) => (
-              <li
-                key={`${s.planet}-${s.aspect}-${s.point}-${s.peak}`}
-                className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-[18px] py-3"
-              >
-                <span className="font-fraunces text-[18px]">{transitCopy(s.planet, s.aspect, s.point).headline}</span>
-                <span className="text-[14px] text-midBrown">
-                  {peakLabel(s.peak)} <time dateTime={s.peak}>{fmt(s.peak)}</time>
+        <ol className="m-0 mt-6 list-none space-y-0 border-l-[1.5px] border-deepBrown p-0">
+          {seasons.map((s) => (
+            <li key={`${s.planet}-${s.aspect}-${s.point}-${s.peak}`} className="relative pb-6 pl-6 last:pb-0">
+              <span aria-hidden="true" className="absolute -left-[7px] top-[7px] h-3 w-3 rounded-full bg-coral2" />
+              <p className="m-0 flex flex-wrap items-baseline gap-x-3 text-[14px] text-midBrown">
+                <span>
+                  <time dateTime={s.start}>{fmt(s.start)}</time> – <time dateTime={s.end}>{fmt(s.end)}</time>
                 </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+                {isUnderway(s) && (
+                  <span className="rounded-full bg-deepBrown px-2 py-[1px] font-dm-mono text-[11px] uppercase tracking-[0.12em] text-cream2">
+                    {PROFILE_FLOW.now}
+                  </span>
+                )}
+              </p>
+              <h3 className="mb-0 mt-1 font-fraunces text-[20px] font-medium leading-snug !text-deepBrown">
+                {transitTheme(s.planet, s.point)}
+              </h3>
+              <p className="mb-0 mt-1 text-[15px]">{transitCopy(s.planet, s.aspect, s.point).headline}</p>
+            </li>
+          ))}
+        </ol>
       )}
-    </section>
-  );
-}
 
-function NextSeason({ season }: { season: SerializedSeason }) {
-  const copy = transitCopy(season.planet, season.aspect, season.point);
-  const several = season.exactDates.length > 1;
-  return (
-    <div className="mt-6">
-      <p className={EYEBROW}>{PROFILE.sections.transit}</p>
-      <p className="mb-0 mt-2">
-        {peakLabel(season.peak)} <time dateTime={season.peak}>{fmt(season.peak)}</time>
-      </p>
-      {several && (
-        <div className="mt-3 text-[15px]">
-          <p className="m-0 text-midBrown">{TRANSIT_UI.passesNote}</p>
-          <p className="m-0 mt-1">
-            {TRANSIT_UI.exactOn}{" "}
-            {season.exactDates.map((d, i) => (
-              <span key={d}>
-                {i > 0 && ", "}
-                <time dateTime={d}>{fmt(d)}</time>
-              </span>
-            ))}
-          </p>
-        </div>
-      )}
-      <LabNote
-        className="mt-5"
-        title={copy.headline}
-        astro={copy.astro}
-        psych={copy.psych}
-        test={copy.test}
-        headingId="lab-note-transit"
-      />
-    </div>
+      {children}
+    </section>
   );
 }

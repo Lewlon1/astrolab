@@ -1,16 +1,36 @@
 "use client";
 
-// Booking link. The click event is fire-and-forget (keepalive) so it never blocks navigation.
-import { BOOKING_CTA, BOOKING_URL, PROFILE_EXTRA } from "@/content/lab/ui";
-import { BTN_LIGHT } from "./classes";
+// Booking link. The click event is fire-and-forget (keepalive) so it never blocks
+// navigation. `service` and `placement` say which offer and which button converted.
+import { useId } from "react";
+import { PROFILE_EXTRA } from "@/content/lab/ui";
+import { BTN, BTN_LIGHT, cx } from "./classes";
 
-export default function BookingCta() {
+type Props = {
+  href: string;
+  label: string;
+  /** services.slug of the offer, if the link is for one. */
+  service?: string;
+  /** Where the button sits on the profile. */
+  placement: "chart" | "transits" | "offers";
+  variant?: "primary" | "secondary";
+  className?: string;
+};
+
+const BTN_OUTLINE = cx(
+  BTN,
+  "border-deepBrown bg-transparent text-deepBrown hover:border-coral2 hover:text-coral2 focus-visible:outline-coral2",
+);
+
+export default function BookingCta({ href, label, service, placement, variant = "primary", className }: Props) {
+  const noteId = useId();
+
   function onClick() {
     try {
       void fetch("/api/lab/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "lab_booking_clicked" }),
+        body: JSON.stringify({ type: "lab_booking_clicked", service, placement }),
         keepalive: true,
       }).catch(() => {});
     } catch {
@@ -20,15 +40,15 @@ export default function BookingCta() {
 
   return (
     <a
-      href={BOOKING_URL}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       onClick={onClick}
-      className={BTN_LIGHT}
-      aria-describedby="lab-booking-note"
+      className={cx(variant === "primary" ? BTN_LIGHT : BTN_OUTLINE, "text-center leading-snug", className)}
+      aria-describedby={noteId}
     >
-      {BOOKING_CTA.button}
-      <span id="lab-booking-note" className="sr-only">
+      {label}
+      <span id={noteId} className="sr-only">
         {PROFILE_EXTRA.bookingNote}
       </span>
     </a>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TransitSeason } from "@/lib/astro";
-import { natalPointsFromStoredChart, nextTransitFields, seasonsForChart, serializeSeasons, transitFieldsUnchanged } from "../nextTransit";
+import { natalPointsFromStoredChart, nextTransitFields, seasonsForChart, serializeSeasons, transitFieldsUnchanged, upcomingSeasons } from "../nextTransit";
 import { fakeChart } from "./helpers";
 
 const withLons = (hasTime: boolean) => {
@@ -90,5 +90,21 @@ describe("transitFieldsUnchanged", () => {
   it("is false when either field differs", () => {
     expect(transitFieldsUnchanged({ ...f, transit_peak_date: "2027-02-15" }, f)).toBe(false);
     expect(transitFieldsUnchanged({ next_transit: null, transit_peak_date: null }, f)).toBe(false);
+  });
+});
+
+describe("upcomingSeasons", () => {
+  const now = new Date("2027-02-01T00:00:00Z");
+  const ended = season({ start: new Date("2026-11-01Z"), end: new Date("2027-01-15Z"), peak: new Date("2026-12-10Z") });
+  const active = season({ planet: "Jupiter", start: new Date("2027-01-20Z"), end: new Date("2027-03-10Z"), peak: new Date("2027-02-14Z") });
+  const later = season({ planet: "Pluto", start: new Date("2027-05-01Z"), end: new Date("2027-07-01Z"), peak: new Date("2027-06-01Z") });
+  const latest = season({ planet: "Uranus", start: new Date("2027-08-01Z"), end: new Date("2027-09-01Z"), peak: new Date("2027-08-15Z") });
+
+  it("drops seasons that are over, keeps one under way, and caps at two", () => {
+    expect(upcomingSeasons([ended, active, later, latest], now).map((s) => s.planet)).toEqual(["Jupiter", "Pluto"]);
+  });
+  it("is empty when nothing is left", () => {
+    expect(upcomingSeasons([ended], now)).toEqual([]);
+    expect(upcomingSeasons([], now)).toEqual([]);
   });
 });

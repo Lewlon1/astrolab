@@ -2,6 +2,8 @@
 // Turns a stored profile row into the sections the profile page renders.
 import { BODIES, type Body, type Sign } from "@/lib/astro";
 import { CARDS } from "@/content/lab/cards";
+import { LENS, lensText } from "@/content/lab/lens";
+import { THEMES, type Theme } from "@/content/lab/themes";
 import {
   KEYWORDS,
   PLACEMENTS,
@@ -38,12 +40,44 @@ export type PositionRow = {
   keyword: string | null;
 };
 
+/** Sun, Moon or Rising, read through the card's theme. */
+export type BigThreeItem = {
+  key: "Sun" | "Moon" | "Rising";
+  /** "Leo" or "Leo or Virgo" */
+  signLabel: string;
+  /** First sentence of the placement's astrology layer. */
+  essence: string;
+  /** The placement seen through the card's theme. */
+  lensLine: string;
+  /** The full three-layer note, for "Read the full note". */
+  note: ProfileNote;
+};
+
+/** The card as a lens. Null if the card is unknown (it never is for a live row). */
+export type ProfileLens = {
+  theme: Theme;
+  /** The card's "now" line. */
+  now: string;
+  /** Open question under the card. */
+  question: string;
+  /** Closes the chart section, leading to a session. */
+  chartQuestion: string;
+};
+
 export type ProfileView = {
   header: { card: string; sun: string; moon: string; rising: string | null };
   hasTime: boolean;
   coreNotes: ProfileNote[];
+  lens: ProfileLens | null;
+  bigThree: BigThreeItem[];
   positions: PositionRow[];
 };
+
+/** Up to and including the first full stop that ends a sentence. */
+export function firstSentence(text: string): string {
+  const m = /^.*?[.!?](?=\s|$)/.exec(text.trim());
+  return m ? m[0] : text.trim();
+}
 
 const CORE: { key: PlacementKey; body: Body | "Rising" }[] = [
   { key: "Sun", body: "Sun" },
@@ -65,7 +99,8 @@ function isKeywordKey(b: string): b is KeywordKey {
 export function buildProfileView(row: LabProfileRow): ProfileView {
   const chart = row.positions;
   const hasTime = chart.hasTime;
-  const card = CARDS.find((c) => c.name === row.card_drawn)?.name ?? row.card_drawn;
+  const cardEntry = CARDS.find((c) => c.name === row.card_drawn);
+  const card = cardEntry?.name ?? row.card_drawn;
 
   const signsOf = (body: Body): Sign[] => {
     const amb = chart.ambiguous[body];
@@ -117,6 +152,34 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
 
   const sun = signsOf("Sun");
   const moon = signsOf("Moon");
+
+  const lensEntry = cardEntry ? LENS[cardEntry.theme] : null;
+  const vars = { card, sun: signChip(sun), moon: signChip(moon) };
+  const lens: ProfileLens | null =
+    cardEntry && lensEntry
+      ? {
+          theme: THEMES[cardEntry.theme],
+          now: cardEntry.now,
+          question: lensText(lensEntry.question, vars),
+          chartQuestion: lensText(lensEntry.chartQuestion, vars),
+        }
+      : null;
+
+  const bigThree: BigThreeItem[] = coreNotes.flatMap((note) => {
+    if (note.key !== "Sun" && note.key !== "Moon" && note.key !== "Rising") return [];
+    const signLabel = signChip(note.signs);
+    const template = lensEntry ? lensEntry[note.key] : "";
+    return [
+      {
+        key: note.key,
+        signLabel,
+        essence: firstSentence(note.astro),
+        lensLine: template ? lensText(template, { ...vars, sign: signLabel }) : "",
+        note,
+      },
+    ];
+  });
+
   return {
     header: {
       card,
@@ -126,6 +189,8 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
     },
     hasTime,
     coreNotes,
+    lens,
+    bigThree,
     positions,
   };
 }

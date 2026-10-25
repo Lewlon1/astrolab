@@ -53,11 +53,11 @@ export const RESULT = {
 export const GATE = {
   eyebrow: "Step 04 · Keep going",
   title: "Save this as your Lab profile.",
-  lede: "Free. Your full chart, your rising sign, and a monthly note on what the sky is doing to your chart.",
+  lede: "Free. Your card read against your chart, your rising sign, and a monthly Lab note.",
   gets: [
-    { title: "Full natal chart", body: "Every planet, read through the same three layers." },
+    { title: "Your card, read against your chart", body: "What your pick suggests is on your mind, read through your Sun, Moon and Rising." },
     { title: "Your rising sign", body: "Needs your birth time. Add it below or later." },
-    { title: "Transit tracker", body: "Your next significant transit and the day it peaks." },
+    { title: "Your next two seasons", body: "The transit themes coming up for you, and when." },
   ],
   emailLabel: "Email",
   emailPlaceholder: "you@example.com",
@@ -80,16 +80,11 @@ export const PROFILE = {
   title: "Your Lab profile",
   sections: {
     chart: "Your chart",
-    placements: "Your placements",
-    rising: "Rising",
-    transit: "Next significant transit",
-    card: "Your card",
     settings: "Your data",
   },
   risingLocked: "Add your birth time to see your rising sign.",
   risingNoTime: "Without a time, the profile skips houses and the rising sign rather than guessing.",
-  transitIntro: "A transit is a prompt to notice, not a forecast.",
-  transitNone: "No significant transits in the coming months.",
+  transitNone: "No major transit themes in the coming months. A quiet stretch is a good time to look back at the last one.",
   addTime: "Add birth time",
 } as const;
 
@@ -104,11 +99,6 @@ export const DELETE = {
 } as const;
 
 /** Booking CTA copy (new draft). */
-export const BOOKING_CTA = {
-  title: "Talk it through with Gabs",
-  body: "Members get a Check-In with Gabs timed to the peak.",
-  button: "Book a Check-In",
-} as const;
 
 /** Server-side validation messages (new draft). */
 export const VALIDATION = {
@@ -203,7 +193,7 @@ export const SENT = {
   hint: "Open the link on this device to see your profile. It can take a minute to arrive.",
   previewTitle: "What your profile holds",
   tiles: {
-    sunMoon: { label: "Sun · Moon", body: "Your full chart, every planet read through the same three layers." },
+    sunMoon: { label: "Sun · Moon", body: "Read through the theme of the card you drew." },
     risingWithTime: { label: "Rising", value: "From your birth time", body: "Calculated from your birth time and place." },
     risingNoTime: {
       label: "Rising",
@@ -220,7 +210,6 @@ export const PROFILE_EXTRA = {
   moonLabel: "Moon",
   risingLabel: "Rising",
   cardAlt: (card: string) => `Your card: ${card}`,
-  placementsIntro: "Six placements, each read as a prompt to notice rather than a cause.",
   tableCaption: "Every position in your chart",
   tableIntro: "Every position in your chart, by planet, sign and degree.",
   colPlanet: "Planet",
@@ -245,14 +234,31 @@ export const PROFILE_EXTRA = {
 /** Booking link target for the profile CTA. */
 export const BOOKING_URL = "https://cal.com/theastropsychelab";
 
-/** Transit tracker on the profile page (new draft). The "Next significant transit" label, intro and empty state are in PROFILE. */
-export const TRANSIT_UI = {
-  heading: "Transit tracker",
-  peaks: "Peaks",
-  /** Used instead of "Peaks" when the season's peak date has already passed. */
-  peaked: "Peaked",
-  exactOn: "Exact on",
-  /** Shown when a season has several exact dates (retrograde passes). */
-  passesNote: "The planet crosses this point more than once as it turns retrograde and direct.",
-  alsoComing: "Also coming up",
+/**
+ * The profile page, written to explain the Lab as it goes (new draft). Each
+ * section opens with the Lab layer it shows and closes with the question a
+ * session would take further.
+ */
+export const PROFILE_FLOW = {
+  layers: {
+    card: "Layer one · The card",
+    chart: "Layer two · The chart",
+    test: "Layer three · The test",
+  },
+  cardLine:
+    "In psychology, what you reach for in an ambiguous image is called a projective choice: it says something about what is on your mind. So we start with your card.",
+  heroTitle: (card: string) => `You reached for ${card}`,
+  themeLabel: "The theme it points to",
+  chartLine: "The chart is read as a map of patterns, not a forecast. Here we read it through your card's theme.",
+  chartTitle: (theme: string) => `Your chart through ${theme.charAt(0).toLowerCase()}${theme.slice(1)}`,
+  readNote: "Read the full note",
+  testLine: "One thing to notice this month, so you can check the reading against your own life.",
+  testTitle: "Your Lab experiment",
+  testClose: "Bring what you notice to a session with Gabs. It is the best place to start.",
+  upcomingLabel: "What's next",
+  upcomingTitle: "Your next two seasons",
+  upcomingLine: "A transit is read as a prompt to notice, not a forecast. These are the next two themes in your chart.",
+  upcomingClose: "Want to meet these seasons with a plan? This is exactly what Gabs works through in a session.",
+  now: "Now",
+  fullChart: "See your full chart",
 } as const;

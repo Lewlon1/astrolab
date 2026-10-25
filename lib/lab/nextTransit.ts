@@ -51,6 +51,14 @@ export function nextTransitFields(seasons: readonly TransitSeason[], now: Date =
   };
 }
 
+/**
+ * The next `count` seasons for the profile timeline: those not yet over at `now`
+ * (a season already under way counts), in the existing peak order.
+ */
+export function upcomingSeasons(seasons: readonly TransitSeason[], now: Date = new Date(), count = 2): TransitSeason[] {
+  return seasons.filter((s) => s.end.getTime() >= now.getTime()).slice(0, count);
+}
+
 /** True when a stored row already holds exactly these transit fields. */
 export function transitFieldsUnchanged(
   stored: { next_transit?: string | null; transit_peak_date?: string | null },
