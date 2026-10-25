@@ -6,7 +6,24 @@ const good = { date: "1990-05-17", time: "08:30", place: "London, UK", card: "Th
 
 describe("validateCompute", () => {
   it("accepts a good body", () => {
-    expect(validateCompute(good, now)).toEqual({ ok: true, value: { ...good } });
+    expect(validateCompute(good, now)).toEqual({ ok: true, value: { ...good, geo: null } });
+  });
+  it("accepts a resolved geo and rejects malformed or out-of-range ones", () => {
+    const geo = { lat: -33.45, lon: -70.66, displayName: "Santiago, Chile" };
+    const ok = validateCompute({ ...good, geo }, now);
+    expect(ok.ok && ok.value.geo).toEqual(geo);
+    for (const bad of [
+      { ...geo, lat: 91 },
+      { ...geo, lon: -181 },
+      { ...geo, lat: "1" },
+      { ...geo, lat: NaN },
+      { ...geo, displayName: "" },
+      { ...geo, displayName: "x".repeat(201) },
+      "Santiago",
+    ]) {
+      const r = validateCompute({ ...good, geo: bad }, now);
+      expect(r.ok && r.value.geo).toBeNull();
+    }
   });
   it("treats empty time as null and unknown src as null", () => {
     const r = validateCompute({ ...good, time: "", src: "weird" }, now);

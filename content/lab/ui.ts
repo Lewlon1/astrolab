@@ -173,6 +173,19 @@ export const GATE_EXTRA = {
 /** Birth-form busy label (new draft). */
 export const BIRTH_EXTRA = {
   submitting: "Reading your card and chart…",
+  placeHint: "Many places share a name. Add the country, like “Santiago, Chile”.",
+} as const;
+
+/** Shown when a place name matches several places, so the visitor picks the right one (new draft). */
+export const PLACE_PICK = {
+  title: "Which one is it?",
+  hint: "That name matches more than one place. Pick the one you were born in.",
+} as const;
+
+/** Under the reading: which place the chart was built for, and a way to fix it (new draft). */
+export const PLACE_CONFIRM = {
+  label: "Birth place",
+  change: "Not right? Change place",
 } as const;
 
 /** The "sent" state after a successful gate submit (new draft). No example transit here. */

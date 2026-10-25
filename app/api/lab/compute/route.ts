@@ -4,7 +4,7 @@ import { computeChart } from "@/lib/astro";
 import { composeReading } from "@/lib/lab/reading";
 import { clientIp, computeLimiter } from "@/lib/lab/rateLimit";
 import { validateCompute } from "@/lib/lab/validate";
-import { badRequest, geocodeOrResponse, readJson } from "@/lib/lab/routeHelpers";
+import { badRequest, publicPlace, readJson, resolvePlaceOrChoices } from "@/lib/lab/routeHelpers";
 import { API, VALIDATION } from "@/content/lab/ui";
 
 export const dynamic = "force-dynamic";
@@ -20,8 +20,10 @@ export async function POST(request: Request) {
   if (!v.ok) return NextResponse.json({ field: v.field, error: v.message }, { status: 400 });
   const input = v.value;
 
-  const g = await geocodeOrResponse(input.place);
-  if (!g.ok) return g.res;
+  const g = await resolvePlaceOrChoices(input.place, input.geo);
+  if (g.ok === false) return g.res;
+  // Ambiguous name ("Santiago"): let the visitor pick before we compute anything.
+  if (g.ok === "choose") return NextResponse.json({ choices: g.choices.map(publicPlace) });
   const { geo } = g;
 
   try {
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
         ambiguous: chart.ambiguous,
         rising: chart.rising,
       },
-      place: { displayName: geo.displayName, lat: geo.lat, lon: geo.lon, tz: geo.tz },
+      place: publicPlace(geo),
       attribution: API.attribution,
     });
   } catch (err) {

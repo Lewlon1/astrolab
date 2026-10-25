@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   if (!v.ok) return NextResponse.json({ field: v.field, error: v.message }, { status: 400 });
   const input = v.value;
 
-  const g = await geocodeOrResponse(input.place);
+  const g = await geocodeOrResponse(input.place, input.geo);
   if (!g.ok) return g.res;
   const { geo } = g;
 

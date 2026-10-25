@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CARDS, type Card } from "@/content/lab/cards";
 import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
-import { AUTH_ERROR, BIRTH, DRAW, ERRORS, HERO, RESULT, STANCE, STEP_TITLES } from "@/content/lab/ui";
+import { AUTH_ERROR, BIRTH, DRAW, ERRORS, HERO, PLACE_CONFIRM, RESULT, STANCE, STEP_TITLES } from "@/content/lab/ui";
 import type { LabSrc } from "@/lib/lab/validate";
 import type { InstantReading } from "@/lib/lab/reading";
 import { signChip } from "@/content/lab/reading";
@@ -15,7 +15,7 @@ import { track } from "@/lib/analytics/track";
 import { trackLead } from "@/lib/fbpixel";
 import { useConsent } from "@/context/ConsentContext";
 import LabDeck from "./LabDeck";
-import BirthForm, { type BirthValues, type FormError } from "./BirthForm";
+import BirthForm, { type BirthValues, type FormError, type PlaceChoice } from "./BirthForm";
 import Reading from "./Reading";
 import Gate, { type GateValues, type SentInfo } from "./Gate";
 import { ERROR_LIGHT, EYEBROW, FOCUS, HAND_NOTE, LEDE, cx } from "./classes";
@@ -26,6 +26,13 @@ type Props = {
   src: LabSrc | null;
   authError: boolean;
 };
+
+/** The place the reading was built for. Sent back at the gate so the saved profile matches. */
+type ResolvedPlace = { displayName: string; label: string; lat: number; lon: number };
+
+type ComputeResponse =
+  | { choices: (PlaceChoice & { tz?: string })[] }
+  | { reading: InstantReading; place: ResolvedPlace };
 
 type Stage = "draw" | "birth" | "reading" | "gate" | "sent";
 const ORDER: Stage[] = ["draw", "birth", "reading", "gate", "sent"];
@@ -82,6 +89,8 @@ export default function LabDraw({ src, authError }: Props) {
   const [reading, setReading] = useState<InstantReading | null>(null);
   const [birthError, setBirthError] = useState<FormError>(null);
   const [birthBusy, setBirthBusy] = useState(false);
+  const [choices, setChoices] = useState<PlaceChoice[] | null>(null);
+  const [place, setPlace] = useState<ResolvedPlace | null>(null);
   const [gateError, setGateError] = useState<FormError>(null);
   const [gateBusy, setGateBusy] = useState(false);
   const [sent, setSent] = useState<SentInfo | null>(null);
@@ -125,22 +134,31 @@ export default function LabDraw({ src, authError }: Props) {
     }, 700);
   };
 
-  const handleBirth = async (values: BirthValues) => {
+  const handleBirth = async (values: BirthValues, choice?: PlaceChoice) => {
     if (!card) return;
     setBirthBusy(true);
     setBirthError(null);
-    const r = await postJson<{ reading: InstantReading }>("/api/lab/compute", {
+    const r = await postJson<ComputeResponse>("/api/lab/compute", {
       date: values.date,
       place: values.place,
       time: values.time || undefined,
       card: card.name,
       src,
+      geo: choice ? { lat: choice.lat, lon: choice.lon, displayName: choice.displayName } : undefined,
     });
     setBirthBusy(false);
     if (!r.ok) {
+      setChoices(null);
       setBirthError(r.error);
       return;
     }
+    // Ambiguous place name: nothing is computed until the visitor picks one.
+    if ("choices" in r.data) {
+      setChoices(r.data.choices);
+      return;
+    }
+    setChoices(null);
+    setPlace(r.data.place);
     const hasTime = Boolean(values.time);
     const props = { src, card: card.name, has_time: hasTime };
     track("interaction", "lab_birth_submitted", props);
@@ -165,6 +183,7 @@ export default function LabDraw({ src, authError }: Props) {
       card: card.name,
       date: birth.date,
       place: birth.place,
+      geo: place ? { lat: place.lat, lon: place.lon, displayName: place.displayName } : undefined,
       src,
     });
     setGateBusy(false);
@@ -238,7 +257,14 @@ export default function LabDraw({ src, authError }: Props) {
         >
           <StepHead n="02" id="lab-step-birth" title={STEP_TITLES.birth} />
           <p className="m-0 max-w-[62ch]">{BIRTH.intro}</p>
-          <BirthForm ref={dateRef} onSubmit={handleBirth} error={birthError} submitting={birthBusy} />
+          <BirthForm
+            ref={dateRef}
+            onSubmit={handleBirth}
+            error={birthError}
+            submitting={birthBusy}
+            choices={choices}
+            onPlaceEdit={() => setChoices(null)}
+          />
         </section>
       )}
 
@@ -250,6 +276,23 @@ export default function LabDraw({ src, authError }: Props) {
         >
           <StepHead n="03" title={STEP_TITLES.result} asHeading={false} />
           <Reading reading={reading} headingId="lab-reading-title" />
+          {place && (
+            <p className="m-0 max-w-[62ch] text-[14px] text-midBrown">
+              {PLACE_CONFIRM.label}: <span className="text-deepBrown">{place.label}</span>
+              {" · "}
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("lab-place");
+                  el?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
+                  el?.focus({ preventScroll: true });
+                }}
+                className={cx("border-0 bg-transparent p-0 text-[14px] underline underline-offset-[3px] hover:text-coral2", FOCUS, "focus-visible:outline-coral2")}
+              >
+                {PLACE_CONFIRM.change}
+              </button>
+            </p>
+          )}
         </section>
       )}
 

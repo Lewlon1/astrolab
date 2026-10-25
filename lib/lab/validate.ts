@@ -11,6 +11,9 @@ export function parseLabSrc(v: unknown): LabSrc | null {
   return typeof v === "string" && SRC_VALUES.includes(v) ? (v as LabSrc) : null;
 }
 
+/** A place the visitor already picked (or that a previous compute resolved). */
+export type ChosenGeo = { lat: number; lon: number; displayName: string };
+
 export type ComputeInput = {
   date: string;
   /** HH:MM or null when unknown */
@@ -18,6 +21,8 @@ export type ComputeInput = {
   place: string;
   card: string;
   src: LabSrc | null;
+  /** Resolved place from a previous step; when set, no geocoding happens. */
+  geo: ChosenGeo | null;
 };
 export type GateInput = ComputeInput & { email: string };
 
@@ -38,6 +43,19 @@ const fail = (field: string, message: string): { ok: false; field: string; messa
 function isRealDate(y: number, m: number, d: number): boolean {
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+/** Optional resolved place: finite in-range coordinates and a bounded name, else null. */
+function parseGeo(v: unknown): ChosenGeo | null {
+  if (!v || typeof v !== "object") return null;
+  const g = v as Record<string, unknown>;
+  const lat = g.lat;
+  const lon = g.lon;
+  const name = str(g.displayName).trim();
+  if (typeof lat !== "number" || typeof lon !== "number" || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+  if (!name || name.length > 200) return null;
+  return { lat, lon, displayName: name };
 }
 
 function str(v: unknown): string {
@@ -71,7 +89,7 @@ export function validateCompute(body: unknown, now: Date = new Date()): Validate
 
   const src = parseLabSrc(b.src);
 
-  return { ok: true, value: { date, time, place, card, src } };
+  return { ok: true, value: { date, time, place, card, src, geo: parseGeo(b.geo) } };
 }
 
 export function validateGate(body: unknown, now: Date = new Date()): Validated<GateInput> {
