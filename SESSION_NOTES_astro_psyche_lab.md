@@ -989,3 +989,10 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Merged `origin/main` (admin simplification, Today home, homepage services fold-in, `lead_inline` section) into `feat/lab-draw`. Conflicts: `app/api/admin/actions/route.ts` (kept main's `getOrCreateTodayBatch` behind `requireAdminApi`) and this file (both sides kept, in date order).
 - **Supersedes the teaser renumbering noted above:** main appends new sections with the next unused index (`lead_inline` = 11) so historical section indexes stay comparable. `lab_teaser` now uses index 12 and every other section keeps main's index. `SECTION_ORDER` still lists it after `services_index` (scroll order).
 - No new migrations or `authenticated` policies came in from main, so 015/015b still cover every admin policy.
+
+### Migrations applied, rollback, birth-place matching (2026-10-25)
+
+- **015, 015b, 016 and 017 were applied to the production project "Astro lab" (`nekpalyvjeaskdchrgih`) via the Supabase MCP before the PR merged.** Closing or reverting the PR does not undo them. `admin_users` holds `astropsychelabadmi@gmail.com` and `lonsdale744@gmail.com`.
+- **Rollback SQL:** `docs/maintenance/2026-10-25-lab-draw-rollback.sql`. Every statement is commented out on purpose. Keeping 015/015b is recommended even if the Lab is cancelled. Do not revert 015 while any non-admin auth user exists: reverting restores "any signed-in user is an admin", and every Lab sign-up would inherit it. Note that the in-app delete keeps the auth account.
+- **017** adds `lab_geocode_cache.candidates` (jsonb). Without it, place lookups still work but are not cached.
+- **Birth-place matching:** ambiguous names (Santiago, Córdoba, Valencia) now return up to five candidates for the visitor to pick; the chosen place is sent back to the gate so the saved profile matches the reading. Spanish names resolve through Nominatim (`Accept-Language: es,en`). Needs `NOMINATIM_USER_AGENT`.
