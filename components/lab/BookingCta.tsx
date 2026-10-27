@@ -15,6 +15,8 @@ type Props = {
   placement: "chart" | "transits" | "offers";
   variant?: "primary" | "secondary";
   className?: string;
+  /** False on the admin preview, so test clicks never reach the funnel numbers. */
+  track?: boolean;
 };
 
 const BTN_OUTLINE = cx(
@@ -22,10 +24,11 @@ const BTN_OUTLINE = cx(
   "border-deepBrown bg-transparent text-deepBrown hover:border-coral2 hover:text-coral2 focus-visible:outline-coral2",
 );
 
-export default function BookingCta({ href, label, service, placement, variant = "primary", className }: Props) {
+export default function BookingCta({ href, label, service, placement, variant = "primary", className, track = true }: Props) {
   const noteId = useId();
 
   function onClick() {
+    if (!track) return;
     try {
       void fetch("/api/lab/event", {
         method: "POST",

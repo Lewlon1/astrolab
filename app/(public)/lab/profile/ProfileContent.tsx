@@ -47,9 +47,11 @@ type Props = {
   unverified: boolean;
   /** The sign-in email could not be sent. */
   mailFailed: boolean;
+  /** Admin preview: hide the controls that change a real profile (add time, delete). */
+  preview?: boolean;
 };
 
-export default function ProfileContent({ profile, offers, unverified, mailFailed }: Props) {
+export default function ProfileContent({ profile, offers, unverified, mailFailed, preview = false }: Props) {
   const view = buildProfileView(profile);
   const card = CARDS.find((c) => c.name === view.header.card) ?? null;
   const showHouse = view.hasTime;
@@ -139,14 +141,14 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
               <article className="rounded-[14px] border-[1.5px] border-dashed border-cardBorder p-5">
                 <p className={EYEBROW}>{PROFILE_EXTRA.risingLabel}</p>
                 <p className="mb-0 mt-1 text-midBrown">{PROFILE.risingLocked}</p>
-                <AddBirthTime />
+                {!preview && <AddBirthTime />}
               </article>
             )}
           </div>
           {lens && (
             <div className="mt-8 rounded-[14px] bg-sagePale p-6">
               <p className="m-0 font-fraunces text-[20px] leading-snug">{lens.chartQuestion}</p>
-              <BookingCta className="mt-5" href={primaryHref} label={primaryLabel} service={primary?.slug} placement="chart" />
+              <BookingCta className="mt-5" href={primaryHref} label={primaryLabel} service={primary?.slug} placement="chart" track={!preview} />
             </div>
           )}
         </section>
@@ -181,13 +183,14 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
                 label={primaryLabel}
                 service={primary?.slug}
                 placement="transits"
+                track={!preview}
                 variant="secondary"
               />
             </div>
           )}
         </TransitTracker>
 
-        <OfferLadder offers={offers} card={view.header.card} />
+        <OfferLadder offers={offers} card={view.header.card} preview={preview} />
 
         <section className={SECTION} aria-labelledby="lab-chart">
           <details>
@@ -247,7 +250,7 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
             {PROFILE.sections.settings}
           </h2>
           <div className="grid gap-5">
-            <DeleteProfile />
+            {!preview && <DeleteProfile />}
             <p className="m-0 text-[14px]">
               <Link href="/privacy#lab" className={cx("text-midBrown underline underline-offset-4", FOCUS, "focus-visible:outline-coral2")}>
                 {PROFILE_EXTRA.privacyLink}

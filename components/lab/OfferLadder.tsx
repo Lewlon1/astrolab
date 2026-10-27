@@ -7,11 +7,16 @@ import type { LabOffer } from "@/lib/lab/offers";
 import BookingCta from "./BookingCta";
 import { EYEBROW, cx } from "./classes";
 
-type Props = { offers: readonly LabOffer[]; card: string };
+type Props = {
+  offers: readonly LabOffer[];
+  card: string;
+  /** Admin preview: booking clicks are not tracked. */
+  preview?: boolean;
+};
 
 const H2 = "m-0 font-fraunces text-[26px] font-medium leading-tight !text-deepBrown";
 
-export default function OfferLadder({ offers, card }: Props) {
+export default function OfferLadder({ offers, card, preview = false }: Props) {
   const primary = offers.find((o) => o.role === "primary");
   const others = offers.filter((o) => o.role !== "primary");
 
@@ -25,7 +30,7 @@ export default function OfferLadder({ offers, card }: Props) {
       {offers.length === 0 ? (
         // Services could not be loaded: one generic booking link.
         <div className="mt-6">
-          <BookingCta href={BOOKING_URL} label={OFFERS_UI.book("a session", null)} placement="offers" />
+          <BookingCta href={BOOKING_URL} label={OFFERS_UI.book("a session", null)} placement="offers" track={!preview} />
         </div>
       ) : (
         <div className="mt-6 grid gap-4">
@@ -42,6 +47,7 @@ export default function OfferLadder({ offers, card }: Props) {
                 label={OFFERS_UI.book(primary.name, primary.priceLabel)}
                 service={primary.slug}
                 placement="offers"
+                track={!preview}
               />
             </article>
           )}
@@ -59,6 +65,7 @@ export default function OfferLadder({ offers, card }: Props) {
                     label={OFFERS_UI.book(o.name, o.priceLabel)}
                     service={o.slug}
                     placement="offers"
+                    track={!preview}
                     variant="secondary"
                   />
                 </article>
