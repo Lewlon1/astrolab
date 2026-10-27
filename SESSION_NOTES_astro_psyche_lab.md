@@ -821,3 +821,187 @@ No DB changes; `leads.source` still `website_form`. tsc, 66 tests, lint clean fo
 **Lessons learned**
 - When replacing a component's data source, grep the whole file for the old variable — a stats bar at the bottom
   still used `todaysAccounts` and only `tsc` caught it.
+
+# The Lab Draw (card draw, free Lab profile, transit tracker) + admin lockdown
+
+**Session date:** 2026-10-24
+**Status:** Built on branch `feat/lab-draw` (not pushed, not merged). Typecheck, lint (0 errors), Vitest and `next build` clean. **Nothing has been run against real infrastructure:** SQL 015, 015b and 016 have **not been run**, the Supabase Auth settings, MailerLite group and env vars are not set, and no magic-link flow has been exercised end to end.
+
+The work is two things in one branch. First an **admin lockdown** (Task 0), because magic links make every signed-in user a public user and until now "signed in" meant "admin". Then the **Lab Draw** itself: a public `/lab` page (pick a card, enter birth data, get a three-layer reading), an email gate that creates a free Lab profile by magic link, `/lab/profile` with a transit tracker, delete, and a monthly cron that refreshes each profile's next transit into MailerLite.
+
+## Run before deploy (in this order)
+
+**Deploy order matters.** 015 and the code must go out together. The admin code **fails closed**: `requireAdminApi`, the middleware and the admin layout all ask `public.is_admin()`, and an RPC error counts as "not admin". If the new code is live before 015 has run, every admin, including you, is locked out of `/admin`. If 015 runs and the old code is live, nothing breaks (the old code only checks that a user exists).
+
+1. **SQL, by hand in the Supabase SQL editor. None of these has been run yet.**
+   - `supabase/migrations/015_admin_lockdown.sql`. Creates `admin_users` and `public.is_admin()` and moves every admin RLS policy onto it. **It seeds every existing `auth.users` row as an admin**, because today every signed-in user is effectively one. Review the list in `admin_users` straight after running it and delete anyone who should not be there, **before** opening sign-ups.
+   - `supabase/migrations/015b_admin_lockdown_storage.sql`. The `service-images` storage policies, split out because policy changes on `storage.objects` can fail with "must be owner of table objects" and would otherwise roll back all of 015. If it hits the ownership error, recreate the three policies in Dashboard > Storage > Policies (bucket `service-images`, role `authenticated`, conditions are in the file header).
+   - `supabase/migrations/016_lab_profiles.sql`. `lab_profiles`, `lab_geocode_cache`, `lab_take_slot()` RPC and their RLS. Depends on 015 (`is_admin()` in the admin-read policy).
+2. **Supabase Auth settings** (Dashboard > Authentication): email sign-ups **on**, magic link (email OTP) enabled, and `https://<site>/auth/callback` added to the redirect URL allowlist (plus the localhost and Vercel preview URLs you want to test on). Confirm the email template contains the magic link.
+3. **MailerLite:** create a group called **"Lab Profiles"** and five custom fields: `lab_card`, `sun_sign`, `moon_sign`, `next_transit`, `transit_peak_date`. Copy the group id for the env var below.
+4. **Env vars**, in Vercel (Production and Preview) **and** `.env.local`:
+   - `MAILERLITE_LAB_GROUP_ID` (the Lab Profiles group id)
+   - `NOMINATIM_USER_AGENT` (e.g. `AstropsycheLab/1.0 (contact@...)`; Nominatim's policy needs an identifying agent with a contact)
+   - `NEXT_PUBLIC_SITE_URL` (the magic-link redirect falls back to the request's Host header if unset, which is not safe to rely on)
+   - `CRON_SECRET` (Vercel sends it as a Bearer token to the cron; the route returns 500 if it is missing)
+   - `SUPABASE_SERVICE_ROLE_KEY` (already used elsewhere; `.env.local` did not have it, which is why the local `/lab` compute step returned 502)
+   Each one degrades with a logged, clear error when missing rather than crashing a page.
+5. Deploy. `vercel.json` registers the cron `/api/cron/lab-transits` at `0 6 1 * *` (06:00 UTC on the 1st).
+6. Smoke test the list under "QA checklist" that is marked blocked.
+
+## Files created and changed
+
+**Admin lockdown (Task 0)**
+- New: `supabase/migrations/015_admin_lockdown.sql`, `015b_admin_lockdown_storage.sql`, `lib/auth/admin.ts` (+ test).
+- Changed: `lib/supabase/middleware.ts`, `app/admin/layout.tsx`, every `app/api/admin/**` route (now `requireAdminApi()`), plus five previously unauthenticated admin-tool routes now admin-only: `app/api/inspiration`, `repurpose`, `suggest-reply`, `transit-draft`, `transit-horoscope`.
+- Deliberately left public: `POST /api/analytics` (ingestion only).
+
+**Astro engine (Task 1)**: `lib/astro/{types,time,positions,signs,houses,aspects,chart,transits,index}.ts` and `lib/astro/__tests__/*`; `types/tz-lookup.d.ts`. Unknown birth time means no rising and no houses; a body whose sign changes during the birth day is "X or Y".
+
+**Copy (Task 2)**: `content/lab/{cards,signs,themes,placements,reading,transits,ui,privacy}.ts` and a content test. All interpretive copy lives here. Every file starts `// DRAFT — Gabs to rewrite in her voice`.
+
+**Lab libs and routes (Tasks 3, 4)**: `lib/lab/{types,validate,deck,reading,profileView,storedChart,geocode,mailerlite,events,rateLimit,routeHelpers,cronAuth,nextTransit}.ts` + `lib/lab/__tests__/*`; `supabase/migrations/016_lab_profiles.sql`; `app/api/lab/{compute,gate,birth-time,delete,event}/route.ts`; `app/auth/callback/route.ts`.
+
+**UI (Tasks 5, 6)**: `app/(public)/lab/page.tsx`, `app/(public)/lab/profile/page.tsx`, `components/lab/*` (LabDraw, LabDeck, CardFace, BirthForm, Reading, Gate, LabNote, AddBirthTime, BookingCta, DeleteProfile, LabTeaser, TransitTracker, motifs, classes, css module), homepage teaser in `app/(public)/page.tsx` (later `TrackSection` indexes renumbered by one).
+
+**Transits and cron (Task 7)**: `lib/astro/transits.ts`, `lib/lab/nextTransit.ts`, `components/lab/TransitTracker.tsx`, `app/api/cron/lab-transits/route.ts`, `vercel.json`.
+
+**Task 8 (this entry)**: `app/(public)/privacy/page.tsx` (new `#lab` section rendering `LAB_PRIVACY_SECTION`, English only), `lib/analytics/constants.ts` + `app/admin/analytics/page.tsx` (`lab_teaser` section and label), `lib/lab/geocode.ts` (admin-client failure is a cache failure), `components/lab/LabDraw.tsx` (sent-state Sun tile uses `sun[0]`), `lib/astro/transits.ts` (800-day lookback), `lib/lab/nextTransit.ts`, `lib/lab/mailerlite.ts`, `components/lab/TransitTracker.tsx`, `content/lab/ui.ts`, gate / birth-time / cron routes.
+
+**Protected files check.** `git diff main --stat -- components/TarotDeck.tsx components/booking lib/booking.ts lib/payments` prints nothing (empty, exit 0). The paid service deck, booking components, `lib/booking.ts` and `lib/payments` are untouched.
+
+## Dependencies (licences read from `node_modules/*/package.json`)
+
+| package | version | licence | use |
+|---|---|---|---|
+| astronomy-engine | 2.1.19 | MIT | planetary positions |
+| luxon | 3.7.2 | MIT | timezone-correct birth time to UTC |
+| tz-lookup | 6.1.25 | CC0-1.0 | coordinates to IANA zone |
+| @types/luxon (dev) | 3.7.6 | MIT | types |
+
+No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is Nominatim (OpenStreetMap data, ODbL: attribution is on the open items list), cached in `lab_geocode_cache`.
+
+## Rulings taken (from the build ledger)
+
+- **Admin lockdown first.** `admin_users` + `is_admin()`, used in every admin RLS policy and in app code. SQL is numbered files in `supabase/migrations/` that Lewis runs by hand; nothing was run through any tool.
+- **015 seed is safe to re-run**, and the storage policies were split into **015b** so an ownership error cannot roll back the lockdown.
+- **`lab_profiles` writes are service-role only.** The spec's own-update policy is kept (with `deleted_at IS NULL`), but UPDATE is revoked from `anon` and `authenticated` with no column grants. Every write goes through gate, birth-time, delete or the callback link. Cost: a future client-side update needs a column GRANT.
+- **Gate never overwrites a claimed profile.** Only rows with `user_id IS NULL` are updated; for a claimed row it skips field writes and MailerLite, still sends the magic link and returns `{ok:true}` (no email-existence leak). Cost: a verified user who re-draws on `/lab` keeps their original profile.
+- Unique-violation race on first insert reuses the winning row; callback `type` is allowlisted.
+- Lead events logging no longer includes `error.message` (Postgres unique-violation text embeds the email).
+- `StoredChart` type lives in `lib/lab/types.ts` (Task 3), not Task 4. `lib/astro/transits.ts` was built in Task 7, not Phase 1. `supabase/sql/lab_profiles.sql` from the spec became migrations 015/016. `lib/lab/events.ts` was created because the spec's "lead_events helper" did not exist.
+- Homepage teaser renumbers later `TrackSection` indexes rather than using a fractional index.
+- Pre-email events go through the existing `track()` into `analytics_events`; post-email events are written server-side to `lead_events` against a `leads` row with `source = 'lab'`.
+- Meta Pixel `Lead` fires on gate success only when `marketingAllowed` is true.
+- Task 8 folded in: geocode treats admin-client construction failure as a cache failure; the seven transit follow-ups; the `lab_teaser` analytics section; the Sun tile fix.
+- **Tooling:** the main checkout sits in an iCloud folder with evicted `node_modules` and `.git`, so remaining tasks ran in a local worktree (see Lessons).
+
+## Transit follow-ups (done this session)
+
+- Scan lookback widened to 800 days (after-`to` margin stays 400), so chained Pluto/Neptune/Uranus seasons keep their early passes as `from` advances. The new test fails at 400 and passes at 800.
+- `nextTransitFields` prefers the first season whose peak is on or after now, falling back to the first season.
+- Tracker says "Peaked {date}" for a past peak, and the duplicated headline is gone (the LabNote title is the one heading).
+- Gate and birth-time wrap the transit computation in try/catch: a transit failure gives null fields and never blocks signup or a time change.
+- Birth-time recomputes and stores `next_transit` / `transit_peak_date` and syncs them to MailerLite.
+- Cron selects the stored transit fields and skips both the DB write and the MailerLite call when unchanged.
+- A profile with no season sends `""` for both MailerLite transit fields. **MailerLite's treatment of `""` on a custom field is unverified**; check on the first cron run that old values really clear.
+
+## QA checklist
+
+| Item | Result |
+|---|---|
+| `npx tsc --noEmit` | pass |
+| `npm run lint` | pass (0 errors, pre-existing warnings only) |
+| `npx vitest run` | pass (27 files, 179 passed, 1 skipped) |
+| `npm run build` | pass; `/lab` and `/lab/profile` dynamic, `/privacy` static |
+| No `console.*` logs a body, email, date, place, coordinates or positions in the branch's new code | pass (grep audit: only error names, status/error codes, counts; thrown messages are fixed strings plus a code) |
+| Protected files diff against main is empty | pass (output above) |
+| Privacy `#lab` section renders | pass at build; not eyeballed in a browser by me |
+| `/lab` at 375px: no horizontal scroll, 3 cards in a row, flip, "The Sun. Hold that thought.", birth step reveal, date focus | pass, controller browser check recorded in the ledger (sw = cw = 375) |
+| Birth compute at 375px | partial: returned 502 locally because `.env.local` lacks `SUPABASE_SERVICE_ROLE_KEY` and `NOMINATIM_USER_AGENT`; UI showed the inline "couldn't look up that place" message correctly. The geocode fix in this entry removes the dependence on the service-role key for the cache |
+| Full reading path (card, birth, reading, gate) | blocked: needs SQL and env |
+| Full magic-link flow (email, callback, profile) | blocked: needs SQL and env |
+| Delete profile | blocked: needs SQL and env |
+| `?src` landing in `lead_events` | blocked: needs SQL and env |
+| Profile page, transit tracker with real data, cron | blocked: needs SQL and env |
+| Lighthouse | blocked: needs SQL and env |
+| Admin still works after 015 | blocked: needs SQL (015 not run) |
+
+## Deferred minor items worth tracking
+
+**Admin / SQL**: RLS policies call `is_admin()` bare instead of the `(select public.is_admin())` initPlan form; no test for the middleware admin branching; import order in five non-admin routes.
+
+**Astro engine**: ambiguity test only uses the UTC zone (add a Pacific/Auckland case); the `time.test.ts` try/catch assertion passes silently if nothing throws; a DST spring-forward gap is silently shifted by Luxon, not flagged; `houses.ts` polar ASC flip lacks an intent comment.
+
+**Copy**: Neptune test line grammar ("dissolving boundaries comes up") and "points at" is a little oracle-ish in `content/lab/transits.ts`; `KEYWORDS` are bare declaratives and should be framed "Planet in Sign is read as..."; "what the sky is doing to your chart" in `ui.ts` is causal-ish (verbatim from the prototype); the causal-language regex test is narrow; `API.consentInvalid` is unused.
+
+**Reading / validation**: `composeReading` passes `chart.rising` without a `hasTime` guard; the ambiguous-body keyword uses `signs[0]` while the label says "X or Y"; the validate "today" bound uses the UTC date.
+
+**Gate / API**: the site-URL fallback trusts the Host header (set `NEXT_PUBLIC_SITE_URL`); the unclaimed-row update filters by id only (add `.is("user_id", null)` to close the claim race); the claimed path is faster (skips MailerLite), a weak email-enumeration timing channel; the unclaimed test asserts only `updates.length > 0`; no tests for the insert or 23505 paths. The rate limiter is in-memory per instance.
+
+**UI**: Gate `defaultTime` goes stale on birth-form resubmit; the general error `<p role="alert">` is not linked with `aria-describedby`; `<div>` inside `<button>` in LabDeck; a `requestAnimationFrame` is not cancelled on unmount; an empty AddBirthTime alert `<p>` may add a stray gap (visual check); the profile page lookup error is an unhandled 500 (no error boundary).
+
+**Transits**: Pluto/Neptune 300-day chaining merges consecutive annual cycles into ~590 to 690-day seasons (follows the brief); the tie-break sort is untested; birth-time updates the transit fields but not `sun_sign` / `moon_sign` in MailerLite (a newly known time can resolve an ambiguous Moon).
+
+## Open product question
+
+**Should Moon transits be nulled when the birth time is unknown?** No-time charts use the local-noon Moon for transits, but the Moon's uncertainty over a day is about 13 degrees (about plus or minus 6.5), far larger than the 1 degree orb, so a Moon transit date for a no-time profile is close to arbitrary. Option: set `Moon: null` in `natalPointsFromStoredChart` when `hasTime` is false (the same treatment as Rising). Needs a call from Lewis and Gabs.
+
+## Open items
+
+- **Gabs's voice pass** on everything in `content/lab/*.ts`.
+- **Legal review of the privacy text** (`content/lab/privacy.ts`, now live at `/privacy#lab`). Known gaps, deliberately not fixed here: no contact address in the Lab section, no stated lawful basis, no email service provider (MailerLite) named as a processor, vague retention ("may remove it"). Also confirm Nominatim and Supabase as processors and the consent wording / `CONSENT_TEXT_VERSION`.
+- **Cookie banner:** it exists (`context/ConsentContext.tsx`); the Pixel `Lead` fires only with marketing consent.
+- **Monthly Lab note email in MailerLite**: the cron only refreshes fields; the automation / campaign that uses `next_transit` still has to be written.
+- **Spanish version** of `/lab` (English only for now).
+- **OG image**: `/og/lab.png` does not exist yet (TODO in `app/(public)/lab/page.tsx`).
+- **Persistent rate-limit store**: the gate limiter is per-instance memory.
+- **Replace `GABS_NATAL`** in `lib/transits/natal-chart.ts` with the real engine (`lib/astro` now exists).
+- Credit OpenStreetMap / Nominatim data (ODbL) somewhere visible.
+- After merge: re-attach the main checkout to `feat/lab-draw` or main (it was left detached; see Lessons).
+
+## Lessons learned
+
+- **The main checkout is in an iCloud folder and its `node_modules` and `.git` files get evicted ("dataless").** tsc, vitest, eslint, next build and even git then hang for minutes (one `.git/refs/stash` read blocked about 20 minutes), with ECANCELED errors. Hydrating by `cat`-ing files helped a little (about one file per 45 seconds) and was not worth it. **Workaround that worked:** a local git worktree outside iCloud (`/private/tmp/.../scratchpad/verify-wt`, `npm ci` there, branch `feat/lab-draw` checked out there) for all tooling and commits, leaving the main checkout detached at the same commit. Better long-term fix: mark the repo folder "Keep Downloaded", or move the repo out of iCloud.
+- When adding a rule that touches every signed-in user (here: magic links), audit what "signed in" already grants. Here it silently meant admin on three layers (middleware, layout, RLS).
+- Raw SQL that runs as one transaction: put anything that can fail on ownership (storage policies) in its own file.
+- Adding a unique index to an existing table: assume duplicates (same lesson as migration 013).
+- Error logging: Postgres and library messages can embed the offending value (an email in a unique-violation). Log codes and names, build messages yourself.
+- A regression test is only worth keeping if it fails without the fix; the first draft of the lookback test passed at both 400 and 800 days. Check by reverting the fix.
+- A mock of a module a route imports will silently drop any new export the route starts using; the gate test needed `importOriginal` after the MailerLite helper was added.
+
+### Final review additions (2026-10-24)
+
+- **Supabase email templates:** set "Magic Link" and "Confirm signup" to `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/lab/profile`. PKCE `?code=` links fail when opened in another browser (Instagram in-app, then Mail). Smoke-test cross-device.
+- **SMTP:** configure custom SMTP and raise the Auth email rate limit before launch (default SMTP allows only a handful per hour).
+- **Merge = launch:** hold the production deploy until 015/015b/016 have run, or the /lab gate returns 500 and /lab/profile errors.
+- **015b is a go/no-go line:** confirm the storage policies applied before enabling sign-ups.
+- **After 015, run:** `select tablename, policyname, roles, qual from pg_policies where qual ilike '%authenticated%' or 'authenticated' = any(roles);` Only 015b's storage policies (which also require is_admin()) should remain.
+- **Open item:** the cron restarts from the lowest id each month; add `transits_refreshed_at` ordering or a cursor before about 400 profiles.
+- **Open item:** `trackLead` sends content_name "newsletter_signup" for Lab leads.
+- **Open item (legal):** single vs double opt-in, given anyone can submit any address.
+- **Product question (unchanged):** null Moon transits when birth time is unknown.
+- **Delete now scrubs:** the soft-delete also tombstones email (`deleted+<id>@invalid`) and every NOT NULL birth column; MailerLite is forgotten first. Lead/event history and the auth account are kept, and the delete and privacy copy say so.
+- **MailerLite signs:** `sun_sign` and `moon_sign` send "X or Y" when ambiguous (gate), and the birth-time route syncs the settled signs.
+
+### Merge with main (2026-10-24)
+
+- Merged `origin/main` (admin simplification, Today home, homepage services fold-in, `lead_inline` section) into `feat/lab-draw`. Conflicts: `app/api/admin/actions/route.ts` (kept main's `getOrCreateTodayBatch` behind `requireAdminApi`) and this file (both sides kept, in date order).
+- **Supersedes the teaser renumbering noted above:** main appends new sections with the next unused index (`lead_inline` = 11) so historical section indexes stay comparable. `lab_teaser` now uses index 12 and every other section keeps main's index. `SECTION_ORDER` still lists it after `services_index` (scroll order).
+- No new migrations or `authenticated` policies came in from main, so 015/015b still cover every admin policy.
+
+### Migrations applied, rollback, birth-place matching (2026-10-25)
+
+- **015, 015b, 016 and 017 were applied to the production project "Astro lab" (`nekpalyvjeaskdchrgih`) via the Supabase MCP before the PR merged.** Closing or reverting the PR does not undo them. `admin_users` holds `astropsychelabadmi@gmail.com` and `lonsdale744@gmail.com`.
+- **Rollback SQL:** `docs/maintenance/2026-10-25-lab-draw-rollback.sql`. Every statement is commented out on purpose. Keeping 015/015b is recommended even if the Lab is cancelled. Do not revert 015 while any non-admin auth user exists: reverting restores "any signed-in user is an admin", and every Lab sign-up would inherit it. Note that the in-app delete keeps the auth account.
+- **017** adds `lab_geocode_cache.candidates` (jsonb). Without it, place lookups still work but are not cached.
+- **Birth-place matching:** ambiguous names (Santiago, Córdoba, Valencia) now return up to five candidates for the visitor to pick; the chosen place is sent back to the gate so the saved profile matches the reading. Spanish names resolve through Nominatim (`Accept-Language: es,en`). Needs `NOMINATIM_USER_AGENT`.
+
+### Profile redesign: the card as a lens, built to convert (2026-10-25)
+
+- **Goal:** the free profile explains the Lab and turns profile creators into paying clients. Every section opens with its Lab layer (card, chart, test) and closes with the question a session would take further.
+- **Deliberate departure from the spec's Phase 5/6 layout** (six placement notes; next transit plus four more). The page now shows the card and its theme; Sun, Moon and Rising read through that theme (`content/lab/lens.ts`); the theme's three-layer experiment; the next two transit seasons as a minimal timeline; a ladder of offers; and the full chart collapsed. Venus, Saturn and North Node notes are off the page (content kept).
+- **Offers:** Astro Psyche Blend (primary), Cosmic Quick Hit and Stellar Insights, read live from `services` by slug (`content/lab/offers.ts`, `lib/lab/offers.ts`). If `services` can't be read, one generic booking link shows. Membership is a "coming soon" line with no button until it exists.
+- **Measuring conversion:** `lab_booking_clicked` lead events now carry `service` and `placement` (`chart`, `transits` or `offers`).
+- **Copy:** all new lines are drafts for Gabs (lens lines, season names, offer pitches, layer lines).
+- **Dev gotcha:** two `next dev` servers in the same folder share `.next` and serve 404s. Run one at a time.

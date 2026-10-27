@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getAdminUser } from "@/lib/auth/admin";
 import SignOutButton from "@/components/admin/SignOutButton";
 import AdminNav from "@/components/admin/AdminNav";
 import AdminTabBar from "@/components/admin/AdminTabBar";
@@ -9,12 +10,10 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { isAdmin } = await getAdminUser(supabase);
 
-  // No user = login page (middleware allows /admin/login through)
-  if (!user) {
+  // Non-admin (or no user) = login page (middleware allows /admin/login through)
+  if (!isAdmin) {
     return <div className="admin-theme min-h-screen">{children}</div>;
   }
 

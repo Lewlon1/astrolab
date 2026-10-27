@@ -11,6 +11,7 @@ import LeadCaptureInline from "@/components/LeadCaptureInline";
 import LeadCaptureSection from "@/components/LeadCaptureSection";
 import BlogPreview from "@/components/BlogPreview";
 import HomeCTA from "@/components/HomeCTA";
+import LabTeaser from "@/components/lab/LabTeaser";
 import TrackSection from "@/components/analytics/TrackSection";
 import { organizationJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { getEditorialDate } from "@/lib/editorialDate";
@@ -84,6 +85,9 @@ export default async function HomePage() {
       </TrackSection>
       <TrackSection name="services_index" index={6}>
         <ServicesIndex services={services ?? []} />
+      </TrackSection>
+      <TrackSection name="lab_teaser" index={12}>
+        <LabTeaser />
       </TrackSection>
       <TrackSection name="testimonials" index={7}>
         <Testimonials testimonials={testimonials ?? []} />

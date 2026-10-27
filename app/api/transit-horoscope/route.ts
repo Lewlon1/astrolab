@@ -1,3 +1,4 @@
+import { requireAdminApi } from "@/lib/auth/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { invokeModelJSON, MODELS } from "@/lib/bedrock";
 import { buildHoroscopePrompt } from "@/lib/transits/buildHoroscopePrompt";
@@ -72,6 +73,9 @@ function validateBundle(raw: RawBundle): {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = (await req.json()) as Partial<TransitHoroscopeRequest>;
     const { transit, language } = body;

@@ -1,0 +1,288 @@
+-- ============================================================================
+-- ROLLBACK for the Lab Draw migrations (PR #19): 017, 016, 015b, 015.
+-- Run MANUALLY in the Supabase SQL Editor, in the order below. NOT applied by any tool.
+-- EVERY statement is commented out on purpose (some delete data). Uncomment one step at a
+-- time, read it, then run it.
+--
+-- State when this was written (2026-10-25): 015, 015b, 016 and 017 were APPLIED to the
+-- production project "Astro lab" (ref nekpalyvjeaskdchrgih) before the PR merged, via the
+-- Supabase MCP (migration names 015_admin_lockdown, 015b_admin_lockdown_storage,
+-- 016_lab_profiles, 017_lab_geocode_candidates). Closing or reverting the PR does NOT undo them.
+--
+-- READ FIRST
+-- 1. RECOMMENDED even if the Lab is cancelled: keep 015 and 015b (steps 3 and 4 are
+--    optional). They only restrict admin access to the allow-listed users, and nothing
+--    else depends on reverting them.
+-- 2. DO NOT run step 4 while any non-admin auth user exists. Reverting 015 restores the
+--    old rule "any signed-in user is an admin". Lab magic links create auth users for
+--    the public, so each of them would become an admin. Step 4 refuses to run if such
+--    users exist; delete them (4a) first, or keep 015.
+-- 3. Step 2 deletes visitors' emails and birth data. Export first if you need to keep
+--    or return it (2a), and tell anyone who asked for deletion/access.
+-- 4. Outside SQL: see the "Rolling back" section of the PR description (code, MailerLite,
+--    Auth settings, cron, env vars).
+-- ============================================================================
+
+-- BEGIN;
+
+-- ---------------------------------------------------------------------------
+-- 1. Revert 017: geocode cache candidates column (safe, cache only)
+-- ---------------------------------------------------------------------------
+-- ALTER TABLE lab_geocode_cache DROP COLUMN IF EXISTS candidates;
+
+-- ---------------------------------------------------------------------------
+-- 2. Revert 016: Lab tables, throttle function, leads.source 'lab'
+-- ---------------------------------------------------------------------------
+-- 2a. EXPORT FIRST if the data matters (run on its own, save the result):
+--   SELECT * FROM lab_profiles;
+-- 2b. Lab leads block the old constraint. Review, then delete them (lead_events and
+--     lab_profiles.lead_id reference leads), or relabel them instead:
+--   SELECT id, email FROM leads WHERE source = 'lab';
+--   DELETE FROM lead_events WHERE lead_id IN (SELECT id FROM leads WHERE source = 'lab');
+--   DELETE FROM leads WHERE source = 'lab';
+-- DROP FUNCTION IF EXISTS lab_take_slot(text, int);
+-- DROP TABLE IF EXISTS lab_throttle;
+-- DROP TABLE IF EXISTS lab_geocode_cache;
+-- DROP TABLE IF EXISTS lab_profiles;
+-- ALTER TABLE leads DROP CONSTRAINT IF EXISTS leads_source_check;
+-- ALTER TABLE leads ADD CONSTRAINT leads_source_check
+--   CHECK (source IN (
+--     'website_form', 'lovecode', 'event_qr', 'manychat',
+--     'mailerlite', 'csv_import'
+--   ));
+
+-- COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- 3. OPTIONAL. Revert 015b: storage policies back to "any authenticated user"
+--    (the 012 definitions). Not recommended, see note 1.
+--    If this fails with "must be owner of table objects", recreate the three
+--    policies in Dashboard -> Storage -> Policies (bucket service-images).
+-- ---------------------------------------------------------------------------
+-- BEGIN;
+-- DROP POLICY IF EXISTS "Admin: upload service images" ON storage.objects;
+-- CREATE POLICY "Admin: upload service images"
+--   ON storage.objects FOR INSERT TO authenticated
+--   WITH CHECK (bucket_id = 'service-images');
+-- DROP POLICY IF EXISTS "Admin: update service images" ON storage.objects;
+-- CREATE POLICY "Admin: update service images"
+--   ON storage.objects FOR UPDATE TO authenticated
+--   USING (bucket_id = 'service-images')
+--   WITH CHECK (bucket_id = 'service-images');
+-- DROP POLICY IF EXISTS "Admin: delete service images" ON storage.objects;
+-- CREATE POLICY "Admin: delete service images"
+--   ON storage.objects FOR DELETE TO authenticated
+--   USING (bucket_id = 'service-images');
+-- COMMIT;
+
+-- ---------------------------------------------------------------------------
+-- 4. OPTIONAL. Revert 015: restore "any authenticated user is an admin".
+--    Not recommended, see notes 1 and 2. Run 3 first if you ran it at all.
+--
+-- 4a. Non-admin auth users (the public's Lab sign-ups). Review, then delete them
+--     (Dashboard -> Authentication -> Users, or SQL) BEFORE running 4b:
+--       SELECT u.id, u.email FROM auth.users u
+--       WHERE u.id NOT IN (SELECT user_id FROM admin_users);
+--       DELETE FROM auth.users WHERE id NOT IN (SELECT user_id FROM admin_users);
+--     Admins at the time of writing: astropsychelabadmi@gmail.com, lonsdale744@gmail.com
+--
+-- 4b. Uncomment the block below to run it. It aborts if non-admin users remain.
+-- ---------------------------------------------------------------------------
+-- BEGIN;
+-- DO $$
+-- BEGIN
+--   IF EXISTS (SELECT 1 FROM auth.users u WHERE u.id NOT IN (SELECT user_id FROM admin_users)) THEN
+--     RAISE EXCEPTION 'Non-admin auth users exist: delete them (4a) before reverting 015';
+--   END IF;
+-- END $$;
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON services;
+-- CREATE POLICY "Admin: full access" ON services
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON blog_posts;
+-- CREATE POLICY "Admin: full access" ON blog_posts
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON events;
+-- CREATE POLICY "Admin: full access" ON events
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON testimonials;
+-- CREATE POLICY "Admin: full access" ON testimonials
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON leads;
+-- CREATE POLICY "Admin: full access" ON leads
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON engagement_accounts;
+-- CREATE POLICY "Admin: full access" ON engagement_accounts
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON content_queue;
+-- CREATE POLICY "Admin: full access" ON content_queue
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON analytics_sessions;
+-- CREATE POLICY "Admin: full access" ON analytics_sessions
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON analytics_events;
+-- CREATE POLICY "Admin: full access" ON analytics_events
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON lead_events;
+-- CREATE POLICY "Admin: full access" ON lead_events
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON lead_scoring_config;
+-- CREATE POLICY "Admin: full access" ON lead_scoring_config
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON action_items;
+-- CREATE POLICY "Admin: full access" ON action_items
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON ritual_calendar;
+-- CREATE POLICY "Admin: full access" ON ritual_calendar
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON transit_drafts;
+-- CREATE POLICY "Admin: full access" ON transit_drafts
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: full access" ON transit_horoscopes;
+-- CREATE POLICY "Admin: full access" ON transit_horoscopes
+--   FOR ALL USING (auth.role() = 'authenticated')
+--   WITH CHECK (auth.role() = 'authenticated');
+--
+-- DROP POLICY IF EXISTS "Admin: read bookings" ON bookings;
+-- CREATE POLICY "Admin: read bookings" ON bookings
+--   FOR SELECT USING (auth.role() = 'authenticated');
+--
+-- -- Analytics RPCs: the original migration 010 definitions, without the is_admin() gate.
+-- CREATE OR REPLACE FUNCTION analytics_overview(p_from timestamptz, p_to timestamptz)
+-- RETURNS json
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- AS $$
+--   WITH s AS (
+--     SELECT session_key FROM analytics_sessions
+--     WHERE started_at >= p_from AND started_at < p_to AND is_bot = false
+--   ),
+--   pv AS (  -- page-view count per session (for bounce)
+--     SELECT session_key, count(*) AS n
+--     FROM analytics_events
+--     WHERE event_type = 'page_view' AND created_at >= p_from AND created_at < p_to
+--       AND session_key IN (SELECT session_key FROM s)
+--     GROUP BY session_key
+--   ),
+--   dur AS (  -- session duration from session_end events
+--     SELECT (props->>'duration_ms')::numeric AS d
+--     FROM analytics_events
+--     WHERE event_type = 'session_end' AND created_at >= p_from AND created_at < p_to
+--       AND session_key IN (SELECT session_key FROM s)
+--       AND props ? 'duration_ms'
+--   )
+--   SELECT json_build_object(
+--     'sessions',           (SELECT count(*) FROM s),
+--     'pageviews',          (SELECT coalesce(sum(n), 0) FROM pv),
+--     'avg_duration_ms',    (SELECT coalesce(round(avg(d)), 0) FROM dur),
+--     'median_duration_ms', (SELECT coalesce(round(percentile_cont(0.5) WITHIN GROUP (ORDER BY d)), 0) FROM dur),
+--     'bounce_rate',        (SELECT CASE WHEN (SELECT count(*) FROM s) = 0 THEN 0
+--                             ELSE round(
+--                               100.0 * ((SELECT count(*) FROM s)
+--                                        - (SELECT count(*) FROM pv WHERE n > 1))
+--                               / (SELECT count(*) FROM s), 1)
+--                             END)
+--   );
+-- $$;
+--
+-- -- b) Average dwell time per section → the headline "time reading each section" metric
+-- CREATE OR REPLACE FUNCTION analytics_section_dwell(p_from timestamptz, p_to timestamptz)
+-- RETURNS TABLE(section text, views bigint, avg_dwell_ms numeric, total_dwell_ms numeric)
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- AS $$
+--   SELECT e.section,
+--          count(*) FILTER (WHERE e.event_type = 'section_view')                       AS views,
+--          coalesce(round(avg(e.dwell_ms) FILTER (WHERE e.event_type = 'section_dwell')), 0) AS avg_dwell_ms,
+--          coalesce(sum(e.dwell_ms) FILTER (WHERE e.event_type = 'section_dwell'), 0)        AS total_dwell_ms
+--   FROM analytics_events e
+--   WHERE e.created_at >= p_from AND e.created_at < p_to AND e.section IS NOT NULL
+--     AND e.session_key IN (SELECT session_key FROM analytics_sessions WHERE is_bot = false)
+--   GROUP BY e.section
+--   ORDER BY avg_dwell_ms DESC;
+-- $$;
+--
+-- -- c) Top clicked events
+-- CREATE OR REPLACE FUNCTION analytics_top_clicks(p_from timestamptz, p_to timestamptz)
+-- RETURNS TABLE(event_name text, clicks bigint)
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- AS $$
+--   SELECT event_name, count(*)::bigint AS clicks
+--   FROM analytics_events
+--   WHERE event_type = 'click' AND created_at >= p_from AND created_at < p_to
+--     AND session_key IN (SELECT session_key FROM analytics_sessions WHERE is_bot = false)
+--   GROUP BY event_name
+--   ORDER BY clicks DESC
+--   LIMIT 20;
+-- $$;
+--
+-- -- d) Conversion funnel → distinct sessions reaching each stage, as JSON
+-- CREATE OR REPLACE FUNCTION analytics_funnel(p_from timestamptz, p_to timestamptz)
+-- RETURNS json
+-- LANGUAGE sql
+-- SECURITY DEFINER
+-- SET search_path = public
+-- AS $$
+--   WITH ev AS (
+--     SELECT * FROM analytics_events
+--     WHERE created_at >= p_from AND created_at < p_to
+--       AND session_key IN (SELECT session_key FROM analytics_sessions WHERE is_bot = false)
+--   )
+--   SELECT json_build_object(
+--     'visit',     (SELECT count(DISTINCT session_key) FROM ev WHERE event_type = 'session_start'),
+--     'engaged',   (SELECT count(DISTINCT session_key) FROM ev WHERE event_type = 'section_view'),
+--     'cta_click', (SELECT count(DISTINCT session_key) FROM ev
+--                    WHERE event_type = 'click' AND (event_name LIKE 'cta_book%' OR event_name LIKE 'cta_order%')),
+--     'lead',      (SELECT count(DISTINCT session_key) FROM ev
+--                    WHERE event_type = 'conversion' AND event_name IN ('newsletter_signup','booking_click')),
+--     'booking',   (SELECT count(DISTINCT session_key) FROM ev
+--                    WHERE event_type = 'conversion' AND event_name = 'booking_confirmed')
+--   );
+-- $$;
+--
+-- -- e) Lock down execution: admin (authenticated) only.
+-- REVOKE ALL ON FUNCTION analytics_overview(timestamptz, timestamptz)      FROM public, anon;
+-- REVOKE ALL ON FUNCTION analytics_section_dwell(timestamptz, timestamptz) FROM public, anon;
+-- REVOKE ALL ON FUNCTION analytics_top_clicks(timestamptz, timestamptz)    FROM public, anon;
+-- REVOKE ALL ON FUNCTION analytics_funnel(timestamptz, timestamptz)        FROM public, anon;
+--
+-- GRANT EXECUTE ON FUNCTION analytics_overview(timestamptz, timestamptz)      TO authenticated;
+-- GRANT EXECUTE ON FUNCTION analytics_section_dwell(timestamptz, timestamptz) TO authenticated;
+-- GRANT EXECUTE ON FUNCTION analytics_top_clicks(timestamptz, timestamptz)    TO authenticated;
+-- GRANT EXECUTE ON FUNCTION analytics_funnel(timestamptz, timestamptz)        TO authenticated;
+--
+-- DROP FUNCTION IF EXISTS public.is_admin();
+-- DROP TABLE IF EXISTS admin_users;
+-- COMMIT;

@@ -1,5 +1,6 @@
 import LangText from "@/components/LangText";
 import CookieSettingsButton from "@/components/CookieSettingsButton";
+import { LAB_PRIVACY_SECTION } from "@/content/lab/privacy";
 
 export const metadata = {
   title: "Cookie & Privacy Notice",
@@ -165,6 +166,45 @@ export default function PrivacyPage() {
             >
               <CookieSettingsButton />
             </div>
+
+            {/* The Lab Draw: English only, see content/lab/privacy.ts. */}
+            <section id="lab" aria-labelledby="lab-privacy-heading" style={{ scrollMarginTop: "6rem" }}>
+              <h2
+                id="lab-privacy-heading"
+                className="font-fraunces mt-10 mb-4"
+                style={{
+                  fontStyle: "italic",
+                  fontSize: 24,
+                  fontWeight: 400,
+                  color: "var(--ed-ink)",
+                }}
+              >
+                {LAB_PRIVACY_SECTION.heading}
+              </h2>
+              <p className="m-0 mb-5">{LAB_PRIVACY_SECTION.intro}</p>
+              <div
+                className="grid gap-px mb-6"
+                style={{ background: "var(--ed-rule)", border: "1px solid var(--ed-rule)" }}
+              >
+                {LAB_PRIVACY_SECTION.items.map((item) => (
+                  <div
+                    key={item.title}
+                    className="grid grid-cols-1 md:grid-cols-[1fr_1.6fr] gap-1 md:gap-6 p-4"
+                    style={{ background: "var(--ed-paper)" }}
+                  >
+                    <div
+                      className="font-dm-mono"
+                      style={{ fontSize: 13, color: "var(--ed-ink)", fontWeight: 500 }}
+                    >
+                      {item.title}
+                    </div>
+                    <p className="m-0" style={{ fontSize: 14.5 }}>
+                      {item.body}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <p
               className="m-0 mt-10"

@@ -1,3 +1,4 @@
+import { requireAdminApi } from "@/lib/auth/admin";
 import { NextRequest, NextResponse } from "next/server";
 import { invokeModel, MODELS } from "@/lib/bedrock";
 import { buildDraftPrompt } from "@/lib/transits/buildDraftPrompt";
@@ -11,6 +12,9 @@ const VALID_FORMATS = new Set(["reel", "carousel", "caption", "story"]);
 const VALID_LANGUAGES = new Set(["en", "es", "both"]);
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+
   try {
     const body = (await req.json()) as Partial<TransitDraftRequest>;
     const { transit, pillar, format, language, angle } = body;

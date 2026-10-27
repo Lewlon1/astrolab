@@ -29,6 +29,7 @@ export const SECTION_ORDER = [
   "lead_inline",
   "magazine",
   "services_index",
+  "lab_teaser",
   "testimonials",
   "lead_capture",
   "blog",
