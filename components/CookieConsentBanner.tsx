@@ -15,7 +15,9 @@ export default function CookieConsentBanner() {
       ? {
           body:
             "A little cosmic housekeeping ✨ Some cookies simply keep this corner of the internet running. Others — only if you say yes — help us find kindred spirits and remember you next time. Your call, always.",
+          short: "✨ Essential cookies keep the site running. Others only if you say yes.",
           learn: "See the full details",
+          learnShort: "Details",
           accept: "Sounds good",
           reject: "No thanks",
           aria: "Cookie consent",
@@ -23,7 +25,9 @@ export default function CookieConsentBanner() {
       : {
           body:
             "Un poco de orden cósmico ✨ Algunas cookies simplemente hacen que este rincón de internet funcione. Otras — solo si dices que sí — nos ayudan a encontrar almas afines y a recordarte la próxima vez. Tú decides, siempre.",
+          short: "✨ Las cookies esenciales hacen que el sitio funcione. Las demás, solo si dices que sí.",
           learn: "Ver todos los detalles",
+          learnShort: "Detalles",
           accept: "Me parece bien",
           reject: "No, gracias",
           aria: "Consentimiento de cookies",
@@ -34,15 +38,15 @@ export default function CookieConsentBanner() {
       role="dialog"
       aria-label={copy.aria}
       aria-live="polite"
-      className="fixed inset-x-0 bottom-0 z-[100] px-4 pb-4 md:px-6 md:pb-6"
+      className="fixed inset-x-0 bottom-0 z-[100] px-2 pb-2 md:px-6 md:pb-6"
     >
+      {/* Phones get a slim bar (short copy, one row of equal buttons) so it never covers the page. */}
       <div
-        className="mx-auto max-w-[1100px] flex flex-col md:flex-row md:items-center gap-4 md:gap-6"
+        className="mx-auto max-w-[1100px] flex flex-col md:flex-row md:items-center gap-2.5 md:gap-6 px-3.5 py-3 md:px-5 md:py-[18px]"
         style={{
           background: "var(--ed-paper)",
           border: "1px solid var(--ed-ink)",
           boxShadow: "0 18px 50px rgba(0,0,0,.22)",
-          padding: "18px 20px",
         }}
       >
         <p
@@ -53,17 +57,19 @@ export default function CookieConsentBanner() {
             color: "var(--ed-ink-soft)",
           }}
         >
-          {copy.body}{" "}
+          <span className="md:hidden">{copy.short}</span>
+          <span className="hidden md:inline">{copy.body}</span>{" "}
           <Link
             href="/privacy"
             className="underline hover:opacity-70 transition-opacity"
             style={{ color: "var(--ed-ink)", textUnderlineOffset: "2px" }}
           >
-            {copy.learn}
+            <span className="md:hidden">{copy.learnShort}</span>
+            <span className="hidden md:inline">{copy.learn}</span>
           </Link>
         </p>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="grid grid-cols-2 md:flex items-center gap-2 md:gap-3 shrink-0">
           {/* Reject stays a real one-click, equally-sized option (GDPR), just
               visually quieter so the warm Accept reads as the friendly default. */}
           <button
@@ -74,7 +80,7 @@ export default function CookieConsentBanner() {
               background: "transparent",
               color: "var(--ed-text-mute)",
               border: "1px solid var(--ed-rule)",
-              padding: "12px 22px",
+              padding: "11px 18px",
               fontSize: 10.5,
               letterSpacing: "0.18em",
               fontWeight: 500,
@@ -91,7 +97,7 @@ export default function CookieConsentBanner() {
               background: "var(--ed-rust)",
               color: "var(--ed-paper)",
               border: "1px solid var(--ed-rust)",
-              padding: "12px 28px",
+              padding: "11px 22px",
               fontSize: 11,
               letterSpacing: "0.18em",
               fontWeight: 600,

@@ -250,9 +250,12 @@ export default function LabDraw({ src, authError }: Props) {
 
       <section aria-labelledby="lab-step-draw" className="flex flex-col gap-4">
         <StepHead n="01" id="lab-step-draw" title={STEP_TITLES.draw} />
-        <p className="m-0 max-w-[62ch]">{DRAW.intro}</p>
-        <LabDeck hand={hand} pickedIndex={pickedIndex} onPick={handlePick} />
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Phones: the cards come straight after the step title so the whole arch is in the first view; the intro follows. */}
+        <p className="m-0 max-w-[62ch] max-sm:order-2">{DRAW.intro}</p>
+        <div className="max-sm:order-1">
+          <LabDeck hand={hand} pickedIndex={pickedIndex} onPick={handlePick} />
+        </div>
+        <div className="flex flex-wrap items-center gap-3 max-sm:order-3">
           {pickedIndex === null && (
             <button
               type="button"
@@ -271,7 +274,7 @@ export default function LabDraw({ src, authError }: Props) {
             {card ? `${card.name}. ${DRAW.hold}` : ""}
           </p>
         </div>
-        <p className="m-0 text-[12px] text-midBrown">{DRAW.credit}</p>
+        <p className="m-0 text-[12px] text-midBrown max-sm:order-4">{DRAW.credit}</p>
       </section>
 
       {atLeast(stage, "birth") && (

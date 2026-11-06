@@ -1039,3 +1039,12 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - The Commons API returned 429 to the shared proxy IP even on the first call. `upload.wikimedia.org` serves originals at a fixed path, `/{md5[0]}/{md5[0:2]}/{filename}`, so the files can be fetched directly and slowly, without the API.
 - `CREATE OR REPLACE VIEW` can only append columns. Adding one in the middle breaks re-running a migration that was already applied. Put new columns last, and test the new file over the old version (`git show HEAD:file`) on scratch Postgres.
 - A CSS-module `width: 100%` and a Tailwind `w-[72px]` on the same element have equal specificity, so whichever loads last wins. Here it collapsed the reading headline to zero width, and Playwright reported it as "hidden". Put size utilities on a wrapper.
+
+### Mobile first view: cards above the fold, slim cookie bar (2026-11-06)
+
+**Files touched:** `components/CookieConsentBanner.tsx`, `components/lab/LabDraw.tsx`.
+
+- On phones the cookie banner was about 220px tall and covered the arch on first load. It is now a slim bar on phones (short copy, "Details" link, two equal buttons in one row, about 127px); desktop is unchanged. Reject is still a one-click option the same size as Accept (GDPR).
+- On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
+- Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
+- The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
