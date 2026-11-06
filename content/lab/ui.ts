@@ -17,11 +17,18 @@ export const STEP_TITLES = {
 
 export const DRAW = {
   intro:
-    "Three of the 22 major arcana, face down. Don't deliberate. In psychology this is called a projective task: what you reach for in an ambiguous image says something about you.",
-  shuffle: "Shuffle a new three",
+    "Six of the 22 major arcana. Don't deliberate: choose the one that pulls you first. In psychology this is called a projective choice: what you reach for in an image says something about what's on your mind.",
+  deal: "Deal six more",
   hold: "Hold that thought.",
   chosenLabel: "chosen",
-  faceDownLabel: (position: number) => `Face-down card ${position} of 3`,
+  dealingLabel: "Dealing the cards",
+  spreadLabel: "Spread the six cards out to choose one",
+  spreadHint: {
+    collapsed: "Tap the cards to spread them out.",
+    spread: "Tap the card that pulls you.",
+  },
+  /** Credit line under the deck (the art is public domain; credit is courtesy). */
+  credit: "Cards: Pamela Colman Smith, Rider-Waite-Smith deck, 1909.",
 } as const;
 
 export const BIRTH = {

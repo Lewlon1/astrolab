@@ -80,9 +80,9 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
           <div className="mt-6 grid grid-cols-[minmax(0,120px)_minmax(0,1fr)] items-start gap-5 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)] sm:gap-8">
             <div className={styles.staticCard} role="img" aria-label={PROFILE_EXTRA.cardAlt(view.header.card)}>
               {card ? (
-                <CardFace card={card} flat ariaHidden />
+                <CardFace card={card} ariaHidden priority sizes="(min-width: 640px) 170px, 120px" />
               ) : (
-                <div className={`${styles.face} ${styles.front} ${styles.flat}`}>
+                <div className={`${styles.face} ${styles.front}`}>
                   <span className={styles.name}>{view.header.card}</span>
                 </div>
               )}

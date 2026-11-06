@@ -43,6 +43,17 @@ describe("feedback route", () => {
     });
   });
 
+  it("stores the cards dealt alongside it; drops an invalid list without failing", async () => {
+    const shown = ["The Star", "The Moon", "Death", "The Fool", "Justice", "The Sun"];
+    await POST(req({ ...good, shown }));
+    expect(upserts[0].row.shown).toEqual(shown);
+    for (const bad of [["The Moon", "Death"], ["The Star", "The Star"], ["The Star", "The Joker"], "The Star", [...shown, "Strength"]]) {
+      upserts.length = 0;
+      expect((await POST(req({ ...good, shown: bad }))).status).toBe(204);
+      expect(upserts[0].row.shown).toBeNull();
+    }
+  });
+
   it("never writes lab_profile_id, so a changed vote cannot unlink a profile", async () => {
     await POST(req({ ...good, vote: -1, lab_profile_id: "x" }));
     expect(upserts[0].row).not.toHaveProperty("lab_profile_id");

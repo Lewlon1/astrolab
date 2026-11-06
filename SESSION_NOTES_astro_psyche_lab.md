@@ -1023,3 +1023,19 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Sign placeholders after "a" break for vowel signs ("a Aries Moon"). This was already live in `lens.ts` `chartQuestion`. `lensText()` now rewrites "a Aries/Aquarius" to "an"; new templates use "your {sign}".
 - The admin layout renders `children` for non-admins (that's how the login page works), so admin pages must not assume the layout guards them. Rely on RLS, and check `getAdminUser` in the page too.
 - E2E without a `.env`: start `next dev` with dummy `NEXT_PUBLIC_SUPABASE_*` values, and in Playwright add a `geo` to `/api/lab/compute` (the real route then computes the chart with no geocoding) and stub the DB-backed routes. The gate drawId test was checked to fail with the link disabled.
+
+### Face-up RWS cards dealt in an arch (2026-11-06)
+
+**Files touched:** `public/lab/cards/*.webp` + `SOURCES.md` (new), `content/lab/cards.ts` (`image`, `cardImageSrc`), `content/lab/ui.ts` (`DRAW`), `components/lab/{LabDeck,CardFace,LabDraw,Reading,ReadingFeedback}.tsx`, `components/lab/lab.module.css`, `app/(public)/lab/profile/ProfileContent.tsx`, `lib/lab/validate.ts`, `app/api/lab/feedback/route.ts`, `supabase/migrations/018_lab_reading_feedback.sql`, and tests.
+
+- **Why:** the draw said "projective choice", but people picked from 3 face-down backs, so the pick was random. Now 6 face-up cards are dealt from the 22 into an arch, with "Deal six more". On a phone the arch is compact; tapping it spreads the six into an even 3 × 2 grid, and a tap then chooses. All positions are CSS-variable transforms (`--x/--y/--col/--row`), so the arch-to-grid move animates. Under reduced motion there is no deal animation and no transitions.
+- **Images:** the original 1909 Pamela Colman Smith "Roses & Lilies" scans from Wikimedia Commons (public domain: published before 1929, artist died 1951), saved at 240 and 480 px wide as WebP (about 670 KB for all 240s). They are used on the draw, beside the reading headline and in the profile hero. If an image fails, the old numeral/motif face shows. The sources are in `public/lab/cards/SOURCES.md`. The 5 `public/images/The_*.JPG` files on the services page are a separate set; they were not checked and look like modern recolourings.
+- **Signal:** `lab_card_drawn` and the feedback vote now carry `shown` (all six dealt), so "chosen when shown" rates are possible later. 018 gained a `shown text[]` column (added at the end of the `lab_reading_signal` view) and is still unapplied.
+- **Network:** `commons.wikimedia.org` and `upload.wikimedia.org` were added to this personal environment's allowlist (user approved).
+- **Copy for Gabs:** `DRAW.intro`, `spreadHint` and `credit` are drafts.
+- **Heads-up:** several RWS cards show nudity (The Star, The Lovers, The Devil, The World). This is traditional art, but Meta ad review can flag landing pages, so check before sending paid traffic to `/lab`.
+
+**Lessons learned**
+- The Commons API returned 429 to the shared proxy IP even on the first call. `upload.wikimedia.org` serves originals at a fixed path, `/{md5[0]}/{md5[0:2]}/{filename}`, so the files can be fetched directly and slowly, without the API.
+- `CREATE OR REPLACE VIEW` can only append columns. Adding one in the middle breaks re-running a migration that was already applied. Put new columns last, and test the new file over the old version (`git show HEAD:file`) on scratch Postgres.
+- A CSS-module `width: 100%` and a Tailwind `w-[72px]` on the same element have equal specificity, so whichever loads last wins. Here it collapsed the reading headline to zero width, and Playwright reported it as "hidden". Put size utilities on a wrapper.

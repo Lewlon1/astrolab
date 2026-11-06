@@ -1,7 +1,7 @@
-import { readdirSync, readFileSync } from "fs";
+import { existsSync, readdirSync, readFileSync } from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
-import { CARDS } from "../cards";
+import { CARDS, cardImageSrc } from "../cards";
 import { SIGNS, COMPATIBLE_ELEMENT, elementOf } from "../signs";
 import { THEMES } from "../themes";
 import { KEYWORDS, PLACEMENTS, PLACEMENT_TITLES } from "../placements";
@@ -112,6 +112,21 @@ describe("transit themes", () => {
     for (const p of TRANSIT_PLANETS) expect(SEASON_NAMES[p].length).toBeGreaterThan(3);
     for (const pt of TRANSIT_POINTS) expect(POINT_SHORT[pt].length).toBeGreaterThan(3);
     expect(transitTheme("Saturn", "Sun")).toBe("Testing what you've built · who you are");
+  });
+});
+
+describe("card images", () => {
+  it("every card has both image sizes on disk, named by its number", () => {
+    for (const c of CARDS) {
+      expect(c.image, c.name).toMatch(new RegExp(`^/lab/cards/${String(c.n).padStart(2, "0")}-[a-z-]+$`));
+      for (const w of [240, 480] as const) {
+        expect(existsSync(path.join(process.cwd(), "public", cardImageSrc(c, w))), `${c.name} ${w}`).toBe(true);
+      }
+    }
+  });
+  it("records a source for every image", () => {
+    const sources = readFileSync(path.join(process.cwd(), "public/lab/cards/SOURCES.md"), "utf8");
+    for (const c of CARDS) expect(sources, c.name).toContain(c.image.split("/").pop());
   });
 });
 

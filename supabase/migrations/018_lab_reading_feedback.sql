@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS lab_reading_feedback (
   draw_id         uuid NOT NULL,
   vote            smallint NOT NULL CHECK (vote IN (-1, 1)),
   card            text NOT NULL,
+  shown           text[] NULL,            -- every card dealt with it (the draw shows six), for "chosen when shown"
   sun_sign        text NOT NULL,          -- "Leo" or "Leo or Virgo"
   moon_sign       text NOT NULL,          -- "Gemini" or "Gemini or Cancer"
   relation        text NOT NULL CHECK (relation IN ('mirror', 'agree', 'tension')),
@@ -51,6 +52,9 @@ GRANT SELECT ON lab_reading_feedback TO authenticated;
 DROP POLICY IF EXISTS "Lab: admin reads reading feedback" ON lab_reading_feedback;
 CREATE POLICY "Lab: admin reads reading feedback" ON lab_reading_feedback
   FOR SELECT USING (public.is_admin());
+
+-- Re-run safety for databases that ran an earlier draft of 018 (before the six-card deal).
+ALTER TABLE lab_reading_feedback ADD COLUMN IF NOT EXISTS shown text[] NULL;
 
 -- Bookings are matched by lower(attendee_email).
 CREATE INDEX IF NOT EXISTS idx_bookings_attendee_email_lower ON bookings (lower(attendee_email));
@@ -88,7 +92,8 @@ SELECT
       AND b.created_at >= p.created_at
       AND b.cal_status <> 'cancelled'
       AND b.payment_status IN ('paid', 'manual')
-  ), false) AS paid
+  ), false) AS paid,
+  f.shown  -- last: CREATE OR REPLACE VIEW can only append columns
 FROM lab_reading_feedback f
 -- A deleted profile keeps signed_up but has no email left to match bookings against.
 LEFT JOIN lab_profiles p ON p.id = f.lab_profile_id AND p.deleted_at IS NULL;

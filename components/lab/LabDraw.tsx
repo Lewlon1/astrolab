@@ -15,7 +15,7 @@ import { drawCards } from "@/lib/lab/deck";
 import { track } from "@/lib/analytics/track";
 import { trackLead } from "@/lib/fbpixel";
 import { useConsent } from "@/context/ConsentContext";
-import LabDeck from "./LabDeck";
+import LabDeck, { HAND_SIZE } from "./LabDeck";
 import BirthForm, { type BirthValues, type FormError, type PlaceChoice } from "./BirthForm";
 import Reading from "./Reading";
 import ReadingFeedback from "./ReadingFeedback";
@@ -120,7 +120,7 @@ export default function LabDraw({ src, authError }: Props) {
 
   // Shuffle only after mount, so the server renders three identical face-down backs.
   useEffect(() => {
-    setHand(drawCards(CARDS));
+    setHand(drawCards(CARDS, HAND_SIZE));
     const pending = timers.current;
     return () => pending.forEach((t) => window.clearTimeout(t));
   }, []);
@@ -139,7 +139,7 @@ export default function LabDraw({ src, authError }: Props) {
     if (!hand || pickedIndex !== null) return;
     const chosen = hand[i];
     setPickedIndex(i);
-    track("interaction", "lab_card_drawn", { src, card: chosen.name, has_time: false });
+    track("interaction", "lab_card_drawn", { src, card: chosen.name, has_time: false, shown: hand.map((c) => c.name) });
     later(() => {
       setStage("birth");
       afterPaint(() => {
@@ -228,7 +228,7 @@ export default function LabDraw({ src, authError }: Props) {
     afterPaint(() => sentRef.current?.focus());
   };
 
-  const reshuffle = () => setHand(drawCards(CARDS));
+  const reshuffle = () => setHand(drawCards(CARDS, HAND_SIZE));
 
   return (
     <div className="flex flex-col gap-14">
@@ -264,13 +264,14 @@ export default function LabDraw({ src, authError }: Props) {
                 "focus-visible:outline-coral2",
               )}
             >
-              {DRAW.shuffle}
+              {DRAW.deal}
             </button>
           )}
           <p className={HAND_NOTE} aria-live="polite">
             {card ? `${card.name}. ${DRAW.hold}` : ""}
           </p>
         </div>
+        <p className="m-0 text-[12px] text-midBrown">{DRAW.credit}</p>
       </section>
 
       {atLeast(stage, "birth") && (
@@ -299,9 +300,17 @@ export default function LabDraw({ src, authError }: Props) {
           className={cx("flex scroll-mt-6 flex-col gap-4", styles.reveal)}
         >
           <StepHead n="03" title={STEP_TITLES.result} asHeading={false} />
-          <Reading reading={reading} headingId="lab-reading-title" />
+          <Reading reading={reading} card={card} headingId="lab-reading-title" />
           {drawId && card && (
-            <ReadingFeedback key={drawId} drawId={drawId} card={card.name} reading={reading} hasTime={Boolean(birth?.time)} src={src} />
+            <ReadingFeedback
+              key={drawId}
+              drawId={drawId}
+              card={card.name}
+              shown={hand?.map((c) => c.name) ?? null}
+              reading={reading}
+              hasTime={Boolean(birth?.time)}
+              src={src}
+            />
           )}
           {place && (
             <p className="m-0 max-w-[62ch] text-[14px] text-midBrown">

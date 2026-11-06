@@ -31,6 +31,7 @@ export async function POST(request: Request) {
         draw_id: f.drawId,
         vote: f.vote,
         card: f.card,
+        shown: f.shown,
         sun_sign: signChip(f.sun),
         moon_sign: signChip(f.moon),
         relation: f.relation,

@@ -17,6 +17,14 @@ describe("drawCards", () => {
     }
   });
 
+  it("deals 6 distinct cards for the arch", () => {
+    for (let k = 0; k < 50; k++) {
+      const hand = drawCards(CARDS, 6);
+      expect(hand).toHaveLength(6);
+      expect(new Set(hand.map((c) => c.name)).size).toBe(6);
+    }
+  });
+
   it("is deterministic for an injected random", () => {
     expect(drawCards([1, 2, 3, 4, 5], 3, seq([0]))).toEqual([1, 2, 3]);
     expect(drawCards([1, 2, 3, 4, 5], 3, seq([0.999]))).toEqual([5, 1, 2]);

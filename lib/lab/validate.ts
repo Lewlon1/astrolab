@@ -37,6 +37,8 @@ export type FeedbackInput = {
   drawId: string;
   vote: 1 | -1;
   card: string;
+  /** The cards dealt alongside it (2-6 known names, including `card`), or null. */
+  shown: string[] | null;
   /** One sign, or two in order when it changed across the birth day. */
   sun: string[];
   moon: string[];
@@ -58,6 +60,14 @@ const RELATIONS: readonly string[] = ["mirror", "agree", "tension"];
 /** A client-generated reading id (crypto.randomUUID), lower-cased; anything else is null. */
 export function parseDrawId(v: unknown): string | null {
   return typeof v === "string" && UUID_RE.test(v) ? v.toLowerCase() : null;
+}
+
+/** 2-6 distinct known card names that include the chosen card, else null (dropped, not an error). */
+function parseShown(v: unknown, card: string): string[] | null {
+  if (!Array.isArray(v) || v.length < 2 || v.length > 6) return null;
+  if (!v.every((x) => typeof x === "string" && CARDS.some((c) => c.name === x))) return null;
+  if (new Set(v).size !== v.length || !v.includes(card)) return null;
+  return v as string[];
 }
 
 /** One or two known sign names, else null. */
@@ -152,6 +162,7 @@ export function validateFeedback(body: unknown): Validated<FeedbackInput> {
       drawId,
       vote: b.vote,
       card,
+      shown: parseShown(b.shown, card),
       sun,
       moon,
       relation: relation as ReadingRelation,

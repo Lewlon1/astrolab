@@ -14,6 +14,8 @@ type Vote = 1 | -1;
 type Props = {
   drawId: string;
   card: string;
+  /** All cards dealt with it (including the chosen one), for "chosen when shown" rates. */
+  shown: string[] | null;
   reading: InstantReading;
   hasTime: boolean;
   src: LabSrc | null;
@@ -46,7 +48,7 @@ function Thumb({ down = false }: { down?: boolean }) {
   );
 }
 
-export default function ReadingFeedback({ drawId, card, reading, hasTime, src }: Props) {
+export default function ReadingFeedback({ drawId, card, shown, reading, hasTime, src }: Props) {
   const [vote, setVote] = useState<Vote | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -60,7 +62,7 @@ export default function ReadingFeedback({ drawId, card, reading, hasTime, src }:
       const res = await fetch("/api/lab/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ drawId, vote: next, card, sun: reading.sun, moon: reading.moon, relation: reading.relation, hasTime, src }),
+        body: JSON.stringify({ drawId, vote: next, card, shown, sun: reading.sun, moon: reading.moon, relation: reading.relation, hasTime, src }),
       });
       if (!res.ok) throw new Error(String(res.status));
     } catch {
