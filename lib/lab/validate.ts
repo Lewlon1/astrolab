@@ -1,6 +1,7 @@
 // Server-only by convention (the `server-only` package is not installed).
-// Hand-written input guards for the compute and gate request bodies.
+// Hand-written input guards for the compute, gate and feedback request bodies.
 import { CARDS } from "@/content/lab/cards";
+import { SIGNS } from "@/content/lab/signs";
 import { ERRORS, VALIDATION } from "@/content/lab/ui";
 
 export type LabSrc = "manychat" | "bio" | "ad" | "lora";
@@ -24,7 +25,25 @@ export type ComputeInput = {
   /** Resolved place from a previous step; when set, no geocoding happens. */
   geo: ChosenGeo | null;
 };
-export type GateInput = ComputeInput & { email: string };
+export type GateInput = ComputeInput & {
+  email: string;
+  /** The reading's client id, so a vote cast before the gate links to the profile. */
+  drawId: string | null;
+};
+
+export type ReadingRelation = "mirror" | "agree" | "tension";
+
+export type FeedbackInput = {
+  drawId: string;
+  vote: 1 | -1;
+  card: string;
+  /** One sign, or two in order when it changed across the birth day. */
+  sun: string[];
+  moon: string[];
+  relation: ReadingRelation;
+  hasTime: boolean;
+  src: LabSrc | null;
+};
 
 export type Validated<T> = { ok: true; value: T } | { ok: false; field: string; message: string };
 
@@ -33,6 +52,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MIN_DATE = "1900-01-01";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const RELATIONS: readonly string[] = ["mirror", "agree", "tension"];
+
+/** A client-generated reading id (crypto.randomUUID), lower-cased; anything else is null. */
+export function parseDrawId(v: unknown): string | null {
+  return typeof v === "string" && UUID_RE.test(v) ? v.toLowerCase() : null;
+}
+
+/** One or two known sign names, else null. */
+function parseSigns(v: unknown): string[] | null {
+  if (!Array.isArray(v) || v.length < 1 || v.length > 2) return null;
+  return v.every((x) => typeof x === "string" && SIGNS.some((s) => s.name === x)) ? (v as string[]) : null;
+}
 
 const fail = (field: string, message: string): { ok: false; field: string; message: string } => ({
   ok: false,
@@ -98,5 +130,33 @@ export function validateGate(body: unknown, now: Date = new Date()): Validated<G
   const b = body as Record<string, unknown>;
   const email = str(b.email).trim();
   if (!EMAIL_RE.test(email)) return fail("email", ERRORS.emailInvalid);
-  return { ok: true, value: { ...base.value, email: email.toLowerCase() } };
+  return { ok: true, value: { ...base.value, email: email.toLowerCase(), drawId: parseDrawId(b.drawId) } };
+}
+
+/** Thumbs up/down on an instant reading. Fields come from the reading the server composed. */
+export function validateFeedback(body: unknown): Validated<FeedbackInput> {
+  const b = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
+  const drawId = parseDrawId(b.drawId);
+  if (!drawId) return fail("drawId", VALIDATION.feedbackInvalid);
+  if (b.vote !== 1 && b.vote !== -1) return fail("vote", VALIDATION.feedbackInvalid);
+  const card = str(b.card);
+  if (!CARDS.some((c) => c.name === card)) return fail("card", VALIDATION.cardUnknown);
+  const sun = parseSigns(b.sun);
+  const moon = parseSigns(b.moon);
+  if (!sun || !moon) return fail("sign", VALIDATION.feedbackInvalid);
+  const relation = str(b.relation);
+  if (!RELATIONS.includes(relation)) return fail("relation", VALIDATION.feedbackInvalid);
+  return {
+    ok: true,
+    value: {
+      drawId,
+      vote: b.vote,
+      card,
+      sun,
+      moon,
+      relation: relation as ReadingRelation,
+      hasTime: b.hasTime === true,
+      src: parseLabSrc(b.src),
+    },
+  };
 }

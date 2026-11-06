@@ -44,6 +44,8 @@ const WINDOW_MS = 10 * 60 * 1000;
 export const computeLimiter = createRateLimiter({ limit: 10, windowMs: WINDOW_MS });
 /** 5 requests / 10 min per IP. */
 export const gateLimiter = createRateLimiter({ limit: 5, windowMs: WINDOW_MS });
+/** 20 votes / 10 min per IP (a visitor may change their vote a few times). */
+export const feedbackLimiter = createRateLimiter({ limit: 20, windowMs: WINDOW_MS });
 
 /** First entry of x-forwarded-for, else "unknown". */
 export function clientIp(headers: { get(name: string): string | null }): string {

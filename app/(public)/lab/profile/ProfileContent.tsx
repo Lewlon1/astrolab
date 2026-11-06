@@ -100,20 +100,20 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
               )}
             </div>
           </div>
-          {lens && (
-            <p className="mb-0 mt-6 border-l-2 border-coral2 pl-4 font-heading text-[20px] italic leading-snug text-coral2">
-              {lens.question}
-            </p>
-          )}
         </header>
 
         {/* Layer two: the chart, read through the card */}
         <section className={SECTION} aria-labelledby="lab-chart-lens">
           <p className={LAYER}>{PROFILE_FLOW.layers.chart}</p>
           <h2 id="lab-chart-lens" className={cx(H2, "mt-2")}>
-            {lens ? PROFILE_FLOW.chartTitle(lens.theme.title) : PROFILE.sections.chart}
+            {lens ? PROFILE_FLOW.chartTitle(view.header.card) : PROFILE.sections.chart}
           </h2>
           <p className="mb-0 mt-2 text-midBrown">{PROFILE_FLOW.chartLine}</p>
+          {lens && (
+            <p className="mb-0 mt-6 border-l-2 border-coral2 pl-4 font-heading text-[20px] italic leading-snug text-coral2">
+              {lens.intro}
+            </p>
+          )}
           <div className="mt-6 grid gap-4">
             {view.bigThree.map((b) => (
               <article key={b.key} className="rounded-[14px] border-[1.5px] border-deepBrown p-5" aria-labelledby={`lab-big-${b.key}`}>
@@ -147,7 +147,9 @@ export default function ProfileContent({ profile, offers, unverified, mailFailed
           </div>
           {lens && (
             <div className="mt-8 rounded-[14px] bg-sagePale p-6">
-              <p className="m-0 font-fraunces text-[20px] leading-snug">{lens.chartQuestion}</p>
+              <p className={EYEBROW}>{PROFILE_FLOW.reflectionLabel}</p>
+              <p className="mb-0 mt-2 font-fraunces text-[20px] leading-snug">{lens.reflection}</p>
+              <p className="mb-0 mt-4 text-midBrown">{lens.chartQuestion}</p>
               <BookingCta className="mt-5" href={primaryHref} label={primaryLabel} service={primary?.slug} placement="chart" track={!preview} />
             </div>
           )}

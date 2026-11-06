@@ -109,6 +109,7 @@ export const VALIDATION = {
   cardUnknown: "Pick one of the cards on the table.",
   geocodeBusy: "Our place lookup is busy. Please try again in a few seconds.",
   rateLimited: "Too many tries. Please wait a few minutes and try again.",
+  feedbackInvalid: "We couldn't save that. Please try again.",
 } as const;
 
 /** Frame for keyword-only placements on the profile, so they read as a stance, not a trait claim. */
@@ -149,6 +150,15 @@ export const OSM_ATTRIBUTION = {
 } as const;
 
 /** Extra notes on the instant reading (new draft). */
+/** Thumbs up/down at the end of the instant reading. */
+export const FEEDBACK = {
+  question: "Did this reading resonate?",
+  up: "Yes, it resonated",
+  down: "No, not really",
+  thanks: "Thank you. That helps the Lab learn which readings land.",
+  failed: "We couldn't save that just now.",
+} as const;
+
 export const READING_NOTES = {
   approximateZone:
     "We could only place your birth time zone approximately, so a position near a sign change may read differently in your full profile.",
@@ -249,9 +259,10 @@ export const PROFILE_FLOW = {
     "In psychology, what you reach for in an ambiguous image is called a projective choice: it says something about what is on your mind. So we start with your card.",
   heroTitle: (card: string) => `You reached for ${card}`,
   themeLabel: "The theme it points to",
-  chartLine: "The chart is read as a map of patterns, not a forecast. Here we read it through your card's theme.",
-  chartTitle: (theme: string) => `Your chart through ${theme.charAt(0).toLowerCase()}${theme.slice(1)}`,
+  chartLine: "The chart is read as a map of patterns, not a forecast. Here we read it through your card.",
+  chartTitle: (card: string) => `${card} × your Big Three`,
   readNote: "Read the full note",
+  reflectionLabel: "The Lab's reflection",
   testLine: "One thing to notice this month, so you can check the reading against your own life.",
   testTitle: "Your Lab experiment",
   testClose: "Bring what you notice to a session with Gabs. It is the best place to start.",

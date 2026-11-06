@@ -1,4 +1,4 @@
-// DRAFT — Gabs to rewrite in her voice
+// GABS VOICE (2026-11): instant-reading templates and labels are Gabs's final copy.
 // Sentence templates for the instant reading. Each is a function so the sentence
 // is rebuilt exactly as the prototype built it. The chart is a prompt, not a cause.
 import type { Card } from "./cards";
@@ -12,12 +12,12 @@ export type Relation =
 
 /** Section labels for the three-layer lab note. */
 export const LAYER_LABELS = {
-  astro: "What astrology says",
-  psych: "What psychology studies",
-  test: "Test it this month",
+  astro: "The astrological lens",
+  psych: "The psychological lens",
+  test: "Put it into practice",
 } as const;
 
-export const LAB_NOTE_LABEL = "Lab note";
+export const LAB_NOTE_LABEL = "A Lab note";
 export const STANCE_LINE = "the chart is a prompt, not a cause";
 
 /** Look up a sign record by name. */
@@ -41,9 +41,9 @@ export function relationOf(card: Card, sunName: string, moonName: string): Relat
   return { kind: "tension" };
 }
 
-/** Headline, e.g. "The Tower meets a Leo Sun". */
+/** Headline, e.g. "The Tower meets your Leo Sun". */
 export function headline(card: Card, sunName: string): string {
-  return `${card.name} meets a ${sunName} Sun`;
+  return `${card.name} meets your ${sunName} Sun`;
 }
 
 /** Opening line: the card's "what you're reaching for" sentence. */
@@ -65,14 +65,14 @@ export function relationText(rel: Relation, ctx: { card: Card; sunName: string }
   const { card, sunName } = ctx;
   if (rel.kind === "mirror") {
     return (
-      `This one is unusual. In the Golden Dawn tradition ${card.name} corresponds to ${card.attribution}, which is your own ${rel.with}` +
-      ` sign. You reached for something that already describes you. It's worth asking whether you're looking for permission rather than direction.`
+      `There's an interesting overlap here: in the Golden Dawn tradition, ${card.name} corresponds to ${card.attribution}, which is your own ${rel.with}` +
+      ` sign. You may have reached for a theme that already feels familiar. Ask yourself: are you looking for confirmation of what you know, or a new way to work with it?`
     );
   }
   if (rel.kind === "agree") {
-    return `The card and your ${sunName} Sun pull the same way. When that happens, the useful question is less what you want and more what's stopping you from doing it.`;
+    return `Your ${sunName} Sun and this card point in a similar direction. The useful question may not be what you want, but what needs to shift for you to act on it.`;
   }
-  return `The card pulls against your ${sunName} Sun. That tension is the interesting part: something in you is reaching for what your usual way of operating doesn't easily allow.`;
+  return `This card introduces a different perspective from your ${sunName} Sun. That contrast is worth exploring: what might you be reaching for that doesn't come naturally to your usual way of operating?`;
 }
 
 /**
@@ -82,7 +82,7 @@ export function relationText(rel: Relation, ctx: { card: Card; sunName: string }
  * @param relation the relationText output
  */
 export function traditionParagraph(card: Card, sun: SignInfo, relation: string): string {
-  return `In the Golden Dawn tradition, ${card.name} is linked to ${card.attribution} (${attributionKind(card)}). Your Sun in ${sun.name} ${sun.baseline}. ${relation}`;
+  return `In the Golden Dawn tradition, ${card.name} is associated with ${card.attribution} (${attributionKind(card)}). Your Sun in ${sun.name} ${sun.baseline}. Read together, they offer two perspectives on what may be taking up space in your life right now. ${relation}`;
 }
 
 /**
@@ -92,14 +92,14 @@ export function traditionParagraph(card: Card, sun: SignInfo, relation: string):
  */
 export function moonLine(moonNames: readonly string[], moon: SignInfo): string {
   if (moonNames.length > 1) {
-    return `Your Moon was moving from ${moonNames[0]} into ${moonNames[1]} around your birth. One of those describes how you settle under stress, and your exact birth time decides which.`;
+    return `Your Moon was moving from ${moonNames[0]} into ${moonNames[1]} around your birth. Since the Moon sign is linked to emotional needs and responses, your exact birth time helps us determine which interpretation applies.`;
   }
-  return `With your Moon in ${moon.name}, ${moon.settle}. Notice whether the pull of this card makes that harder or easier right now.`;
+  return `With your Moon in ${moon.name}, ${moon.settle}. Notice how this card's theme meets the way you tend to respond when you need emotional grounding.`;
 }
 
 /** Note shown when the Sun sign changes across the birth day. @param first the sign the reading uses */
 export function cuspNote(first: string): string {
-  return `You were born on the cusp. The reading uses ${first}. Your full profile settles it from your exact time and place.`;
+  return `You were born close to a sign change, so this reading uses ${first} as a starting point. Your full profile can confirm the sign using your exact birth time and place.`;
 }
 
 /** Chip text for a position that may be ambiguous, e.g. "Leo or Virgo". */

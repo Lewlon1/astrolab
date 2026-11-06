@@ -44,17 +44,20 @@ describe("buildProfileView", () => {
   });
 
   describe("the card as a lens", () => {
-    it("reads the big three through the card's theme (The Tower: endings)", () => {
+    it("reads the big three through the drawn card (The Tower)", () => {
       const v = buildProfileView(fakeRow(fakeChart({ sun: "Leo", moon: "Pisces", hasTime: true })));
       expect(v.lens?.theme.key).toBe("endings");
-      expect(v.lens?.now).toMatch(/shaky assumption/);
+      expect(v.lens?.now).toMatch(/assumption that no longer holds/);
       expect(v.lens?.chartQuestion).toContain("a Leo Sun with a Pisces Moon");
       expect(v.bigThree.map((b) => b.key)).toEqual(["Sun", "Moon", "Rising"]);
       const sun = v.bigThree[0];
       expect(sun.signLabel).toBe("Leo");
       expect(sun.essence).toBe(firstSentence(sun.note.astro));
       expect(sun.lensLine).toContain("Your Leo Sun");
-      for (const s of [v.lens!.question, v.lens!.chartQuestion, ...v.bigThree.map((b) => b.lensLine)]) expect(s).not.toMatch(/\{\w+\}/);
+      expect(sun.lensLine).toContain("The Tower invites you");
+      expect(v.lens?.intro).toMatch(/^The Tower speaks to/);
+      expect(v.lens?.reflection).toMatch(/\?$/);
+      for (const s of [v.lens!.intro, v.lens!.reflection, v.lens!.chartQuestion, ...v.bigThree.map((b) => b.lensLine)]) expect(s).not.toMatch(/\{\w+\}/);
     });
 
     it("without a time: Sun and Moon only, and an ambiguous Moon reads 'X or Y' with its note", () => {
@@ -63,7 +66,7 @@ describe("buildProfileView", () => {
       expect(v.bigThree.map((b) => b.key)).toEqual(["Sun", "Moon"]);
       const moon = v.bigThree[1];
       expect(moon.signLabel).toBe("Gemini or Cancer");
-      expect(moon.lensLine).toContain("Your Gemini or Cancer Moon");
+      expect(moon.lensLine).toMatch(/your Gemini or Cancer Moon/i);
       expect(moon.note.note).toContain("Gemini");
     });
 

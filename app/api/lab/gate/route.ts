@@ -122,6 +122,17 @@ export async function POST(request: Request) {
       if (upd.error) throw new Error(`profile update failed (code ${upd.error.code})`);
     }
 
+    // Link a thumbs vote cast on this reading before the gate. Only an unlinked row
+    // is touched, and a failure never blocks signup.
+    if (input.drawId) {
+      const fb = await admin
+        .from("lab_reading_feedback")
+        .update({ lab_profile_id: profileId })
+        .eq("draw_id", input.drawId)
+        .is("lab_profile_id", null);
+      if (fb.error) console.error("[lab] feedback link failed, code", fb.error.code);
+    }
+
     const supabase = await createClient();
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: input.email,

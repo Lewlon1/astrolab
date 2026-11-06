@@ -31,6 +31,8 @@ export type InstantReading = {
   moon: Sign[];
   rising: Sign | null;
   approximateZone: boolean;
+  /** How the card relates to the Sun (or Moon): sent back with a thumbs vote. */
+  relation: "mirror" | "agree" | "tension";
 };
 
 function signsFor(chart: ReadingChart, body: "Sun" | "Moon"): Sign[] {
@@ -79,6 +81,7 @@ export function composeReading(cardName: string, chart: ReadingChart): InstantRe
     moon,
     rising: chart.rising,
     approximateZone: chart.approximateZone,
+    relation: rel.kind,
   };
 }
 

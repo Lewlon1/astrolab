@@ -78,7 +78,12 @@ export const LENS: Record<ThemeKey, LensEntry> = {
 export const LENS_PLACEHOLDERS = ["card", "sign", "sun", "moon"] as const;
 type LensVar = (typeof LENS_PLACEHOLDERS)[number];
 
-/** Fill `{name}` placeholders. Unknown or missing ones are left as they are, so tests can catch them. */
+/**
+ * Fill `{name}` placeholders. Unknown or missing ones are left as they are, so tests can catch them.
+ * "a" before a vowel sign (Aries, Aquarius) becomes "an".
+ */
 export function lensText(template: string, vars: Partial<Record<LensVar, string>>): string {
-  return template.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars && vars[k as LensVar] ? vars[k as LensVar]! : m));
+  return template
+    .replace(/\{(\w+)\}/g, (m, k: string) => (k in vars && vars[k as LensVar] ? vars[k as LensVar]! : m))
+    .replace(/\b([Aa]) (?=(Aries|Aquarius)\b)/g, "$1n ");
 }

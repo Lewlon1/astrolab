@@ -18,6 +18,7 @@ import { useConsent } from "@/context/ConsentContext";
 import LabDeck from "./LabDeck";
 import BirthForm, { type BirthValues, type FormError, type PlaceChoice } from "./BirthForm";
 import Reading from "./Reading";
+import ReadingFeedback from "./ReadingFeedback";
 import Gate, { type GateValues, type SentInfo } from "./Gate";
 import { ERROR_LIGHT, EYEBROW, FOCUS, HAND_NOTE, LEDE, cx } from "./classes";
 import { MOTIF_COLORS, SunMotif } from "./motifs";
@@ -65,6 +66,16 @@ async function postJson<T>(url: string, body: unknown): Promise<{ ok: true; data
   return { ok: true, data };
 }
 
+/** A random v4 UUID; falls back for browsers without crypto.randomUUID (older Safari). */
+function newDrawId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const b = crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
 /** Numbered step rule. `asHeading` is false where the step has its own headline (the reading). */
 function StepHead({ n, id, title, asHeading = true }: { n: string; id?: string; title: string; asHeading?: boolean }) {
   const Tag = asHeading ? "h2" : "p";
@@ -89,6 +100,8 @@ export default function LabDraw({ src, authError }: Props) {
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [birth, setBirth] = useState<BirthValues | null>(null);
   const [reading, setReading] = useState<InstantReading | null>(null);
+  /** Client id for the reading on screen: a thumbs vote is keyed by it and linked at the gate. */
+  const [drawId, setDrawId] = useState<string | null>(null);
   const [birthError, setBirthError] = useState<FormError>(null);
   const [birthBusy, setBirthBusy] = useState(false);
   const [choices, setChoices] = useState<PlaceChoice[] | null>(null);
@@ -166,6 +179,8 @@ export default function LabDraw({ src, authError }: Props) {
     track("interaction", "lab_birth_submitted", props);
     setBirth(values);
     setReading(r.data.reading);
+    // A new reading (e.g. a corrected birth date) is a new draw id, so its vote starts fresh.
+    setDrawId(newDrawId());
     // A resubmit after the gate is open keeps the gate (and anything typed in it).
     setStage((s) => (atLeast(s, "gate") ? s : "reading"));
     afterPaint(() => scrollTo(readingRef.current));
@@ -187,6 +202,7 @@ export default function LabDraw({ src, authError }: Props) {
       place: birth.place,
       geo: place ? { lat: place.lat, lon: place.lon, displayName: place.displayName } : undefined,
       src,
+      drawId: drawId ?? undefined,
     });
     if (!r.ok) {
       setGateBusy(false);
@@ -284,6 +300,9 @@ export default function LabDraw({ src, authError }: Props) {
         >
           <StepHead n="03" title={STEP_TITLES.result} asHeading={false} />
           <Reading reading={reading} headingId="lab-reading-title" />
+          {drawId && card && (
+            <ReadingFeedback key={drawId} drawId={drawId} card={card.name} reading={reading} hasTime={Boolean(birth?.time)} src={src} />
+          )}
           {place && (
             <p className="m-0 max-w-[62ch] text-[14px] text-midBrown">
               {PLACE_CONFIRM.label}: <span className="text-deepBrown">{place.label}</span>

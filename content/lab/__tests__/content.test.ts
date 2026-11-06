@@ -15,6 +15,7 @@ import {
   transitTheme,
 } from "../transits";
 import { LENS, LENS_PLACEHOLDERS, lensText } from "../lens";
+import { BIG_THREE } from "../bigThree";
 import { LAB_OFFERS, OFFERS_UI } from "../offers";
 import {
   cuspNote,
@@ -114,6 +115,33 @@ describe("transit themes", () => {
   });
 });
 
+describe("big three", () => {
+  it("has an entry for every card, and nothing else", () => {
+    expect(Object.keys(BIG_THREE).sort()).toEqual(CARDS.map((c) => c.name).sort());
+  });
+  it("uses only {sign} and {card}, and every placement line uses {sign}", () => {
+    for (const [name, e] of Object.entries(BIG_THREE)) {
+      for (const [k, v] of Object.entries(e)) {
+        for (const ph of (v.match(/\{\w+\}/g) ?? []).map((m) => m.slice(1, -1))) expect(["sign", "card"], `${name}.${k}`).toContain(ph);
+      }
+      for (const k of ["Sun", "Moon", "Rising"] as const) expect(e[k], `${name}.${k}`).toContain("{sign}");
+      expect(e.intro, name).toMatch(new RegExp(`^${name} speaks? to`));
+      expect(e.reflection, name).toMatch(/\?$/);
+    }
+  });
+  it("never puts 'a' straight before a sign placeholder (a Aries)", () => {
+    for (const e of Object.values(BIG_THREE)) for (const v of Object.values(e)) expect(v).not.toMatch(/\b[Aa] \{sign\}/);
+  });
+});
+
+describe("lensText", () => {
+  it("uses 'an' before Aries and Aquarius", () => {
+    expect(lensText("for a {sun} Sun with a {moon} Moon", { sun: "Aries", moon: "Aquarius" })).toBe("for an Aries Sun with an Aquarius Moon");
+    expect(lensText("A {sign} Moon", { sign: "Aries or Taurus" })).toBe("An Aries or Taurus Moon");
+    expect(lensText("a {sun} Sun", { sun: "Leo" })).toBe("a Leo Sun");
+  });
+});
+
 describe("lens", () => {
   const themes = Object.keys(THEMES) as (keyof typeof LENS)[];
   it("has a question, a chart question and Sun/Moon/Rising lines for all 8 themes", () => {
@@ -149,15 +177,15 @@ describe("offers", () => {
 describe("reading templates", () => {
   const card = (name: string) => CARDS.find((c) => c.name === name)!;
   it("reproduces the prototype sentences", () => {
-    expect(headline(card("The Tower"), "Leo")).toBe("The Tower meets a Leo Sun");
+    expect(headline(card("The Tower"), "Leo")).toBe("The Tower meets your Leo Sun");
     expect(cuspNote("Leo")).toBe(
-      "You were born on the cusp. The reading uses Leo. Your full profile settles it from your exact time and place.",
+      "You were born close to a sign change, so this reading uses Leo as a starting point. Your full profile can confirm the sign using your exact birth time and place.",
     );
     expect(moonLine(["Aries", "Taurus"], signInfo("Aries")!)).toBe(
-      "Your Moon was moving from Aries into Taurus around your birth. One of those describes how you settle under stress, and your exact birth time decides which.",
+      "Your Moon was moving from Aries into Taurus around your birth. Since the Moon sign is linked to emotional needs and responses, your exact birth time helps us determine which interpretation applies.",
     );
     expect(moonLine(["Cancer"], signInfo("Cancer")!)).toBe(
-      "With your Moon in Cancer, you settle when home feels safe. Notice whether the pull of this card makes that harder or easier right now.",
+      "With your Moon in Cancer, you settle when you feel emotionally safe, connected and able to let your guard down. Notice how this card's theme meets the way you tend to respond when you need emotional grounding.",
     );
   });
   it("classifies relations", () => {
@@ -171,7 +199,7 @@ describe("reading templates", () => {
     const sun = signInfo("Gemini")!;
     const rel = relationText({ kind: "agree" }, { card: c, sunName: "Gemini" });
     expect(traditionParagraph(c, sun, rel)).toBe(
-      "In the Golden Dawn tradition, Strength is linked to Leo (a sign). Your Sun in Gemini needs variety and thinks by talking. " + rel,
+      "In the Golden Dawn tradition, Strength is associated with Leo (a sign). Your Sun in Gemini makes sense of life through curiosity, conversation and changing perspectives. Read together, they offer two perspectives on what may be taking up space in your life right now. " + rel,
     );
     expect(traditionParagraph(card("The Tower"), sun, rel)).toContain("Mars (a planet)");
   });
@@ -189,17 +217,17 @@ describe("privacy", () => {
 });
 
 describe("all content files", () => {
-  it("every file starts with the DRAFT header", () => {
+  it("every file starts with a DRAFT or GABS VOICE header", () => {
     expect(files.length).toBeGreaterThanOrEqual(8);
     for (const f of files) {
       const first = readFileSync(path.join(dir, f), "utf8").split("\n")[0];
-      expect(first, f).toBe("// DRAFT — Gabs to rewrite in her voice");
+      expect(first, f).toMatch(/^\/\/ (DRAFT — Gabs to (rewrite in her voice|edit)|GABS VOICE \(2026-11\):)/);
     }
   });
   it("contains no causal phrasing", () => {
     const all = [
       ...strings(CARDS), ...strings(SIGNS), ...strings(THEMES), ...strings(PLACEMENTS), ...strings(KEYWORDS),
-      ...strings(privacy.LAB_PRIVACY_SECTION), ...strings(ui), ...strings(LENS), ...strings(LAB_OFFERS),
+      ...strings(privacy.LAB_PRIVACY_SECTION), ...strings(ui), ...strings(LENS), ...strings(BIG_THREE), ...strings(LAB_OFFERS),
       ...strings(OFFERS_UI), ...strings(SEASON_NAMES), ...strings(POINT_SHORT),
     ];
     for (const p of TRANSIT_PLANETS)

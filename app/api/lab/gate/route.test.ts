@@ -1,24 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { updates, isCalls, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
+const { updates, tableUpdates, isCalls, signIn, upsertSub, recordEvt, state } = vi.hoisted(() => ({
   updates: [] as unknown[],
+  tableUpdates: [] as [string, unknown][],
   isCalls: [] as unknown[][],
   signIn: vi.fn(async () => ({ error: null })),
   upsertSub: vi.fn(async () => "id"),
   recordEvt: vi.fn(async () => "lead1"),
-  state: { liveRow: null as { id: string; user_id: string | null } | null, transitThrows: false },
+  state: { liveRow: null as { id: string; user_id: string | null } | null, transitThrows: false, feedbackLinkFails: false },
 }));
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { signInWithOtp: signIn } }) }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
-    from: () => {
+    from: (table: string) => {
       const q: Record<string, unknown> = {};
       q.select = () => q;
       q.eq = () => q;
       q.is = () => q;
       q.maybeSingle = async () => ({ data: state.liveRow, error: null });
       q.update = (v: unknown) => {
+        tableUpdates.push([table, v]);
+        if (table === "lab_reading_feedback") {
+          const error = state.feedbackLinkFails ? { code: "42P01" } : null;
+          return { eq: () => ({ is: async (c: string, val: unknown) => (isCalls.push([table, c, val]), { error }) }) };
+        }
         updates.push(v);
         return {
           eq: () => {
@@ -59,14 +65,15 @@ import { POST } from "./route";
 import { CONSENT_TEXT_VERSION } from "@/content/lab/privacy";
 import { CARDS } from "@/content/lab/cards";
 
-const req = (date = "1990-06-15") =>
+const req = (date = "1990-06-15", extra: Record<string, unknown> = {}) =>
   new Request("http://localhost/api/lab/gate", {
     method: "POST",
     body: JSON.stringify({
       email: "a@b.co", date, place: "London", card: CARDS[0].name,
-      consent: true, consentVersion: CONSENT_TEXT_VERSION,
+      consent: true, consentVersion: CONSENT_TEXT_VERSION, ...extra,
     }),
   });
+const DRAW = "0b9c1d2e-3f40-4a51-8b62-7c83d94ea5f6";
 
 const PID = "3f1c2b8e-4a5d-4c6e-9f70-1a2b3c4d5e6f";
 
@@ -75,8 +82,10 @@ describe("gate route", () => {
     delete process.env.LAB_SESSION_SECRET;
     signIn.mockResolvedValue({ error: null });
     updates.length = 0;
+    tableUpdates.length = 0;
     isCalls.length = 0;
     state.transitThrows = false;
+    state.feedbackLinkFails = false;
     vi.clearAllMocks();
   });
 
@@ -109,6 +118,28 @@ describe("gate route", () => {
       "a@b.co",
       expect.objectContaining({ next_transit: "", transit_peak_date: "" }),
     );
+  });
+
+  it("links a pre-gate thumbs vote to the profile, only if it is not linked yet", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    await POST(req(undefined, { drawId: DRAW.toUpperCase() }));
+    expect(tableUpdates).toContainEqual(["lab_reading_feedback", { lab_profile_id: "p1" }]);
+    expect(isCalls).toContainEqual(["lab_reading_feedback", "lab_profile_id", null]);
+  });
+
+  it("no drawId (or a malformed one): no feedback write", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    await POST(req());
+    await POST(req(undefined, { drawId: "not-a-uuid" }));
+    expect(tableUpdates.filter(([t]) => t === "lab_reading_feedback")).toHaveLength(0);
+  });
+
+  it("a failed feedback link never blocks signup", async () => {
+    state.liveRow = { id: "p1", user_id: null };
+    state.feedbackLinkFails = true;
+    const res = await POST(req(undefined, { drawId: DRAW }));
+    expect(res.status).toBe(200);
+    expect(signIn).toHaveBeenCalledOnce();
   });
 
   it("unclaimed update is guarded by user_id IS NULL so a concurrent claim is never overwritten", async () => {

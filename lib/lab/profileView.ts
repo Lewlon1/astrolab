@@ -3,6 +3,7 @@
 import { BODIES, type Body, type Sign } from "@/lib/astro";
 import { CARDS } from "@/content/lab/cards";
 import { LENS, lensText } from "@/content/lab/lens";
+import { BIG_THREE } from "@/content/lab/bigThree";
 import { THEMES, type Theme } from "@/content/lab/themes";
 import {
   KEYWORDS,
@@ -40,14 +41,14 @@ export type PositionRow = {
   keyword: string | null;
 };
 
-/** Sun, Moon or Rising, read through the card's theme. */
+/** Sun, Moon or Rising, read through the drawn card. */
 export type BigThreeItem = {
   key: "Sun" | "Moon" | "Rising";
   /** "Leo" or "Leo or Virgo" */
   signLabel: string;
   /** First sentence of the placement's astrology layer. */
   essence: string;
-  /** The placement seen through the card's theme. */
+  /** The placement seen through the drawn card (content/lab/bigThree.ts). */
   lensLine: string;
   /** The full three-layer note, for "Read the full note". */
   note: ProfileNote;
@@ -56,10 +57,12 @@ export type BigThreeItem = {
 /** The card as a lens. Null if the card is unknown (it never is for a live row). */
 export type ProfileLens = {
   theme: Theme;
-  /** The card's "now" line. */
+  /** The card's "now" line (ends in its own question or invitation). */
   now: string;
-  /** Open question under the card. */
-  question: string;
+  /** Opens the Big Three: what the card speaks to, then the turn to the chart. */
+  intro: string;
+  /** "The Lab's reflection": closes the Big Three. */
+  reflection: string;
   /** Closes the chart section, leading to a session. */
   chartQuestion: string;
 };
@@ -154,13 +157,15 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
   const moon = signsOf("Moon");
 
   const lensEntry = cardEntry ? LENS[cardEntry.theme] : null;
+  const bigEntry = cardEntry ? BIG_THREE[cardEntry.name] : undefined;
   const vars = { card, sun: signChip(sun), moon: signChip(moon) };
   const lens: ProfileLens | null =
-    cardEntry && lensEntry
+    cardEntry && lensEntry && bigEntry
       ? {
           theme: THEMES[cardEntry.theme],
           now: cardEntry.now,
-          question: lensText(lensEntry.question, vars),
+          intro: lensText(bigEntry.intro, vars),
+          reflection: lensText(bigEntry.reflection, vars),
           chartQuestion: lensText(lensEntry.chartQuestion, vars),
         }
       : null;
@@ -168,7 +173,7 @@ export function buildProfileView(row: LabProfileRow): ProfileView {
   const bigThree: BigThreeItem[] = coreNotes.flatMap((note) => {
     if (note.key !== "Sun" && note.key !== "Moon" && note.key !== "Rising") return [];
     const signLabel = signChip(note.signs);
-    const template = lensEntry ? lensEntry[note.key] : "";
+    const template = bigEntry ? bigEntry[note.key] : "";
     return [
       {
         key: note.key,

@@ -1,4 +1,4 @@
-// DRAFT — Gabs to rewrite in her voice
+// GABS VOICE (2026-11): Sun and Moon sign lines are Gabs's final copy.
 import type { Sign } from "@/lib/astro";
 import type { Element } from "./cards";
 
@@ -12,18 +12,18 @@ export type SignInfo = {
 };
 
 export const SIGNS: readonly SignInfo[] = [
-  { name: "Aries", element: "fire", baseline: "moves first and thinks on the way", settle: "you settle by doing something" },
-  { name: "Taurus", element: "earth", baseline: "builds slowly and wants what lasts", settle: "you settle through the body: food, rest, touch, routine" },
-  { name: "Gemini", element: "air", baseline: "needs variety and thinks by talking", settle: "you settle by putting feelings into words" },
-  { name: "Cancer", element: "water", baseline: "protects what it loves and feels before it reasons", settle: "you settle when home feels safe" },
-  { name: "Leo", element: "fire", baseline: "wants to create and to be recognised for it", settle: "you settle when someone sees you" },
-  { name: "Virgo", element: "earth", baseline: "improves things and trusts what can be checked", settle: "you settle by putting something in order" },
-  { name: "Libra", element: "air", baseline: "seeks balance and comes alive in relationship", settle: "you settle when things between people feel fair" },
-  { name: "Scorpio", element: "water", baseline: "goes deep and wants the truth under the surface", settle: "you settle when you trust someone fully" },
-  { name: "Sagittarius", element: "fire", baseline: "needs meaning and room to roam", settle: "you settle by moving, travelling or learning" },
-  { name: "Capricorn", element: "earth", baseline: "takes the long view and earns its place", settle: "you settle when you're in control of the plan" },
-  { name: "Aquarius", element: "air", baseline: "thinks independently and belongs on its own terms", settle: "you settle with space and a little distance" },
-  { name: "Pisces", element: "water", baseline: "absorbs everything and feels the whole room", settle: "you settle through solitude, music or water" },
+  { name: "Aries", element: "fire", baseline: "moves through life by initiating, taking risks and learning through action", settle: "you often settle by taking action and giving your feelings somewhere to go" },
+  { name: "Taurus", element: "earth", baseline: "values consistency, builds at its own pace and looks for what has lasting value", settle: "you settle through the body: familiar routines, rest, food and physical comfort" },
+  { name: "Gemini", element: "air", baseline: "makes sense of life through curiosity, conversation and changing perspectives", settle: "you settle by talking things through and finding language for what you're feeling" },
+  { name: "Cancer", element: "water", baseline: "is guided by emotional connection, care and a strong sense of what feels like home", settle: "you settle when you feel emotionally safe, connected and able to let your guard down" },
+  { name: "Leo", element: "fire", baseline: "wants to create, express itself and feel that its presence matters", settle: "you settle when you feel appreciated, seen and free to express yourself" },
+  { name: "Virgo", element: "earth", baseline: "finds purpose in understanding, refining and making things work better", settle: "you settle by creating order, making sense of things and focusing on what you can do" },
+  { name: "Libra", element: "air", baseline: "looks for balance, mutuality and a sense of self that can exist in relationship", settle: "you settle when your relationships feel balanced and there's room for honest exchange" },
+  { name: "Scorpio", element: "water", baseline: "seeks depth, emotional honesty and what lies beneath the surface", settle: "you settle through emotional honesty, trust and the feeling that you don't have to hold everything back" },
+  { name: "Sagittarius", element: "fire", baseline: "looks for meaning, possibility and the freedom to explore beyond the familiar", settle: "you settle through movement, perspective, learning and a sense of possibility" },
+  { name: "Capricorn", element: "earth", baseline: "takes the long view, values competence and builds towards meaningful goals", settle: "you settle when you have a plan, a sense of direction and something you can rely on" },
+  { name: "Aquarius", element: "air", baseline: "thinks independently, questions convention and defines belonging on its own terms", settle: "you settle with space to think, perspective and the freedom to process in your own way" },
+  { name: "Pisces", element: "water", baseline: "is receptive to its surroundings, imaginative and sensitive to what isn't always said", settle: "you settle through quiet, imagination, music or time near water" },
 ];
 
 /** Elements that pull the same way: fire with air, earth with water. */
