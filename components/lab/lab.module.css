@@ -1,0 +1,236 @@
+/* Scoped styles for the Lab Draw: the card flip, hairlines and the reveal animation.
+   Colours are the sunset palette (tailwind.config.ts / globals.css --gold etc.). */
+
+/* The deal: six face-up cards in an arch. Each .slot carries --i (0-5), --x (-2.5..2.5),
+   --y (x squared), --col (-1..1) and --row (0..1); LabDeck.tsx sets them inline. */
+.arch {
+  --w: 128px; /* card width */
+  --step: 86px; /* horizontal distance between cards */
+  --tilt: 6deg; /* rotation per step from the centre */
+  --lift: 7px; /* drop per x squared, which makes the curve */
+  --gap: 12px; /* spread grid gap (phone) */
+  --top: 40px; /* room for a raised card */
+  position: relative;
+  width: 100%;
+  height: calc(var(--top) + var(--w) * 12 / 7 + 6.25 * var(--lift) + 12px);
+}
+@media (max-width: 639px) {
+  .arch {
+    --w: 72px;
+    --step: 42px;
+    --tilt: 6deg;
+    --lift: 4px;
+    --top: 18px;
+  }
+  .arch.spread {
+    height: auto;
+    aspect-ratio: 6 / 7;
+  }
+}
+
+.slot {
+  position: absolute;
+  top: var(--top);
+  left: 50%;
+  width: var(--w);
+  margin-left: calc(var(--w) / -2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 9px;
+  transform-origin: 50% 100%;
+  transform: translateX(calc(var(--x) * var(--step))) translateY(calc(var(--y) * var(--lift) - var(--raise, 0px)))
+    rotate(calc(var(--x) * var(--tilt))) scale(var(--scale, 1));
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), width 0.45s ease, margin-left 0.45s ease,
+    opacity 0.45s ease;
+}
+.spread .slot {
+  width: calc((100% - 2 * var(--gap)) / 3);
+  margin-left: calc((100% - 2 * var(--gap)) / -6);
+  transform-origin: 50% 50%;
+  transform: translateX(calc(var(--col) * (100% + var(--gap))))
+    translateY(calc(var(--row) * (100% + var(--gap)) - var(--raise, 0px))) scale(var(--scale, 1));
+}
+.slot:hover:not(:disabled),
+.slot:focus-visible {
+  --raise: 16px;
+  z-index: 10;
+}
+.slot:focus-visible {
+  outline: 3px solid #c45030; /* coral2 */
+  outline-offset: 4px;
+}
+.slot:disabled {
+  cursor: default;
+}
+.chosen {
+  --raise: 26px;
+  --scale: 1.1;
+  z-index: 20;
+}
+.spread .chosen {
+  --raise: 6px;
+  --scale: 1.06;
+}
+.dim {
+  opacity: 0.28;
+  --scale: 0.96;
+}
+
+.cardBody {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 7 / 12;
+  border-radius: 9px;
+  box-shadow: 0 6px 16px rgba(91, 42, 26, 0.22);
+}
+.chosen .cardBody {
+  box-shadow: 0 14px 30px rgba(91, 42, 26, 0.35);
+}
+.dealt {
+  animation: deal 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+@keyframes deal {
+  from {
+    opacity: 0.001;
+    transform: translateY(-36px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Phone: the whole compact arch is one button that spreads the cards. */
+.spreadCover {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.back {
+  background: #4a6b3a; /* forest */
+  border: 1.5px solid #e8a838; /* gold2 */
+  display: grid;
+  place-items: center;
+}
+.back::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(232, 168, 56, 0.55); /* gold2 hairline */
+  border-radius: 6px;
+  pointer-events: none;
+}
+.back svg {
+  width: 62%;
+  height: auto;
+}
+
+.photo {
+  background: #f5edd4; /* cardCream */
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+.front {
+  background: #f5edd4; /* cardCream */
+  color: #5b2a1a; /* deepBrown */
+  border: 1.5px solid #e8a838; /* gold2 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12% 8%;
+  text-align: center;
+}
+.front::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid #b8a070; /* cardBorder */
+  border-radius: 6px;
+  pointer-events: none;
+}
+.front svg {
+  width: 58%;
+  height: auto;
+}
+/* Static card (reading, profile page): the parent sets size and position. */
+.staticCard {
+  position: relative;
+  aspect-ratio: 7 / 12;
+  width: 100%;
+}
+
+.roman {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(14px, 3.4vw, 20px);
+}
+.name {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(11px, 3.1vw, 18px);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.reveal {
+  animation: rise 0.6s ease both;
+}
+@keyframes rise {
+  from {
+    opacity: 0.001;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Gate watermark sun */
+.sunmark {
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  width: 180px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot {
+    transition: none;
+  }
+  .dealt,
+  .reveal {
+    animation: none;
+  }
+}

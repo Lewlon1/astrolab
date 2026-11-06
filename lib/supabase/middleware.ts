@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { getAdminUser } from "@/lib/auth/admin";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -25,20 +26,27 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const pathname = request.nextUrl.pathname;
+  const isAdminRoute = pathname.startsWith("/admin");
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  // Public paths never touch auth beyond the cookie refresh below.
+  if (!isAdminRoute) {
+    await supabase.auth.getUser();
+    return supabaseResponse;
+  }
 
-  if (isAdminRoute && !isLoginPage && !user) {
+  const isLoginPage = pathname === "/admin/login";
+
+  // Signed in is not enough: only users in admin_users may use /admin.
+  const { user, isAdmin } = await getAdminUser(supabase);
+
+  if (!isLoginPage && (!user || !isAdmin)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
   }
 
-  if (isLoginPage && user) {
+  if (isLoginPage && isAdmin) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";
     return NextResponse.redirect(url);

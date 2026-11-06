@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import { generateBatch } from "@/lib/actionEngine";
 import {
   buildEngineInput,
@@ -17,14 +17,9 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  const auth = await requireAdminApi();
+  if (auth instanceof NextResponse) return auth;
+  const { supabase } = auth;
 
   const today = todayInMadrid();
   const existing = await loadBatch(supabase, today);

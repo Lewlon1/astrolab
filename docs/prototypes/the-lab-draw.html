@@ -1,0 +1,619 @@
+<title>The Lab Draw</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow lab-notebook column; the draw is the hero, each step reveals below the last. Gabs content palette. */
+:root {
+  --bg: #F3EBDD;          /* bone cream */
+  --surface: #EAE0CD;
+  --ink: #16151A;         /* ink black */
+  --muted: #6A6155;
+  --line: #D3C6B0;
+  --terra: #C1683C;       /* terracotta */
+  --sun: #E8B94A;         /* golden sun */
+  --rose: #D9A9A0;        /* dusty rose */
+  --coral: #E4544A;       /* riso coral, darkened slightly for text contrast */
+  --sage: #7C8459;
+  --panel: #1F2E22;       /* deep forest */
+  --panel-ink: #F3EBDD;
+  --panel-muted: #B9B0A6;
+  --panel-field: rgba(243,235,221,.08);
+  --panel-line: rgba(243,235,221,.22);
+  --cardback: #1F2E22;
+  --cardface: #F8F2E7;
+  --cardface-ink: #16151A;
+
+  --display: "Playfair Display", "Times New Roman", Georgia, serif;
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Comic Sans MS", cursive;
+  --body: "Poppins", "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A261C; --surface: #233226; --ink: #F3EBDD; --muted: #B9B0A6; --line: #3A4A3C;
+    --terra: #DE8A5C; --sun: #E8B94A; --rose: #D9A9A0; --coral: #F2645A; --sage: #A9B07F;
+    --panel: #16151A; --panel-ink: #F3EBDD; --panel-muted: #B9B0A6;
+    --panel-field: rgba(243,235,221,.06); --panel-line: rgba(243,235,221,.2);
+    --cardback: #16151A; --cardface: #F3EBDD; --cardface-ink: #16151A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A261C; --surface: #233226; --ink: #F3EBDD; --muted: #B9B0A6; --line: #3A4A3C;
+  --terra: #DE8A5C; --sun: #E8B94A; --rose: #D9A9A0; --coral: #F2645A; --sage: #A9B07F;
+  --panel: #16151A; --panel-ink: #F3EBDD; --panel-muted: #B9B0A6;
+  --panel-field: rgba(243,235,221,.06); --panel-line: rgba(243,235,221,.2);
+  --cardback: #16151A; --cardface: #F3EBDD; --cardface-ink: #16151A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; padding-block: 40px 64px; display: flex; flex-direction: column; gap: 56px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.topbar b { color: var(--ink); font-weight: 600; }
+.proto { font-family: var(--hand); text-transform: none; letter-spacing: 0; font-size: 18px; color: var(--coral); }
+
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--terra); margin: 0; }
+h1, h2, h3 { font-family: var(--display); font-weight: 900; margin: 0; text-wrap: balance; line-height: 1.05; }
+h1 { font-size: clamp(40px, 9vw, 68px); letter-spacing: -.01em; }
+h2 { font-size: clamp(28px, 6vw, 40px); }
+h3 { font-size: 22px; font-weight: 700; }
+.lede { font-family: var(--serif); font-style: italic; font-size: clamp(20px, 4vw, 24px); line-height: 1.35; color: var(--terra); margin: 0; max-width: 34ch; }
+.note { font-family: var(--hand); font-size: 22px; line-height: 1.2; color: var(--coral); margin: 0; }
+p { margin: 0; max-width: 62ch; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.hero { gap: 18px; }
+
+/* Step header */
+.stephead { display: flex; align-items: baseline; gap: 14px; border-top: 1.5px solid var(--ink); padding-top: 14px; }
+.stephead .n { font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--terra); font-variant-numeric: tabular-nums; }
+.stephead .t { font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+
+/* Deck */
+.deck { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 3vw, 24px); max-width: 560px; }
+.card { perspective: 1000px; aspect-ratio: 7 / 12; max-width: 100%; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; border-radius: 10px; transition: opacity .5s ease, transform .5s ease; }
+.card:focus-visible { outline: 3px solid var(--terra); outline-offset: 4px; }
+.card:hover:not(:disabled) .inner { transform: translateY(-6px); }
+.card:disabled { cursor: default; }
+.card.dim { opacity: .28; transform: scale(.96); }
+.inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.2,.7,.2,1); }
+.card.flipped .inner, .card.flipped:hover .inner { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 10px; overflow: hidden; }
+.back { background: var(--cardback); border: 1.5px solid var(--sun); display: grid; place-items: center; }
+.back::after { content: ""; position: absolute; inset: 6px; border: 1px solid color-mix(in srgb, var(--sun) 55%, transparent); border-radius: 6px; }
+.back svg { width: 62%; height: auto; }
+.front { transform: rotateY(180deg); background: var(--cardface); color: var(--cardface-ink); border: 1.5px solid var(--sun); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 12% 8%; text-align: center; }
+.front::after { content: ""; position: absolute; inset: 6px; border: 1px solid var(--sun); border-radius: 6px; pointer-events: none; }
+.front .roman { font-family: var(--display); font-weight: 700; font-size: clamp(14px, 3.4vw, 20px); }
+.front svg { width: 58%; height: auto; }
+.front .name { font-family: var(--display); font-weight: 900; font-size: clamp(12px, 3.2vw, 19px); line-height: 1.1; text-transform: uppercase; letter-spacing: .04em; }
+.deckrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+/* Buttons + fields */
+.btn { font: 600 14px/1 var(--body); letter-spacing: .02em; padding: 14px 22px; border-radius: 999px; border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; }
+.btn:hover { background: var(--terra); border-color: var(--terra); color: #FFF8EE; }
+.btn:focus-visible, .link:focus-visible, input:focus-visible { outline: 3px solid var(--terra); outline-offset: 2px; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.ghost:hover { color: #FFF8EE; }
+.link { background: none; border: 0; padding: 0; font: 500 13px var(--body); color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+form.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; max-width: 560px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field.full { grid-column: 1 / -1; }
+label { font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+label .opt { font-family: var(--hand); text-transform: none; letter-spacing: 0; font-size: 17px; font-weight: 500; color: var(--coral); margin-left: 4px; }
+input[type="date"], input[type="time"], input[type="text"], input[type="email"] {
+  font: 400 16px var(--body); color: var(--ink); background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%; min-width: 0;
+}
+.hint { font-size: 13px; color: var(--muted); }
+.formfoot { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.err { color: var(--coral); font-size: 13px; font-weight: 500; }
+
+/* Result */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: baseline; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; }
+.chip span { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+.chip.soft { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+.reading { font-size: 16px; }
+.reading .open { font-family: var(--serif); font-style: italic; font-size: 23px; line-height: 1.35; color: var(--terra); }
+.uncertain { font-size: 13px; color: var(--muted); border-left: 2px solid var(--sun); padding-left: 12px; }
+
+.labnote { border: 1.5px solid var(--ink); border-radius: 14px; overflow: hidden; }
+.labnote header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 14px 18px; background: var(--surface); border-bottom: 1.5px solid var(--ink); }
+.labnote header h3 { font-size: 19px; }
+.labnote header small { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.layer { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding: 16px 18px; border-top: 1px solid var(--line); }
+.layer:first-of-type { border-top: 0; }
+.layer dt { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--terra); padding-top: 3px; }
+.layer dd { margin: 0; min-width: 0; }
+.layer.test dd { font-family: var(--serif); font-style: italic; font-size: 19px; line-height: 1.35; }
+
+/* Gate */
+.gate { background: var(--panel); color: var(--panel-ink); border-radius: 18px; padding: clamp(22px, 5vw, 36px); display: flex; flex-direction: column; gap: 20px; position: relative; overflow: hidden; }
+.gate .eyebrow { color: var(--sun); }
+.gate .lede { color: var(--rose); }
+.gate .sunmark { position: absolute; right: -40px; top: -40px; width: 180px; opacity: .18; pointer-events: none; }
+.gets { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.gets li { border: 1px solid var(--panel-line); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--panel-muted); }
+.gets b { display: block; color: var(--panel-ink); font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+.gate form.fields { max-width: none; }
+.gate label { color: var(--panel-ink); }
+.gate label .opt { color: var(--sun); }
+.gate input[type="time"], .gate input[type="email"] { background: var(--panel-field); border-color: var(--panel-line); color: var(--panel-ink); }
+.consent { grid-column: 1 / -1; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--panel-muted); }
+.consent input { margin-top: 4px; accent-color: var(--sun); width: 16px; height: 16px; flex: none; }
+.gate .btn { background: var(--sun); border-color: var(--sun); color: #16151A; }
+.gate .btn:hover { background: var(--panel-ink); border-color: var(--panel-ink); }
+.gate .hint { color: var(--panel-muted); }
+.gate .err { color: #F7A39C; }
+
+.profile { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile { background: var(--panel-field); border: 1px solid var(--panel-line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tile small { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--sun); }
+.tile .big { font-family: var(--display); font-weight: 700; font-size: 20px; line-height: 1.2; }
+.tile p { font-size: 13px; color: var(--panel-muted); }
+.tile.wide { grid-column: 1 / -1; }
+.example { font-family: var(--hand); font-size: 17px; color: var(--rose); }
+
+/* Footer + log */
+.stance { display: flex; gap: 14px; align-items: flex-start; border-top: 1.5px solid var(--ink); padding-top: 18px; }
+.stance svg { width: 34px; flex: none; }
+.stance p { font-size: 14px; color: var(--muted); }
+details.log { border: 1px dashed var(--line); border-radius: 12px; padding: 12px 16px; font-size: 13px; }
+details.log summary { cursor: pointer; font-weight: 600; }
+.logtable { overflow-x: auto; margin-top: 10px; }
+.logtable table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.logtable td, .logtable th { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: top; }
+.logtable th { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.logtable td.p { white-space: normal; color: var(--muted); min-width: 220px; }
+.funnel { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.funnel span { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.funnel span.on { background: var(--sage); border-color: var(--sage); color: #FFF8EE; }
+
+.reveal { animation: rise .6s ease both; }
+@keyframes rise { from { opacity: .001; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 560px) {
+  form.fields { grid-template-columns: minmax(0, 1fr); }
+  .layer { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .gets { grid-template-columns: minmax(0, 1fr); }
+  .profile { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inner, .card { transition: none; }
+  .reveal { animation: none; }
+}
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <span><b>Astropsyche Lab</b> · The Draw</span>
+    <span class="proto">prototype, nothing is saved or sent</span>
+  </div>
+
+  <section class="stack hero" aria-labelledby="h-hero">
+    <p class="eyebrow">A two-minute experiment</p>
+    <h1 id="h-hero">Draw before you think.</h1>
+    <p class="lede">One card for what is alive in you right now. Your birth data for the longer map. The interesting part is how they meet.</p>
+  </section>
+
+  <section class="stack" aria-labelledby="h-draw">
+    <div class="stephead"><span class="n">01</span><span class="t" id="h-draw">Choose the card you're drawn to</span></div>
+    <p>Three of the 22 major arcana, face down. Don't deliberate. In psychology this is called a projective task: what you reach for in an ambiguous image says something about you.</p>
+    <div class="deck" id="deck"></div>
+    <div class="deckrow">
+      <button class="link" id="reshuffle" type="button">Shuffle a new three</button>
+      <p class="note" id="drawnote" hidden></p>
+    </div>
+  </section>
+
+  <section class="stack" id="step2" hidden aria-labelledby="h-birth">
+    <div class="stephead"><span class="n">02</span><span class="t" id="h-birth">Your birth data</span></div>
+    <p>Two fields are enough for a first reading. Your birth time adds the rising sign later, if you know it.</p>
+    <form class="fields" id="birthform" novalidate>
+      <div class="field">
+        <label for="dob">Date of birth</label>
+        <input type="date" id="dob" required min="1920-01-01" max="2012-12-31" value="1991-08-14">
+      </div>
+      <div class="field">
+        <label for="pob">Place of birth</label>
+        <input type="text" id="pob" required placeholder="City, country" value="San Juan, Puerto Rico" autocomplete="off">
+      </div>
+      <div class="field full">
+        <label for="tob">Birth time <span class="opt">only if you know it</span></label>
+        <input type="time" id="tob">
+        <span class="hint">Leave it blank if you're not sure. A wrong time is worse than none.</span>
+      </div>
+      <div class="formfoot">
+        <button class="btn" type="submit">Read my card and chart</button>
+        <span class="err" id="birtherr" role="alert"></span>
+      </div>
+    </form>
+  </section>
+
+  <section class="stack" id="step3" hidden aria-labelledby="h-result">
+    <div class="stephead"><span class="n">03</span><span class="t">Your first reading</span></div>
+    <h2 id="h-result"></h2>
+    <div class="chips" id="chips"></div>
+    <div class="stack reading" id="reading"></div>
+    <p class="uncertain" id="uncertain" hidden></p>
+    <article class="labnote" aria-labelledby="h-lab">
+      <header><h3 id="h-lab"></h3><small>Lab note</small></header>
+      <dl id="layers" style="margin:0"></dl>
+    </article>
+    <p class="note">the chart is a prompt, not a cause</p>
+  </section>
+
+  <section class="gate" id="step4" hidden aria-labelledby="h-gate">
+    <svg class="sunmark" viewBox="0 0 100 100" aria-hidden="true" id="gatesun"></svg>
+    <p class="eyebrow">Step 04 · Keep going</p>
+    <h2 id="h-gate">Save this as your Lab profile.</h2>
+    <p class="lede">Free. Your full chart, your rising sign, and a monthly note on what the sky is doing to your chart.</p>
+    <ul class="gets">
+      <li><b>Full natal chart</b>Every planet, read through the same three layers.</li>
+      <li><b>Your rising sign</b>Needs your birth time. Add it below or later.</li>
+      <li><b>Transit tracker</b>Your next significant transit and the day it peaks.</li>
+    </ul>
+    <form class="fields" id="gateform" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="tob2">Birth time <span class="opt">unlocks rising</span></label>
+        <input type="time" id="tob2">
+      </div>
+      <label class="consent" for="consent">
+        <input type="checkbox" id="consent">
+        <span>Use my birth data and email to build my profile and send monthly Lab notes. I can delete my profile at any time. Privacy notice.</span>
+      </label>
+      <div class="formfoot">
+        <button class="btn" type="submit">Create my free profile</button>
+        <span class="err" id="gateerr" role="alert"></span>
+      </div>
+    </form>
+    <div class="stack" id="profile" hidden>
+      <p class="hint">Prototype: this is what the profile would open with. Nothing was sent.</p>
+      <div class="profile" id="tiles"></div>
+    </div>
+  </section>
+
+  <div class="stance">
+    <svg viewBox="0 0 100 100" aria-hidden="true" id="footsun"></svg>
+    <p>The Lab position: astrology has no proven power to predict events. We use the chart the way a therapist uses a good question, as a structured prompt for noticing your own patterns. Every reading separates what astrology says from what psychology actually studies.</p>
+  </div>
+
+  <details class="log">
+    <summary>Test log for Lewis and Gabs</summary>
+    <div class="funnel" id="funnel"></div>
+    <div class="logtable"><table><thead><tr><th>Time</th><th>Event</th><th>Payload</th></tr></thead><tbody id="logbody"></tbody></table></div>
+  </details>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Content library (draft copy, for Gabs to rewrite in her voice) ---------- */
+  var CARDS = [
+    { n: 0,  r: "0",     name: "The Fool",           attr: "Uranus",      el: "air",   theme: "explore", now: "Something in you wants to step off the edge without the full map." },
+    { n: 1,  r: "I",     name: "The Magician",       attr: "Mercury",     el: "air",   theme: "control", now: "You're reaching for agency: the sense that you can make something happen with what's already on the table." },
+    { n: 2,  r: "II",    name: "The High Priestess", attr: "the Moon",    el: "water", theme: "intuit",  now: "You're drawn to what you know but can't yet explain." },
+    { n: 3,  r: "III",   name: "The Empress",        attr: "Venus",       el: "earth", theme: "give",    now: "You're reaching for nourishment, either giving it or finally letting yourself have it." },
+    { n: 4,  r: "IV",    name: "The Emperor",        attr: "Aries",       el: "fire",  theme: "structure", now: "Part of you wants order, a frame that holds when everything else moves." },
+    { n: 5,  r: "V",     name: "The Hierophant",     attr: "Taurus",      el: "earth", theme: "belong",  now: "You're drawn to tradition and to the people who share your way of seeing." },
+    { n: 6,  r: "VI",    name: "The Lovers",         attr: "Gemini",      el: "air",   theme: "belong",  now: "There's a choice about closeness in front of you, and the card asks what you value, not only who you want." },
+    { n: 7,  r: "VII",   name: "The Chariot",        attr: "Cancer",      el: "water", theme: "structure", now: "You want direction and momentum, and you're looking for the discipline to hold two opposing pulls together." },
+    { n: 8,  r: "VIII",  name: "Strength",           attr: "Leo",         el: "fire",  theme: "control", now: "The strength you're reaching for is the gentle kind: steadiness rather than force." },
+    { n: 9,  r: "IX",    name: "The Hermit",         attr: "Virgo",       el: "earth", theme: "visible", now: "Part of you wants to step back, go quiet and think." },
+    { n: 10, r: "X",     name: "Wheel of Fortune",   attr: "Jupiter",     el: "fire",  theme: "explore", now: "You're drawn to change you didn't fully choose, and to whether you can ride it." },
+    { n: 11, r: "XI",    name: "Justice",            attr: "Libra",       el: "air",   theme: "give",    now: "Something feels out of balance and you want it weighed fairly." },
+    { n: 12, r: "XII",   name: "The Hanged Man",     attr: "Neptune",     el: "water", theme: "control", now: "You're drawn to pausing, to letting something hang instead of forcing a resolution." },
+    { n: 13, r: "XIII",  name: "Death",              attr: "Scorpio",     el: "water", theme: "endings", now: "Something is finishing, and part of you already knows it." },
+    { n: 14, r: "XIV",   name: "Temperance",         attr: "Sagittarius", el: "fire",  theme: "give",    now: "You're looking for the middle way: blending, pacing, not all or nothing." },
+    { n: 15, r: "XV",    name: "The Devil",          attr: "Capricorn",   el: "earth", theme: "structure", now: "You're drawn to look at what holds you, and at how loose the chains really are." },
+    { n: 16, r: "XVI",   name: "The Tower",          attr: "Mars",        el: "fire",  theme: "endings", now: "Something you built on a shaky assumption wants to come down." },
+    { n: 17, r: "XVII",  name: "The Star",           attr: "Aquarius",    el: "air",   theme: "visible", now: "You're reaching for hope, and for being seen as you are rather than as you perform." },
+    { n: 18, r: "XVIII", name: "The Moon",           attr: "Pisces",      el: "water", theme: "intuit",  now: "You're in a fog and drawn to trust the instinct that's guiding you through it." },
+    { n: 19, r: "XIX",   name: "The Sun",            attr: "the Sun",     el: "fire",  theme: "visible", now: "Part of you wants to be fully visible, warm and unhidden." },
+    { n: 20, r: "XX",    name: "Judgement",          attr: "Pluto",       el: "water", theme: "endings", now: "Something from your past is asking to be reckoned with, not buried." },
+    { n: 21, r: "XXI",   name: "The World",          attr: "Saturn",      el: "earth", theme: "explore", now: "You're drawn to completion, the end of a long cycle and the open space after it." }
+  ];
+
+  var SIGNS = [
+    { name: "Aries",       el: "fire",  base: "moves first and thinks on the way",                    moon: "you settle by doing something" },
+    { name: "Taurus",      el: "earth", base: "builds slowly and wants what lasts",                   moon: "you settle through the body: food, rest, touch, routine" },
+    { name: "Gemini",      el: "air",   base: "needs variety and thinks by talking",                  moon: "you settle by putting feelings into words" },
+    { name: "Cancer",      el: "water", base: "protects what it loves and feels before it reasons",   moon: "you settle when home feels safe" },
+    { name: "Leo",         el: "fire",  base: "wants to create and to be recognised for it",          moon: "you settle when someone sees you" },
+    { name: "Virgo",       el: "earth", base: "improves things and trusts what can be checked",       moon: "you settle by putting something in order" },
+    { name: "Libra",       el: "air",   base: "seeks balance and comes alive in relationship",        moon: "you settle when things between people feel fair" },
+    { name: "Scorpio",     el: "water", base: "goes deep and wants the truth under the surface",      moon: "you settle when you trust someone fully" },
+    { name: "Sagittarius", el: "fire",  base: "needs meaning and room to roam",                       moon: "you settle by moving, travelling or learning" },
+    { name: "Capricorn",   el: "earth", base: "takes the long view and earns its place",              moon: "you settle when you're in control of the plan" },
+    { name: "Aquarius",    el: "air",   base: "thinks independently and belongs on its own terms",    moon: "you settle with space and a little distance" },
+    { name: "Pisces",      el: "water", base: "absorbs everything and feels the whole room",          moon: "you settle through solitude, music or water" }
+  ];
+
+  var THEMES = {
+    visible: {
+      title: "Visibility and withdrawal",
+      astro: "This axis shows up between the Sun, which is about being seen, and the 12th house and Neptune, which govern retreat and the parts of us that stay hidden.",
+      psych: "Research on solitude separates chosen solitude, which tends to calm high-arousal feelings and restore people, from withdrawal driven by avoidance. The behaviour looks the same. The motive is what differs.",
+      test: "Each time you step back from something this month, note whether you were moving toward rest or away from discomfort."
+    },
+    control: {
+      title: "Control and surrender",
+      astro: "Astrologers read this through Mars and Pluto, the drive to act on the world, set against Neptune and the 12th house, where things are let go.",
+      psych: "Intolerance of uncertainty is linked in the research to worry and over-control. Acceptance-based therapies treat accepting what can't be controlled as a skill that improves with practice.",
+      test: "Choose one situation you've been managing tightly and deliberately hand one decision to someone else."
+    },
+    structure: {
+      title: "Structure and freedom",
+      astro: "Saturn, the planet of rules and limits, against Uranus, the planet of breaking out. Most charts carry some version of this argument.",
+      psych: "Self-determination theory treats autonomy as a basic psychological need. Structure you chose tends to support it. Structure imposed on you tends to wear it down.",
+      test: "Write down three rules you live by. For each one, ask whose rule it was in the first place."
+    },
+    give: {
+      title: "Giving and receiving",
+      astro: "Venus describes what we value and how we receive. Its houses show where the exchange flows easily and where it sticks.",
+      psych: "Reciprocity research suggests relationships feel fair when giving balances out over time, and people who habitually over-give often find receiving uncomfortable.",
+      test: "Accept one offer of help this month without paying it back straight away. Notice what that brings up."
+    },
+    explore: {
+      title: "Certainty and exploration",
+      astro: "Jupiter expands and Uranus disrupts. Both push against the safety of what's already known.",
+      psych: "Personality research shows people differ widely and fairly stably in openness to new experience. Neither end is better. Strain comes from a mismatch between your appetite for novelty and your circumstances.",
+      test: "Do one small unfamiliar thing each week. Rate your discomfort from 1 to 10 before and after."
+    },
+    endings: {
+      title: "Endings and holding on",
+      astro: "Pluto and the 8th house describe loss and transformation, the endings that make room for something else.",
+      psych: "Grief research has moved away from 'letting go' toward continuing bonds: people often carry what ended into a new form rather than cutting it off.",
+      test: "Name something that has already ended that you still act as if hasn't. What would carrying it forward look like instead?"
+    },
+    belong: {
+      title: "Independence and belonging",
+      astro: "The Moon and the 4th house describe where we feel we belong. Aquarius and Uranus describe the urge to stand apart.",
+      psych: "Attachment research describes how early experience shapes the balance between closeness and independence, and shows adults can move toward more secure patterns over time.",
+      test: "Notice when you pull back after getting close to someone. Write down what happened just before."
+    },
+    intuit: {
+      title: "Intuition and evidence",
+      astro: "The Moon and Neptune rule instinct and what can't be measured. Mercury rules what can be argued.",
+      psych: "Research on expert intuition by Kahneman and Klein found gut feelings are reliable in settings with regular patterns and fast feedback, and unreliable almost everywhere else.",
+      test: "Write down three gut calls this month before you act on them. Check how they turned out in four weeks."
+    }
+  };
+
+  var ELEMENT_OF = {}; SIGNS.forEach(function (s) { ELEMENT_OF[s.name] = s.el; });
+  var COMPAT = { fire: "air", air: "fire", earth: "water", water: "earth" };
+
+  /* ---------- Astronomy (low precision, good to well under a degree) ---------- */
+  var RAD = Math.PI / 180;
+  function norm(x) { x %= 360; return x < 0 ? x + 360 : x; }
+  function daysJ2000(ms) { return (ms - Date.UTC(2000, 0, 1, 12)) / 86400000; }
+  function moonLon(ms) {
+    var d = daysJ2000(ms);
+    var Lp = 218.316 + 13.176396 * d, Mp = 134.963 + 13.064993 * d, D = 297.850 + 12.190749 * d,
+        F = 93.272 + 13.229350 * d, M = 357.529 + 0.98560028 * d;
+    return norm(Lp + 6.289 * Math.sin(Mp * RAD) + 1.274 * Math.sin((2 * D - Mp) * RAD) + 0.658 * Math.sin(2 * D * RAD)
+      + 0.214 * Math.sin(2 * Mp * RAD) - 0.186 * Math.sin(M * RAD) - 0.114 * Math.sin(2 * F * RAD));
+  }
+  function sunLon(ms) {
+    var d = daysJ2000(ms), g = norm(357.529 + 0.98560028 * d), q = norm(280.459 + 0.98564736 * d);
+    return norm(q + 1.915 * Math.sin(g * RAD) + 0.020 * Math.sin(2 * g * RAD));
+  }
+  function signAt(lon) { return SIGNS[Math.floor(lon / 30)]; }
+  // Window covers time-zone uncertainty: we don't geocode the birthplace in the prototype.
+  function signRange(fn, start, end) {
+    var seen = [], step = 3600000;
+    for (var t = start; t <= end; t += step) {
+      var s = signAt(fn(t)).name; if (seen.indexOf(s) === -1) seen.push(s);
+    }
+    return seen;
+  }
+
+  /* ---------- SVG motifs (original sun + star) ---------- */
+  function sunSVG(color, rays) {
+    var out = '<circle cx="50" cy="50" r="15" fill="' + color + '"/>';
+    for (var i = 0; i < rays; i++) {
+      var a = (i / rays) * Math.PI * 2, long = i % 2 === 0, r1 = 21, r2 = long ? 46 : 36;
+      out += '<line x1="' + (50 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (50 + r1 * Math.sin(a)).toFixed(2)
+        + '" x2="' + (50 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (50 + r2 * Math.sin(a)).toFixed(2)
+        + '" stroke="' + color + '" stroke-width="' + (long ? 2.4 : 1.6) + '" stroke-linecap="round"/>';
+    }
+    return out;
+  }
+  function starSVG(color) {
+    return '<path d="M50 6 C54 38 62 46 94 50 C62 54 54 62 50 94 C46 62 38 54 6 50 C38 46 46 38 50 6Z" fill="' + color + '"/>';
+  }
+  var SUNC = "#E8B94A";
+  document.getElementById("gatesun").innerHTML = sunSVG(SUNC, 24);
+  document.getElementById("footsun").innerHTML = sunSVG(SUNC, 16);
+
+  /* ---------- Event log ---------- */
+  var STEPS = ["card_drawn", "birth_submitted", "result_viewed", "email_submitted"];
+  var reached = {};
+  var logbody = document.getElementById("logbody"), funnel = document.getElementById("funnel");
+  function renderFunnel() {
+    funnel.innerHTML = STEPS.map(function (s) { return '<span class="' + (reached[s] ? "on" : "") + '">' + s + "</span>"; }).join("");
+  }
+  function logEvent(name, payload) {
+    reached[name] = true; renderFunnel();
+    var tr = document.createElement("tr");
+    var now = new Date();
+    var ts = [now.getHours(), now.getMinutes(), now.getSeconds()].map(function (n) { return String(n).padStart(2, "0"); }).join(":");
+    tr.innerHTML = "<td>" + ts + "</td><td>" + name + '</td><td class="p"></td>';
+    tr.querySelector(".p").textContent = JSON.stringify(payload);
+    logbody.appendChild(tr);
+  }
+  renderFunnel();
+
+  /* ---------- Draw ---------- */
+  var deck = document.getElementById("deck");
+  var picked = null, birth = null;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function shuffleThree() {
+    var pool = CARDS.slice();
+    for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    return pool.slice(0, 3);
+  }
+  function renderDeck() {
+    deck.innerHTML = "";
+    shuffleThree().forEach(function (c, i) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "card"; b.id = "card-" + i;
+      b.setAttribute("aria-label", "Face-down card " + (i + 1) + " of 3");
+      b.innerHTML = '<div class="inner"><div class="face back"><svg viewBox="0 0 100 100" aria-hidden="true">' + sunSVG(SUNC, 20) + '</svg></div>'
+        + '<div class="face front"><span class="roman">' + c.r + '</span><svg viewBox="0 0 100 100" aria-hidden="true">'
+        + (c.theme === "visible" || c.theme === "explore" ? sunSVG("#C1683C", 16) : starSVG("#C1683C"))
+        + '</svg><span class="name">' + c.name + "</span></div></div>";
+      b.addEventListener("click", function () { pick(b, c); });
+      deck.appendChild(b);
+    });
+  }
+  function pick(btn, card) {
+    if (picked) return;
+    picked = card;
+    Array.prototype.forEach.call(deck.children, function (el) { el.disabled = true; if (el !== btn) el.classList.add("dim"); });
+    btn.classList.add("flipped");
+    btn.setAttribute("aria-label", card.name + ", chosen");
+    document.getElementById("reshuffle").hidden = true;
+    var note = document.getElementById("drawnote");
+    note.textContent = card.name + ". Hold that thought.";
+    note.hidden = false;
+    logEvent("card_drawn", { card: card.name, position: Array.prototype.indexOf.call(deck.children, btn) + 1 });
+    setTimeout(function () { show("step2"); document.getElementById("dob").focus({ preventScroll: true }); }, reduce ? 0 : 700);
+  }
+  function show(id) {
+    var el = document.getElementById(id);
+    el.hidden = false; el.classList.add("reveal");
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }
+  document.getElementById("reshuffle").addEventListener("click", renderDeck);
+  renderDeck();
+
+  /* ---------- Birth form ---------- */
+  document.getElementById("birthform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var dob = document.getElementById("dob").value, pob = document.getElementById("pob").value.trim(), tob = document.getElementById("tob").value;
+    var err = document.getElementById("birtherr");
+    if (!dob) { err.textContent = "Add your date of birth to continue."; return; }
+    if (!pob) { err.textContent = "Add the city you were born in. It sets your rising sign later."; return; }
+    err.textContent = "";
+    var p = dob.split("-").map(Number), start, end;
+    // Prototype shortcut: the birthplace isn't geocoded, so we read the date in the viewer's own time zone
+    // and allow +/- 2 hours of slack. The real build resolves the place to a time zone server-side.
+    var slack = 2 * 3600000;
+    if (tob) {
+      var t = tob.split(":").map(Number);
+      var mid = new Date(p[0], p[1] - 1, p[2], t[0], t[1]).getTime();
+      start = mid - slack; end = mid + slack;
+    } else {
+      start = new Date(p[0], p[1] - 1, p[2], 0, 0).getTime() - slack;
+      end = new Date(p[0], p[1] - 1, p[2], 23, 59).getTime() + slack;
+    }
+    birth = { dob: dob, pob: pob, tob: tob, sun: signRange(sunLon, start, end), moon: signRange(moonLon, start, end) };
+    logEvent("birth_submitted", { has_time: !!tob, place: pob });
+    renderResult();
+    show("step3");
+    logEvent("result_viewed", { card: picked.name, sun: birth.sun.join("/"), moon: birth.moon.join("/") });
+    setTimeout(function () { var g = document.getElementById("step4"); g.hidden = false; g.classList.add("reveal"); }, reduce ? 0 : 400);
+    if (tob) document.getElementById("tob2").value = tob;
+  });
+
+  function relation(card, sunName, moonName) {
+    if (card.attr === sunName) return { kind: "mirror", with: "Sun" };
+    if (card.attr === moonName) return { kind: "mirror", with: "Moon" };
+    var se = ELEMENT_OF[sunName];
+    if (card.el === se || COMPAT[card.el] === se) return { kind: "agree" };
+    return { kind: "tension" };
+  }
+
+  function renderResult() {
+    var c = picked, sun = SIGNS.filter(function (s) { return s.name === birth.sun[0]; })[0];
+    var moonNames = birth.moon, moon = SIGNS.filter(function (s) { return s.name === moonNames[0]; })[0];
+    var th = THEMES[c.theme];
+
+    document.getElementById("h-result").textContent = c.name + " meets a " + sun.name + " Sun";
+    var signNote = ELEMENT_OF[c.attr] ? "a sign" : "a planet";
+    document.getElementById("chips").innerHTML =
+      '<span class="chip"><span>Card</span>' + c.r + " · " + c.name + "</span>"
+      + '<span class="chip soft"><span>Sun</span>' + birth.sun.join(" or ") + "</span>"
+      + '<span class="chip soft"><span>Moon</span>' + moonNames.join(" or ") + "</span>";
+
+    var rel = relation(c, sun.name, moon.name);
+    var relText;
+    if (rel.kind === "mirror") {
+      relText = "This one is unusual. In the Golden Dawn tradition " + c.name + " corresponds to " + c.attr + ", which is your own " + rel.with
+        + " sign. You reached for something that already describes you. It's worth asking whether you're looking for permission rather than direction.";
+    } else if (rel.kind === "agree") {
+      relText = "The card and your " + sun.name + " Sun pull the same way. When that happens, the useful question is less what you want and more what's stopping you from doing it.";
+    } else {
+      relText = "The card pulls against your " + sun.name + " Sun. That tension is the interesting part: something in you is reaching for what your usual way of operating doesn't easily allow.";
+    }
+
+    var moonLine = moonNames.length > 1
+      ? "Your Moon was moving from " + moonNames[0] + " into " + moonNames[1] + " around your birth. One of those describes how you settle under stress, and your exact birth time decides which."
+      : "With your Moon in " + moon.name + ", " + moon.moon + ". Notice whether the pull of this card makes that harder or easier right now.";
+
+    var reading = document.getElementById("reading");
+    reading.innerHTML = "";
+    [
+      ["open", c.now],
+      ["", "In the Golden Dawn tradition, " + c.name + " is linked to " + c.attr + " (" + signNote + "). Your Sun in " + sun.name + " " + sun.base + ". " + relText],
+      ["", moonLine]
+    ].forEach(function (pair) { var p = document.createElement("p"); if (pair[0]) p.className = pair[0]; p.textContent = pair[1]; reading.appendChild(p); });
+
+    var unc = document.getElementById("uncertain");
+    if (birth.sun.length > 1) {
+      unc.hidden = false;
+      unc.textContent = "You were born on the cusp. The reading uses " + birth.sun[0] + ". Your full profile settles it from your exact time and place.";
+    } else { unc.hidden = true; }
+
+    document.getElementById("h-lab").textContent = th.title;
+    document.getElementById("layers").innerHTML =
+      '<div class="layer"><dt>What astrology says</dt><dd></dd></div>'
+      + '<div class="layer"><dt>What psychology studies</dt><dd></dd></div>'
+      + '<div class="layer test"><dt>Test it this month</dt><dd></dd></div>';
+    var dds = document.querySelectorAll("#layers dd");
+    dds[0].textContent = th.astro; dds[1].textContent = th.psych; dds[2].textContent = th.test;
+  }
+
+  /* ---------- Gate ---------- */
+  document.getElementById("gateform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = document.getElementById("email").value.trim(), ok = document.getElementById("consent").checked;
+    var err = document.getElementById("gateerr");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "Enter a full email address, like name@example.com."; return; }
+    if (!ok) { err.textContent = "Tick the consent box so we can store your birth data."; return; }
+    err.textContent = "";
+    var t2 = document.getElementById("tob2").value;
+    logEvent("email_submitted", { has_time: !!t2, card: picked.name });
+    document.getElementById("gateform").hidden = true;
+    var tiles = document.getElementById("tiles");
+    tiles.innerHTML =
+      '<div class="tile"><small>Sun · Moon</small><span class="big"></span><p>Full chart with all ten planets, each in three layers.</p></div>'
+      + '<div class="tile"><small>Rising</small><span class="big">' + (t2 ? "Calculated from your time" : "Add your birth time") + "</span><p>"
+      + (t2 ? "Needs your birthplace resolved to coordinates. That happens server-side in the real build." : "Without a time, the profile skips houses and the rising sign rather than guessing.") + "</p></div>"
+      + '<div class="tile wide"><small>Transit tracker</small><span class="example">example, not your real transit</span><span class="big">Saturn squares your Sun · peaks 14 December</span>'
+      + "<p>A season for testing what you've built. Members get a Check-In with Gabs timed to the peak.</p></div>";
+    tiles.querySelector(".big").textContent = birth.sun[0] + " · " + birth.moon.join(" or ");
+    var pr = document.getElementById("profile"); pr.hidden = false; pr.classList.add("reveal");
+  });
+})();
+</script>

@@ -1,0 +1,332 @@
+// DRAFT — Gabs to rewrite in her voice
+// Placement readings in three layers: what astrology says, what psychology studies,
+// and one concrete self-observation to try this month. The chart is a prompt, not a cause.
+import type { Sign } from "@/lib/astro";
+
+export type PlacementKey = "Sun" | "Moon" | "Rising" | "Venus" | "Saturn" | "NorthNode";
+export type KeywordKey = "Mercury" | "Mars" | "Jupiter" | "Uranus" | "Neptune" | "Pluto";
+export type PlacementEntry = { astro: string; psych: string; test: string };
+
+type Row = [astro: string, psych: string, test: string];
+
+/** Row order follows the zodiac, Aries to Pisces. */
+const ORDER: readonly Sign[] = [
+  "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+  "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
+];
+
+function build(rows: readonly Row[]): Record<Sign, PlacementEntry> {
+  const out = {} as Record<Sign, PlacementEntry>;
+  ORDER.forEach((sign, i) => {
+    const [astro, psych, test] = rows[i];
+    out[sign] = { astro, psych, test };
+  });
+  return out;
+}
+
+const SUN: Row[] = [
+  ["The Sun in Aries is read as an identity that feels most like itself when it initiates: starting, choosing, going first.",
+   "Self-determination theory treats autonomy, the sense that an action is your own, as a basic need, and people tend to report more vitality when they feel they chose what they are doing.",
+   "Pick three things you started this week. For each, note whether you began because you wanted to or because waiting felt uncomfortable."],
+  ["The Sun in Taurus is read as an identity anchored in steadiness, the senses and the things that last.",
+   "Research on savouring finds that deliberately attending to a pleasant experience is a learnable skill that is linked to well-being.",
+   "Once a day, give two full minutes to something physical you enjoy. Note whether the rest of that hour feels any different."],
+  ["The Sun in Gemini is read as an identity built around curiosity, language and moving between ideas.",
+   "Trait curiosity is studied as an appetite for new information that differs between people and overlaps with openness in the Big Five model.",
+   "Keep a running list of questions you wondered about this week. At the end, mark which ones you actually looked up."],
+  ["The Sun in Cancer is read as an identity organised around care, memory and the people who feel like home.",
+   "Belongingness research proposes that frequent, caring contact with a few people is a basic human motivation, not a luxury.",
+   "Note three moments this week when you felt at home. Write down what was present each time: who, where, what was said."],
+  ["The Sun in Leo is read as an identity that comes alive through creating and being warmly seen.",
+   "Self-esteem research separates a stable sense of worth from contingent self-esteem, which rises and falls with other people's approval.",
+   "Make something small and show no one. Then make another and share it. Compare how each felt while you were doing it."],
+  ["The Sun in Virgo is read as an identity that finds itself in refining, repairing and being useful.",
+   "Perfectionism research separates high personal standards from harsh self-criticism, and the two relate differently to well-being.",
+   "Before one task, write down what 'good enough' looks like. Afterwards, note what you would have changed and whether it mattered."],
+  ["The Sun in Libra is read as an identity that comes alive in relationship, in weighing, and in making things fair.",
+   "Studies of conflict styles describe a trade-off between keeping harmony and stating your own needs, and people tend to lean one way.",
+   "Notice when you adjust an opinion mid-conversation. Write down what you originally thought and what you said instead."],
+  ["The Sun in Scorpio is read as an identity drawn to depth, privacy and what sits under the surface.",
+   "Self-disclosure research finds that closeness tends to build when sharing is gradual and reciprocal, rather than all at once.",
+   "Share one slightly more honest thing than usual with someone you trust. Note their response and your own reaction."],
+  ["The Sun in Sagittarius is read as an identity that wants meaning, range and room to roam.",
+   "Meaning-in-life research separates having a sense of purpose from searching for one, and the two feel quite different day to day.",
+   "Each Sunday for four weeks, write one sentence on what made the week feel meaningful. Then read all four together."],
+  ["The Sun in Capricorn is read as an identity that takes the long view and values earned standing.",
+   "Goal-pursuit research finds that people follow through more often when a goal comes with a specific plan for when and where to act.",
+   "Choose one long-term goal. Write its next concrete step and the day you will do it, then check whether the plan held."],
+  ["The Sun in Aquarius is read as an identity that thinks independently and belongs on its own terms.",
+   "Optimal distinctiveness theory describes a balance people look for between fitting in with a group and standing out from it.",
+   "Over a week, mark each time you went along with a group and each time you didn't. Ask which felt chosen."],
+  ["The Sun in Pisces is read as an identity that is porous, imaginative and attuned to the mood of a room.",
+   "Empathy research separates feeling with someone from understanding them, and notes that absorbing others' distress can lead to withdrawal.",
+   "After a draining conversation, note whether you felt their feeling or understood it. Notice what helped you come back to your own."],
+];
+
+const MOON: Row[] = [
+  ["The Moon in Aries is read as an emotional nature that is quick and direct, settling through action.",
+   "Emotion regulation research describes situation modification, changing the circumstances, as one strategy among several, and it suits some feelings better than others.",
+   "When a strong feeling arrives, note whether you reach for action first. Record what you did and how the feeling had changed an hour later."],
+  ["The Moon in Taurus is read as an emotional nature that settles through the body: food, rest, touch and routine.",
+   "Research on interoception, awareness of internal body signals, links it to how clearly people notice and label their own emotions.",
+   "Three times this week, when you feel off, ask where you feel it in your body before you ask why. Write down the answer."],
+  ["The Moon in Gemini is read as an emotional nature that settles by putting feelings into words.",
+   "Affect labelling studies find that naming a feeling in words is associated with reduced emotional intensity in lab tasks.",
+   "Next time you feel unsettled, write one sentence that begins 'I notice I feel...'. Rate the feeling from 1 to 10 before and after."],
+  ["The Moon in Cancer is read as an emotional nature that settles when home and the people in it feel safe.",
+   "Attachment research describes how a sense of a safe base supports exploring the world, and how adults can build one in later relationships.",
+   "List the two or three places or people that feel like a safe base. Note how long it has been since you used them."],
+  ["The Moon in Leo is read as an emotional nature that settles when it is seen and warmly acknowledged.",
+   "Research on social support finds that feeling understood by another person is distinct from simply receiving advice or reassurance.",
+   "Tell one person what you would like noticed this week. Note how it felt to ask rather than wait."],
+  ["The Moon in Virgo is read as an emotional nature that settles by putting something in order.",
+   "Studies of rumination separate reflective thinking from brooding, and tidy-minded problem solving can drift into the second.",
+   "When you start sorting or fixing to feel better, note whether the feeling shifts or just goes quiet. Check again that evening."],
+  ["The Moon in Libra is read as an emotional nature that settles when things between people feel fair.",
+   "Research on emotional suppression finds that routinely holding feelings back to keep the peace is associated with feeling less close to others.",
+   "Once this week, say a small preference out loud that you would normally keep to yourself. Note what happened."],
+  ["The Moon in Scorpio is read as an emotional nature that settles through trust and feels things at depth.",
+   "Studies of emotional intensity describe stable differences in how strongly and how long people feel, which are separate from how well they cope.",
+   "After a strong feeling, note how long it lasted and what, if anything, helped it ease. Do this three times."],
+  ["The Moon in Sagittarius is read as an emotional nature that settles by moving, travelling or learning.",
+   "Exercise and emotion research finds that physical activity is associated with improved mood, and so is novelty in routine.",
+   "Next time you feel stuck, go for a walk somewhere you do not usually go. Rate your mood from 1 to 10 before and after."],
+  ["The Moon in Capricorn is read as an emotional nature that settles when it is in control of the plan.",
+   "Research on locus of control distinguishes believing your actions matter from believing outcomes are fixed, and the first tends to pair with more resilience.",
+   "Pick a worry. Write down which parts are yours to act on and which are not. Act on one part within the week."],
+  ["The Moon in Aquarius is read as an emotional nature that settles with space and a little distance.",
+   "Studies of solitude suggest that chosen time alone can restore people, particularly after high-arousal states, which is different from avoiding others.",
+   "When you pull away this week, note whether you want rest or want to avoid something. Write down how you knew."],
+  ["The Moon in Pisces is read as an emotional nature that settles through solitude, music or water.",
+   "Research on music and mood finds that people use listening deliberately to regulate emotion, and the strategies vary between people.",
+   "Choose one piece of music for a feeling you have this week. Notice whether it matched the feeling or moved it."],
+];
+
+const RISING: Row[] = [
+  ["Aries rising is read as a first impression that is direct, energetic and quick off the mark.",
+   "Thin-slice research finds that strangers form fairly consistent impressions of a person within seconds, mostly from demeanour and pace.",
+   "Ask someone you trust what they first noticed about you. Compare it with what you would have said."],
+  ["Taurus rising is read as a first impression that is calm, grounded and unhurried.",
+   "Self-presentation research notes that people usually show a slightly edited version of themselves, shaped by the setting.",
+   "In one setting this week, note what you tone down or turn up. Write down whether it was a choice."],
+  ["Gemini rising is read as a first impression that is chatty, curious and light on its feet.",
+   "Studies of first meetings find that asking questions and following up on the answers is associated with being liked more.",
+   "Notice in one conversation how often you ask versus tell. Count roughly, then compare with another conversation."],
+  ["Cancer rising is read as a first impression that is warm but guarded, taking time to open.",
+   "Research on shyness and behavioural inhibition describes slow-to-warm styles that are common and often relax with familiarity.",
+   "Next time you meet someone new, note how long it takes you to warm up. Write down what helped."],
+  ["Leo rising is read as a first impression that is expressive, confident and hard to miss.",
+   "Research on nonverbal behaviour finds that expansive posture and expressiveness shape how others read confidence, whatever a person feels inside.",
+   "Choose one meeting and consciously take up either more or less space. Note how others responded and how you felt."],
+  ["Virgo rising is read as a first impression that is careful, observant and a little reserved.",
+   "Attention research suggests that people differ in how much detail they notice at first glance, and that this shapes what they remember.",
+   "On your next walk, notice five details you would usually miss. Write them down when you get home."],
+  ["Libra rising is read as a first impression that is gracious, easy and attentive to the other person.",
+   "Research on rapport describes matching pace and tone as part of how people feel in step with each other, often without noticing.",
+   "In one conversation, notice whether you mirror the other person's pace. Try keeping your own and note the difference."],
+  ["Scorpio rising is read as a first impression that is intense, watchful and hard to read.",
+   "Studies of reserve and self-monitoring describe people who reveal little at first, which others can interpret in very different ways.",
+   "Ask a friend how you came across when you first met. Note where their account and yours differ."],
+  ["Sagittarius rising is read as a first impression that is open, enthusiastic and frank.",
+   "Extraversion in the Big Five model includes warmth and positive emotion, which others tend to pick up on quickly.",
+   "Pay attention to how you greet someone new. Note one thing you do each time without thinking."],
+  ["Capricorn rising is read as a first impression that is composed, serious and capable.",
+   "Research on competence impressions finds that people judge ability from face and bearing quickly, and those judgements are often poor predictors.",
+   "Notice a moment this week when someone treated you as more or less capable than you felt. Write down what you showed."],
+  ["Aquarius rising is read as a first impression that is friendly, a little detached and individual.",
+   "Research on social distance describes how people signal how close they want to be through small cues like eye contact and space.",
+   "Notice how much distance you keep in your next three new encounters. Note whether it matched what you wanted."],
+  ["Pisces rising is read as a first impression that is soft, dreamy and receptive.",
+   "Studies of emotional contagion find that people pick up on and echo the moods of those around them, to differing degrees.",
+   "Before a social event, note your mood. Afterwards, note whose mood you took on, if any."],
+];
+
+const VENUS: Row[] = [
+  ["Venus in Aries is read as loving directly: pursuit, spark and honest appetite.",
+   "Research on approach and avoidance motivation describes how people differ in how readily they move toward what they want.",
+   "Notice one time this week you wanted something from someone and what you did about it. Write down the gap between wanting and asking."],
+  ["Venus in Taurus is read as loving through steady, physical, sensory presence.",
+   "Studies of touch and affection find that warm physical contact is associated with felt closeness and lower stress in couples.",
+   "Offer one unhurried act of physical care this week, and note how it landed."],
+  ["Venus in Gemini is read as loving through conversation, play and curiosity about the other person.",
+   "Research on couples finds that responding warmly to small bids for attention is associated with relationship satisfaction.",
+   "Count the small bids for attention you notice in a day, such as a comment or a joke. Note how you responded to each."],
+  ["Venus in Cancer is read as loving through nurture, memory and making others feel looked after.",
+   "Caregiving research describes how giving support can feel good when freely chosen and draining when it feels obligatory.",
+   "After each act of care this week, note whether you felt energised or depleted. Look for a pattern."],
+  ["Venus in Leo is read as loving generously and wanting that warmth to be seen and returned.",
+   "Studies of gratitude in relationships find that feeling appreciated is associated with greater commitment from both partners.",
+   "Tell someone specifically what you appreciate about them. Notice whether you also want the same back."],
+  ["Venus in Virgo is read as loving through service, attention to detail and practical help.",
+   "Research on love languages is mixed, but studies of everyday kindness suggest that perceived responsiveness matters more than any single style.",
+   "Note one way you showed care this week and whether the other person recognised it as care. Ask if unsure."],
+  ["Venus in Libra is read as loving through partnership, beauty and a sense of fairness.",
+   "Equity research in relationships suggests people tend to feel more content when contributions feel balanced over time.",
+   "List what you give and what you receive in one close relationship. Note where it feels uneven."],
+  ["Venus in Scorpio is read as loving with intensity, loyalty and a wish for full honesty.",
+   "Attachment research describes anxious and avoidant patterns around closeness, and shows that these can shift in secure relationships.",
+   "When closeness feels intense this week, note whether you move toward or away. Write down what you were thinking just before."],
+  ["Venus in Sagittarius is read as loving freely, with humour, adventure and room to breathe.",
+   "Self-expansion theory proposes that people enjoy relationships that bring new experiences and fresh perspectives.",
+   "Do one new thing with someone you care about. Note whether it changed how you saw each other."],
+  ["Venus in Capricorn is read as loving slowly and seriously, with commitment shown over time.",
+   "Studies of commitment find that couples who show reliability in small ways report greater trust.",
+   "Pick one small reliable gesture and repeat it every day for a week. Note how it feels at the end."],
+  ["Venus in Aquarius is read as loving through friendship, ideas and respect for independence.",
+   "Research on friendship-based love describes companionship and shared interests as a stable foundation for long relationships.",
+   "Ask one person you are close to what they feel you do together that is most like friendship. Compare it with your answer."],
+  ["Venus in Pisces is read as loving tenderly, romantically and often without clear boundaries.",
+   "Boundary research in relationships links clear, kindly stated limits with higher satisfaction rather than lower closeness.",
+   "Say one gentle no this month. Note how it felt beforehand and how the other person responded."],
+];
+
+const SATURN: Row[] = [
+  ["Saturn in Aries is read as a lesson in patience and in acting without needing to rush.",
+   "Research on impulse control, including studies of delayed gratification, finds that people vary and that strategies like distraction help.",
+   "Next time you feel the urge to act at once, wait ten minutes. Note whether your decision changed."],
+  ["Saturn in Taurus is read as a lesson in security, value and what is worth keeping.",
+   "Studies of financial well-being separate how much you have from how secure you feel, and the second matters more for stress.",
+   "Write down what 'enough' looks like to you in one area of life. Compare it with where you are."],
+  ["Saturn in Gemini is read as a lesson in discipline of mind, focus and saying exactly what you mean.",
+   "Attention research finds that switching between tasks carries a cost, and that people tend to underestimate it.",
+   "Do one task for twenty-five minutes with nothing else open. Note what pulled you away."],
+  ["Saturn in Cancer is read as a lesson in building emotional safety and in what you owe family.",
+   "Research on family roles describes how early responsibilities can shape expectations of closeness and care, and that those roles can be renegotiated.",
+   "Write down one family role you took on early. Ask whether you still want it."],
+  ["Saturn in Leo is read as a lesson in self-expression that does not depend on applause.",
+   "Intrinsic motivation research finds that doing something for its own interest differs from doing it for praise, and the first tends to last longer.",
+   "Do something creative this week with no plan to share it. Note what motivates you to continue."],
+  ["Saturn in Virgo is read as a lesson in standards, craft and being kind to your own mistakes.",
+   "Self-compassion research finds that responding to your errors with kindness is associated with a greater willingness to try again.",
+   "After a mistake this week, say to yourself what you would say to a friend. Note any difference."],
+  ["Saturn in Libra is read as a lesson in commitment, fairness and honest agreements.",
+   "Research on promises and commitment suggests that explicit expectations reduce resentment in close relationships.",
+   "Make one unspoken expectation explicit with someone. Note the reply."],
+  ["Saturn in Scorpio is read as a lesson in trust, power and facing what is hard to look at.",
+   "Research on post-traumatic growth describes some people reporting greater strength after adversity, without suggesting the adversity was needed.",
+   "Write about one difficult thing you have come through. Note what you would tell someone facing the same."],
+  ["Saturn in Sagittarius is read as a lesson in building beliefs that hold up under questioning.",
+   "Research on intellectual humility links willingness to revise your view with better learning and better conversations.",
+   "Pick a belief you hold firmly. Look for the best argument against it and note what it changes, if anything."],
+  ["Saturn in Capricorn is read as a lesson in responsibility, ambition and what you are building.",
+   "Work on conscientiousness, one of the Big Five traits, finds it is associated with persistence and also with strain when standards are rigid.",
+   "Note one area where your standards feel heavy. Ask what the lightest version that still works would be."],
+  ["Saturn in Aquarius is read as a lesson in building structure around freedom and shared ideals.",
+   "Studies of group commitment describe a tension between individual autonomy and collective rules, and how clear roles can ease it.",
+   "Notice a group you belong to. Write down one rule you follow, and whether you would choose it afresh."],
+  ["Saturn in Pisces is read as a lesson in giving form to imagination and boundaries to compassion.",
+   "Research on compassion fatigue describes how sustained caring without recovery is linked to burnout in helping roles.",
+   "Schedule one recovery period this week after giving a lot. Note how you felt afterwards."],
+];
+
+const NORTH_NODE: Row[] = [
+  ["The North Node in Aries is read as a direction toward courage, independence and acting on your own wants.",
+   "Possible-selves research shows that picturing a specific future self is associated with taking steps toward it.",
+   "Describe in two sentences a bolder version of you. Do one small thing this week that this person would do."],
+  ["The North Node in Taurus is read as a direction toward steadiness, simplicity and trusting what is already enough.",
+   "Research on hedonic adaptation finds that people get used to new gains quickly, which is why appreciation of what is present takes practice.",
+   "Each night for a week, write down one thing you already have that you once wanted."],
+  ["The North Node in Gemini is read as a direction toward curiosity, questions and learning from many people.",
+   "Growth mindset research looks at how believing abilities can develop relates to how people respond to challenge, with mixed effect sizes.",
+   "Ask one real question of someone whose view differs from yours. Note what you learned."],
+  ["The North Node in Cancer is read as a direction toward vulnerability, home and receiving care.",
+   "Research on help-seeking finds that people often underestimate how willing others are to help, and how good it feels to be asked.",
+   "Ask for a small piece of help this week. Note how it went compared with what you expected."],
+  ["The North Node in Leo is read as a direction toward joy, play and being seen.",
+   "Studies of play in adulthood link playfulness with positive emotion and stress recovery.",
+   "Do something playful for twenty minutes, with no goal. Note when you start feeling self-conscious."],
+  ["The North Node in Virgo is read as a direction toward practical routine, service and everyday care.",
+   "Habit research finds that small repeated actions tied to an existing routine are more likely to stick than large changes.",
+   "Pick one small daily habit and attach it to something you already do. Track it for two weeks."],
+  ["The North Node in Libra is read as a direction toward cooperation, compromise and considering others.",
+   "Research on perspective-taking finds that deliberately imagining another's view is associated with better conflict outcomes.",
+   "In one disagreement, state the other person's position well enough that they would say 'yes, exactly'."],
+  ["The North Node in Scorpio is read as a direction toward depth, shared resources and facing change.",
+   "Studies of tolerance for uncertainty link comfort with the unknown to calmer responses to change.",
+   "Name one change you are avoiding. Write down the first step, however small, and the smallest worst case."],
+  ["The North Node in Sagittarius is read as a direction toward big-picture meaning, faith and exploration.",
+   "Values research finds that clarifying what matters most to you is associated with acting in line with it.",
+   "Write your top three values. For each, give one example from this week where you lived it or didn't."],
+  ["The North Node in Capricorn is read as a direction toward self-reliance, goals and public responsibility.",
+   "Self-efficacy research finds that mastering small tasks tends to raise confidence for bigger ones.",
+   "Set one goal that is just within reach, finish it and note how your sense of capability shifts."],
+  ["The North Node in Aquarius is read as a direction toward community, ideals and being one among many.",
+   "Research on social connection finds that group involvement is associated with well-being, particularly when it feels meaningful.",
+   "Take one step toward a group you value, such as a message or a meeting. Note how it feels."],
+  ["The North Node in Pisces is read as a direction toward trust, imagination and letting go of control.",
+   "Mindfulness and acceptance research examines how allowing experience without trying to fix it relates to lower distress.",
+   "Sit for five minutes with an unresolved question without trying to solve it. Note what comes up."],
+];
+
+export const PLACEMENTS: Record<PlacementKey, Record<Sign, PlacementEntry>> = {
+  Sun: build(SUN),
+  Moon: build(MOON),
+  Rising: build(RISING),
+  Venus: build(VENUS),
+  Saturn: build(SATURN),
+  NorthNode: build(NORTH_NODE),
+};
+
+/** Display names for placement keys. */
+export const PLACEMENT_TITLES: Record<PlacementKey | KeywordKey, string> = {
+  Sun: "Sun",
+  Moon: "Moon",
+  Rising: "Rising",
+  Venus: "Venus",
+  Saturn: "Saturn",
+  NorthNode: "North Node",
+  Mercury: "Mercury",
+  Mars: "Mars",
+  Jupiter: "Jupiter",
+  Uranus: "Uranus",
+  Neptune: "Neptune",
+  Pluto: "Pluto",
+};
+
+function kw(values: readonly string[]): Record<Sign, string> {
+  const out = {} as Record<Sign, string>;
+  ORDER.forEach((sign, i) => {
+    out[sign] = values[i];
+  });
+  return out;
+}
+
+/** One short keyword line per planet and sign, for placements without a full reading. */
+export const KEYWORDS: Record<KeywordKey, Record<Sign, string>> = {
+  Mercury: kw([
+    "thinks fast and speaks plainly", "thinks slowly and concretely", "thinks in connections and talks things through",
+    "thinks through feeling and memory", "thinks expressively and in stories", "thinks analytically and notices detail",
+    "thinks in balance and weighs both sides", "thinks deeply and looks for motives", "thinks in big pictures and possibilities",
+    "thinks practically and in plans", "thinks in systems and original ideas", "thinks in images and impressions",
+  ]),
+  Mars: kw([
+    "acts directly and competes openly", "acts steadily and resists being rushed", "acts through variety and quick moves",
+    "acts protectively and indirectly", "acts boldly and with pride", "acts precisely and with effort",
+    "acts through negotiation and tact", "acts with focus and intensity", "acts with enthusiasm and a long stride",
+    "acts with discipline and stamina", "acts on principle and on their own terms", "acts intuitively and sometimes passively",
+  ]),
+  Jupiter: kw([
+    "looks for growth through initiative", "looks for growth through security and pleasure", "looks for growth through learning and contact",
+    "looks for growth through belonging and care", "looks for growth through creativity and generosity", "looks for growth through skill and service",
+    "looks for growth through partnership", "looks for growth through depth and shared resources", "looks for growth through exploration and belief",
+    "looks for growth through structure and achievement", "looks for growth through community and ideas", "looks for growth through compassion and imagination",
+  ]),
+  Uranus: kw([
+    "a generation of pioneers breaking from the past", "a generation reshaping money and the material world", "a generation changing how ideas travel",
+    "a generation rethinking home and family", "a generation reinventing self-expression", "a generation redesigning work and health",
+    "a generation questioning how relationships work", "a generation shaking up power and intimacy", "a generation opening up belief and travel",
+    "a generation restructuring institutions", "a generation pushing technology and collective life", "a generation dissolving old forms and boundaries",
+  ]),
+  Neptune: kw([
+    "a generation of idealists in action", "a generation dreaming about security and the earth", "a generation imagining through words and media",
+    "a generation idealising home and nation", "a generation drawn to glamour and creativity", "a generation chasing perfection in the details",
+    "a generation dreaming of harmony and romance", "a generation exploring mystery and the hidden", "a generation seeking a spiritual horizon",
+    "a generation dreaming within structures", "a generation dreaming of a shared future", "a generation of mystics and artists",
+  ]),
+  Pluto: kw([
+    "a generation facing deep change in how it asserts itself", "a generation transforming values and resources", "a generation transforming how people communicate",
+    "a generation transforming family and belonging", "a generation transforming leadership and creativity", "a generation transforming work and service",
+    "a generation transforming partnership and justice", "a generation transforming power and secrecy", "a generation transforming belief systems",
+    "a generation transforming institutions and authority", "a generation transforming groups and technology", "a generation transforming the boundaries of the self",
+  ]),
+};
