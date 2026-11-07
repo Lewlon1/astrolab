@@ -1048,3 +1048,26 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Persona check: can P1–P4 follow the Lab experiment? (2026-11-07)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. Research session; no code or SQL changed.
+
+**Question:** how to make sure every persona in the Acquisition Bible (P1 Therapy-Literate Seeker, P2 Love-Pattern Looper, P3 Crossroads Planner, P4 Gift-Giver) can follow the Lab concept. Sources: the Bible and Ad Bank docs, plus the Lab code. The Acquisition Journey Map doc could not be read from this session (Claude Docs `access` refusal), so the DM route was not audited.
+
+**Findings**
+- The experiment's three beats go by three sets of names. Ad Bank: "Astrology says / Psychology studies / Test it this week". Instant-reading Lab note: "The astrological lens / The psychological lens / Put it into practice" (`content/lab/reading.ts` `LAYER_LABELS`, Gabs-voice final). Profile: "The card / The chart / The test" (`content/lab/ui.ts` `PROFILE_FLOW.layers`). The Ad Bank says its ads mirror the site's Lab note. They don't.
+- "Hypothesis" never appears on `/lab`. "Test" appears only on the profile, after the email gate. The words the ads lead with are gone by the time the visitor reaches the page.
+- `LAB_META.description` still says "three face-down" cards, but the deck deals six face-up (`components/lab/LabDeck.tsx` `HAND_SIZE = 6`). The same stale comment is in `components/lab/LabDraw.tsx`. Ad 2's hook ("Left, middle or right", "30 seconds") is out of date too, and the hero says "A two-minute experiment".
+- There is no result step. The test ends with "Bring what you notice to a session". The monthly Lab note email, which could ask "what did you notice?", was still unwritten in the Lab Draw notes above.
+- `/lab` and the homepage `LabTeaser` are English only (no `LangText`). Spanish-speaking P2 and P4 only ever see "LAB" as a DM keyword.
+- The profile's offer ladder has no 2027 Map or Travel Magazine (`content/lab/offers.ts`), so a P3 who comes in through the Lab is offered the Blend.
+- `parseLabSrc` only accepts `manychat | bio | ad | lora` (`lib/lab/validate.ts`). `lab_profiles.src` is unconstrained `text`, so adding a `gift` source is a code-only change with no SQL.
+- Each analytics session already stores `utm_content` and `lang` (`analytics_sessions`, joined to `analytics_events` on `session_key`). A per-ad, per-language Lab step funnel needs a read-only query, not new tracking.
+
+**Recommendation given:** pick one spine sentence and one set of beat names, in EN and ES, and check every ad, DM script and page label against it. Before creative locks on 11 Nov, run an "explain it back" test with two people per persona. Add a per-ad drop-off row to the Sunday scorecard. Don't build a Spanish Lab or a result logger before 7 Jan: the Bible parks both. Put the result beat in the first MailerLite email and in the voice note instead.
+
+**Lessons learned**
+- Audit a funnel's concept across artefacts, not inside one. The ad copy lives in Claude Docs and the page copy lives in the repo, so each one reads as consistent on its own. The mismatch only shows when you read them side by side.
+- Before calling a concept broken, check where its key words first appear in the user's path. A grep for "hypothes" and "test" across `components/lab` and `content/lab` showed the gap in one step.
+- Some companion docs can't be opened from a cloud session. Ask for them to be shared, or start the chat from the doc's own page, before auditing the route they describe.
