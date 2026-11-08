@@ -1048,3 +1048,16 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Exploration: love / career lenses on the Lab read (2026-11-08)
+
+**Files touched:** this notes file only (research session, no code).
+
+- **Question:** how to add life-area angles (love, career) to the instant read without losing the lab-report style.
+- **Finding:** the read already has one lens axis: 8 themes (`content/lab/themes.ts`) chosen by the card. Love/career would be a second, orthogonal axis (domain). Content cost scales with themes × domains (8 × 2 = 16 blocks), not cards × signs, as long as the domain layer hangs off the theme.
+- **Chart hooks already exist:** `PLACEMENTS.Venus` and `PLACEMENTS.Saturn` (`content/lab/placements.ts`) give a love and a work placement per sign; a real career read wants the MC / 10th house, which only exists with a birth time.
+- **Options compared:** A keep as is; B ask the area before the draw; C reading-level toggle after the read; D domain lenses only on the gated profile; E full per-card domain readings (rejected: content explosion). Recommended: C first, measure toggle clicks, then decide on B or D.
+- **Signal gap:** `lab_reading_signal` / summary (018) has no domain column, so measuring C needs a new migration file. Write it, test on local Postgres; do not apply to production.
+
+**Lessons learned**
+- Before adding an "angle", check whether it is a new axis or a renaming of an existing one; here the 8 themes are already lenses, so the new work is the domain axis.
