@@ -1101,3 +1101,17 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 
 **Lessons learned**
 - Brand stance matters as much as accuracy: the site should promote the astrology × psychology fusion, never talk astrology down. Disclaimers like "not a cause" or "not a forecast" read as negative even when the intent is careful.
+
+### Lab report card built (2026-11-08)
+
+**Files touched:** `components/lab/{LabNote,Reading,LabDraw,Gate}.tsx`, `components/lab/PracticeCallout.tsx` (new), `content/lab/ui.ts`, `content/lab/reading.ts`, `docs/superpowers/plans/2026-11-08-lab-report-card.md`.
+
+- **Instant reading = Lab report card:** title → report (theme title, "Lab report" label, Gabs's card line as a quote signed "— Gabs", Card/Sun/Moon rows replacing the chips, astrological + psychological lens) → tradition and Moon paragraphs → cusp/zone notes → standout gold "Put it into practice" callout → stance line → thumbs vote. `composeReading` is unchanged; only the rendering moved.
+- **`LabNote`** now takes optional `specimen`, `quote` and `label`. `test` is no longer a table row: when passed, it renders as a `PracticeCallout` under the table. Because of that, the profile's test section and the Big Three "Read the full note" notes picked up the new look automatically. That's the one profile change; F3 left everything else on the profile alone.
+- **Removed:** `DRAW.intro` (the "Six of the 22 major arcana… projective choice" paragraph), the gate's "Step 04" eyebrow and its three tiles (folded into the lede). Email, birth time and consent are unchanged.
+- **Positive tone (drafts for Gabs):** `STANCE`, `STANCE_LINE` ("astrology, read through a therapist's eyes"; this one is in her GABS VOICE file, so it needs her OK), `PROFILE_FLOW.chartLine`, `PROFILE_FLOW.upcomingLine`. The stance still shows in all three places (E3).
+- **Verified:** `tsc` clean, vitest 299 passed, `next lint` clean, and a Playwright run through draw → birth → reading → gate at 390×844 and 1280×900 (compute route given a `geo`, dummy Supabase env). The profile wasn't checked visually because it needs the DB.
+
+**Lessons learned**
+- The reading's content functions were already separate from its layout (`composeReading` returns parts, `Reading.tsx` arranges them), so a full restyle needed no change to Gabs's copy or the tests. Keep that split.
+- Changing a shared component changes every place it's used. `LabNote` sits inside profile `<details>` blocks too. Grep for usages before calling a change "reading only".

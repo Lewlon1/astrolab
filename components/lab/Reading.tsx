@@ -1,12 +1,15 @@
-// Renders the instant reading exactly as the compute route returns it (composeReading output).
+// Renders the instant reading (composeReading output) as a Lab report card:
+// title, Gabs's signed card line + the report table (card, Sun, Moon, both lenses),
+// the remaining text, then "Put it into practice" set apart so it stands out.
 import type { InstantReading } from "@/lib/lab/reading";
 import type { Card } from "@/content/lab/cards";
 import CardFace from "./CardFace";
 import styles from "./lab.module.css";
 import { STANCE_LINE } from "@/content/lab/reading";
-import { READING_NOTES } from "@/content/lab/ui";
+import { READING_NOTES, REPORT } from "@/content/lab/ui";
 import LabNote from "./LabNote";
-import { HAND_NOTE, cx } from "./classes";
+import PracticeCallout from "./PracticeCallout";
+import { HAND_NOTE } from "./classes";
 
 type Props = {
   reading: InstantReading;
@@ -19,8 +22,11 @@ type Props = {
 const UNCERTAIN = "m-0 max-w-[62ch] border-l-2 border-gold2 pl-3 text-[14px] text-midBrown";
 
 export default function Reading({ reading, card, headingId }: Props) {
+  const opening = reading.paragraphs.find((p) => p.kind === "open");
+  const body = reading.paragraphs.filter((p) => p.kind !== "open");
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       <div className="flex items-center gap-4">
         {card && (
           <div className="w-[72px] shrink-0 sm:w-[96px]">
@@ -37,39 +43,29 @@ export default function Reading({ reading, card, headingId }: Props) {
         </h2>
       </div>
 
-      <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
-        {reading.chips.map((chip, i) => (
-          <li
-            key={chip.label}
-            className={cx(
-              "inline-flex items-baseline gap-2 rounded-full px-[14px] py-2 text-[14px]",
-              i === 0 ? "bg-deepBrown text-cream2" : "border border-cardBorder bg-sagePale text-deepBrown",
-            )}
-          >
-            <span className="font-dm-mono text-[11px] uppercase tracking-[0.12em] opacity-80">{chip.label}</span>
-            {chip.value}
-          </li>
-        ))}
-      </ul>
+      <LabNote
+        {...reading.labNote}
+        test={undefined}
+        label={REPORT.label}
+        quote={opening ? { text: opening.text, by: REPORT.signature } : undefined}
+        specimen={reading.chips}
+        headingId={`${headingId}-note`}
+      />
 
-      <div className="flex flex-col gap-4 text-[17px] leading-[1.6]">
-        {reading.paragraphs.map((p, i) => (
-          <p
-            key={i}
-            className={cx(
-              "m-0 max-w-[62ch]",
-              p.kind === "open" && "font-heading text-[24px] italic leading-[1.35] text-coral2",
-            )}
-          >
-            {p.text}
-          </p>
-        ))}
-      </div>
+      {body.length > 0 && (
+        <div className="flex flex-col gap-4 text-[17px] leading-[1.6]">
+          {body.map((p, i) => (
+            <p key={i} className="m-0 max-w-[62ch]">
+              {p.text}
+            </p>
+          ))}
+        </div>
+      )}
 
       {reading.cuspNote && <p className={UNCERTAIN}>{reading.cuspNote}</p>}
       {reading.approximateZone && <p className={UNCERTAIN}>{READING_NOTES.approximateZone}</p>}
 
-      <LabNote {...reading.labNote} headingId={`${headingId}-note`} />
+      <PracticeCallout text={reading.labNote.test} />
 
       <p className={HAND_NOTE}>{STANCE_LINE}</p>
     </div>

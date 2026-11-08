@@ -18,7 +18,8 @@ export const LAYER_LABELS = {
 } as const;
 
 export const LAB_NOTE_LABEL = "A Lab note";
-export const STANCE_LINE = "the chart is a prompt, not a cause";
+// DRAFT (2026-11-08) — Gabs to confirm: positive wording replaces "the chart is a prompt, not a cause".
+export const STANCE_LINE = "astrology, read through a therapist's eyes";
 
 /** Look up a sign record by name. */
 export function signInfo(name: string): SignInfo | undefined {

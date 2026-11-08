@@ -1,6 +1,6 @@
 # Lab report card + flow trims — plan for approval (2026-11-08)
 
-Status: **awaiting Lewis's approval**. Items A–D are agreed; E and F need a decision.
+Status: **approved 2026-11-08: A–D built; E3 (keep the stance in all three places, now positive); F3 (profile unchanged, deep review later)**.
 No SQL, no migrations. Copy marked "draft" goes to Gabs for her voice pass.
 
 ## A. Instant reading as a Lab report card (agreed)
