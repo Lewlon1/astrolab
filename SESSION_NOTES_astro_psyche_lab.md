@@ -1091,3 +1091,13 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 **Lessons learned**
 - Count every decision and field per screen before you redesign. In this flow, a lot of the complexity is repetition (the same question or explanation shown twice), not depth.
 - Testing feedback like "it's complicated" needs a step and a persona attached before it can drive cuts. Ask testers where they hesitated, not whether they liked it.
+
+### Lab report card plan, awaiting approval (2026-11-08)
+
+**Files touched:** `docs/superpowers/plans/2026-11-08-lab-report-card.md` (new), this file. No code changed.
+
+- Lewis's call: the confusion is mostly the instant reading. The plan restyles it as a Lab report card: Gabs's card line as a signed quote, a table (Card/Sun/Moon + the two lenses), then the remaining text, then a standout "Put it into practice". The profile's test section gets the same look.
+- Also agreed: remove `DRAW.intro`, slim the gate, and replace all four defensive lines ("no proven power", "prompt, not a cause", two "not a forecast") with positive astrology-through-psychology wording (drafts for Gabs). Still to decide: E (where the stance appears) and F (profile booking buttons and order).
+
+**Lessons learned**
+- Brand stance matters as much as accuracy: the site should promote the astrology × psychology fusion, never talk astrology down. Disclaimers like "not a cause" or "not a forecast" read as negative even when the intent is careful.
