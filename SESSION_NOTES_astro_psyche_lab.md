@@ -1048,3 +1048,17 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Migration audit: which migrations main still needs (2026-11-08)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only (read-only audit; nothing applied to production).
+
+- Compared `supabase/migrations/` on `main` (dfc93f8) with the "Astro lab" project (`nekpalyvjeaskdchrgih`), using `list_migrations` plus read-only catalog `SELECT`s.
+- **Outstanding: `018_lab_reading_feedback.sql` only.** Missing in prod: table `lab_reading_feedback`, views `lab_reading_signal` / `lab_reading_signal_summary`, index `idx_bookings_attendee_email_lower`.
+- 001–017 are all present by schema, even though 001–003, 005, 006, 009, 010, 012 and 013 are not in `supabase_migrations.schema_migrations` (they were run in the SQL editor).
+- `events` has 0 rows, so the 005 seed is not present (or was deleted). Its May 2026 dates are past, so it doesn't need re-running.
+- Prod history has `061_user_hypotheses` and a `bill-documents` bucket, and neither is in this repo. They're from another app on the same project, or unknown.
+
+**Lessons learned**
+- `list_migrations` isn't a reliable view of prod here, because much was applied by hand. Check catalog objects (tables/views/indexes/columns) to judge what's applied.
+- Don't run `supabase db push` against prod as-is: the CLI would see 001–003, 005, 006, 009, 010, 012, 013 and 018 as pending, and re-running the 003/009 `CREATE POLICY` statements (no `IF NOT EXISTS`) would fail, while 002/005/006 would duplicate seed rows.
