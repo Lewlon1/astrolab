@@ -1071,3 +1071,23 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Audit a funnel's concept across artefacts, not inside one. The ad copy lives in Claude Docs and the page copy lives in the repo, so each one reads as consistent on its own. The mismatch only shows when you read them side by side.
 - Before calling a concept broken, check where its key words first appear in the user's path. A grep for "hypothes" and "test" across `components/lab` and `content/lab` showed the gap in one step.
 - Some companion docs can't be opened from a cloud session. Ask for them to be shared, or start the chat from the doc's own page, before auditing the route they describe.
+
+### Lab flow simplification review, by persona (2026-11-08)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. This was a review session, so no code changed.
+
+**Trigger:** early testers said the Lab flow feels complicated. The feedback didn't say which step, so the review worked from the code.
+
+**What a visitor faces before the email gate:** a hero with a three-sentence abstract lede, then six face-up cards (two taps on a phone), "Deal six more", and an intro explaining "projective choice". Next come three birth fields (date, place, optional time), sometimes followed by a pick between places with the same name. The reading itself has a headline, three chips, the card line, a Golden Dawn paragraph, a Moon paragraph, a three-row Lab note, a stance line and a thumbs vote. The gate has an eyebrow, a title, a lede, three tiles, an email field, the birth time a second time, and consent. After the gate, the profile shows up to five booking buttons.
+
+**Main findings**
+- Birth time is asked twice: in `BirthForm` and again in `Gate`.
+- "Projective choice" is explained twice (`DRAW.intro`, `PROFILE_FLOW.cardLine`). The Lab stance appears three times: `STANCE` in the footer, `STANCE_LINE` under the reading, and `STANCE` on the profile.
+- The pre-gate reading is about five text blocks before the Lab note, and the Lab note is the part that carries the experiment.
+- The hero lede never says what the visitor gets, how long it takes, or that it's free.
+
+**Recommendations given:** pre-launch, copy-only changes. A concrete hero promise. Ask for birth time once, at the gate. Trim the reading to headline + card line + Lab note, and move the Golden Dawn and Moon paragraphs to the profile. Cut the gate down to email + consent. Show the stance once. One booking button before the offer ladder. Before cutting anything, ask testers which step lost them, and read the drop-off in the `lab_*` events.
+
+**Lessons learned**
+- Count every decision and field per screen before you redesign. In this flow, a lot of the complexity is repetition (the same question or explanation shown twice), not depth.
+- Testing feedback like "it's complicated" needs a step and a persona attached before it can drive cuts. Ask testers where they hesitated, not whether they liked it.
