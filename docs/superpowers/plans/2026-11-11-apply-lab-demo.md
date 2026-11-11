@@ -7,7 +7,7 @@ Status: approved in outline (2026-11-11). No code yet.
 - **Where:** variant A only, mid-page. The demo replaces A's static "How it works" block. B stays as built (draw first, then the offer).
 - **Email:** asked after step 3 (Read). Email unlocks step 4 (Test) and the rest of the page's personal touches.
 - **Friction:** card + birth date + place (time optional), like the Lab today.
-- **Base:** build on the Lab report-card reading, so it has to reach `main` first and `feat/apply-lp` has to be rebased onto it.
+- **Base:** build on the Lab report-card reading, so it has to reach `main` first and then be merged into `feat/apply-lp`.
 
 ## What it is
 
@@ -37,7 +37,7 @@ Then a bridge line ties it to the offer, followed by the inclusions, proof, FAQ 
 
 ## Build outline
 
-1. **Prerequisite:** get the report-card work onto `main` (see Q1), then rebase `feat/apply-lp`.
+1. **Prerequisite:** get the report-card work onto `main` (see Q1), then merge `main` into `feat/apply-lp`.
 2. `content/apply/demo.ts` (DRAFT): step titles, method notes, programme notes, gate copy and the bridge line.
 3. `components/apply/LabDemo.tsx`: a progress rail ("Draw · Map · Read · Test", `aria-current` on the active step) and four stages. It reuses `LabDeck`, `BirthForm`, `/api/lab/compute`, and the report-card `Reading` / `LabNote` / `PracticeCallout`. Before the gate, step 4 is hidden by rendering `Reading` without its practice test and `PracticeCallout` after the gate. That may need one optional prop on `Reading` (see Q3).
 4. `EmailCapture` is reused for the gate, with `placement: "demo"`. `VariantA` lifts the `captured` state so `ApplicationForm` skips step 1.
@@ -57,14 +57,14 @@ So the question becomes "does leading with the experience beat leading with the 
 
 ## Answers (Lewis, 2026-11-11)
 
-- **Report card → main:** the 7 uncommitted edits on `claude/determined-galileo-hix9nz` belong to the report card. Commit them there, open their own PR, and Lewis reviews and merges it. Then rebase `feat/apply-lp` onto `main`.
+- **Report card → main:** the 7 uncommitted edits on `claude/determined-galileo-hix9nz` belong to the report card. Commit them there, open their own PR, and Lewis reviews and merges it. Then merge `main` into `feat/apply-lp`.
 - **Demo is optional.** The hero's "Apply for a place" still goes straight to the application. The demo is a mid-page section with an "Or try the method first" link.
 - **Lab code:** one optional, additive prop on `components/lab/Reading.tsx` to hold back the practice callout is fine. With the default, `/lab` renders exactly as before.
-- **Variant B** picks up the report-card reading automatically after the rebase (same component), with the practice callout shown as on `/lab`.
+- **Variant B** picks up the report-card reading automatically after the merge (same component), with the practice callout shown as on `/lab`.
 
 ## Order of work
 
 1. Review the 7 edits, run the Lab tests on that branch, commit, push, and open the report-card PR. **Stop for Lewis to merge.**
-2. Rebase `feat/apply-lp` on `main`, re-run everything, and force-push the PR branch (with Lewis's OK, since it rewrites PR #21's history).
+2. Merge `main` into `feat/apply-lp` (a merge, not a rebase, so PR #21 needs no force-push), then re-run everything.
 3. Build steps 2–8 of the outline above, committing once per step group.
 4. Session notes: the new test question (experience first vs offer first) and the decision rule.
