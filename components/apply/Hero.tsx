@@ -9,11 +9,13 @@ type Props = {
   /** Shown under the headline (variant A shows the price; B leaves it out). */
   price?: { label: string; full: string; instalments: string | null } | null;
   cta: { label: string; href: string };
+  /** Quieter second link, e.g. variant A's "Or try the method first". */
+  secondary?: { label: string; href: string } | null;
   eyebrow: string;
 };
 
 /** Concept-matched hero. The copy is resolved on the server, so it is in the first HTML (no swap, no shift). */
-export default function Hero({ hero, price, cta, eyebrow }: Props) {
+export default function Hero({ hero, price, cta, secondary, eyebrow }: Props) {
   const { lpTrack } = useLp();
   return (
     <section aria-labelledby="lp-hero-title" className="flex flex-col gap-5">
@@ -32,7 +34,7 @@ export default function Hero({ hero, price, cta, eyebrow }: Props) {
           {price.instalments && <span className="text-[15px] text-midBrown">{price.instalments}</span>}
         </p>
       )}
-      <div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
         <a
           href={cta.href}
           className={cx(BTN_LIGHT, "no-underline")}
@@ -40,6 +42,15 @@ export default function Hero({ hero, price, cta, eyebrow }: Props) {
         >
           {cta.label}
         </a>
+        {secondary && (
+          <a
+            href={secondary.href}
+            className="text-[15px] text-deepBrown underline underline-offset-[3px] hover:text-coral2"
+            onClick={() => lpTrack("lp_cta_clicked", { placement: "hero_demo" })}
+          >
+            {secondary.label}
+          </a>
+        )}
       </div>
       <p className="m-0 max-w-[62ch] text-[14px] text-midBrown">{hero.proof}</p>
     </section>

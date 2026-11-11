@@ -12,6 +12,7 @@ import type { Market } from "@/content/apply/offer";
 export type LpEvent =
   | "lp_view"
   | "lp_cta_clicked"
+  | "lp_demo_step"
   | "lp_draw_started"
   | "lp_reading_viewed"
   | "lp_email_captured"

@@ -45,7 +45,7 @@ type Props = {
   /** Variant B passes what the reading showed, for the follow-up email. */
   reading?: ReadingSummary | null;
   submitLabel: string;
-  placement: "application" | "gate";
+  placement: "application" | "gate" | "demo";
   onCaptured: (c: Captured) => void;
   /** Fired on first focus or input (application step 1 only). */
   onStart?: () => void;

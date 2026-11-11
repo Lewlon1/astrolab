@@ -2,7 +2,7 @@
 
 // Multi-step application. Step 1 = email + consent (saved as a partial lead straight
 // away); then one question per step; then the 15-minute Cal call with metadata.
-// Variant B arrives with step 1 already done (`captured`), so the email isn't asked twice.
+// If the email was already given on the page (B's gate, A's demo), step 1 is skipped so it isn't asked twice.
 import { getCalApi } from "@calcom/embed-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { CAL_BRAND } from "@/lib/booking";
@@ -92,11 +92,15 @@ function QuestionField({ q, value, onChange, error }: { q: Question; value: stri
 }
 
 type Props = {
-  /** Variant B: email already captured at the gate. */
+  /** Email already captured elsewhere on the page (B's gate, A's demo): step 1 is skipped. */
   captured?: Captured | null;
+  /** Count the application as started as soon as it shows with the email done (variant B). */
+  autoStart?: boolean;
+  /** Step 1 completed here: lets the page share the email with the demo. */
+  onCaptured?: (c: Captured) => void;
 };
 
-export default function ApplicationForm({ captured: initial = null }: Props) {
+export default function ApplicationForm({ captured: initial = null, autoStart = false, onCaptured }: Props) {
   const { variant, concept, market, utm, lpTrack } = useLp();
   const { marketingAllowed } = useConsent();
   const [captured, setCaptured] = useState<Captured | null>(initial);
@@ -118,7 +122,7 @@ export default function ApplicationForm({ captured: initial = null }: Props) {
   };
   // B arrives with the email done: the application starts when this form appears.
   useEffect(() => {
-    if (initial) markStarted();
+    if (initial && autoStart) markStarted();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
@@ -215,14 +219,25 @@ export default function ApplicationForm({ captured: initial = null }: Props) {
         <div ref={qRef} className="flex scroll-mt-6 flex-col gap-5">
           <ProgressBar step={step} />
           {!captured ? (
-            <EmailCapture placement="application" submitLabel={APPLICATION_UI.continue} onStart={markStarted} onCaptured={setCaptured} />
+            <EmailCapture
+              placement="application"
+              submitLabel={APPLICATION_UI.continue}
+              onStart={markStarted}
+              onCaptured={(c) => {
+                setCaptured(c);
+                onCaptured?.(c);
+              }}
+            />
           ) : (
             <form noValidate onSubmit={next} className="flex flex-col gap-5">
               <QuestionField
                 key={q.id}
                 q={q}
                 value={answers[q.id] ?? ""}
-                onChange={(v) => setAnswers((a) => ({ ...a, [q.id]: v }))}
+                onChange={(v) => {
+                  markStarted();
+                  setAnswers((a) => ({ ...a, [q.id]: v }));
+                }}
                 error={error}
               />
               {error && (

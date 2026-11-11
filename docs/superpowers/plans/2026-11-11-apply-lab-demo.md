@@ -1,6 +1,6 @@
 # Plan: the Lab Draw as an interactive "how the Lab works" section on /apply (variant A)
 
-Status: approved in outline (2026-11-11). No code yet.
+Status: built 2026-11-11 (see SESSION_NOTES, "Lab demo in variant A").
 
 ## Decisions (Lewis, 2026-11-11)
 

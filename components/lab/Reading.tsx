@@ -16,11 +16,15 @@ type Props = {
   card?: Card | null;
   /** id for the headline, so the section can be aria-labelledby it. */
   headingId: string;
+  /** Show "Put it into practice" inside the card. Default true; /apply's demo reveals it later. */
+  showPractice?: boolean;
+  /** Show the stance line under the reading. Default true; /apply hides it (ad-page wording rules). */
+  showStance?: boolean;
 };
 
 const UNCERTAIN = "m-0 max-w-[62ch] border-l-2 border-gold2 pl-3 text-[14px] text-midBrown";
 
-export default function Reading({ reading, card, headingId }: Props) {
+export default function Reading({ reading, card, headingId, showPractice = true, showStance = true }: Props) {
   const opening = reading.paragraphs.find((p) => p.kind === "open");
   const body = reading.paragraphs.filter((p) => p.kind !== "open");
 
@@ -44,6 +48,7 @@ export default function Reading({ reading, card, headingId }: Props) {
 
       <LabNote
         {...reading.labNote}
+        test={showPractice ? reading.labNote.test : undefined}
         label={REPORT.label}
         quote={opening ? { text: opening.text, by: REPORT.signature } : undefined}
         specimen={reading.chips}
@@ -63,7 +68,7 @@ export default function Reading({ reading, card, headingId }: Props) {
       {reading.cuspNote && <p className={UNCERTAIN}>{reading.cuspNote}</p>}
       {reading.approximateZone && <p className={UNCERTAIN}>{READING_NOTES.approximateZone}</p>}
 
-      <p className={HAND_NOTE}>{STANCE_LINE}</p>
+      {showStance && <p className={HAND_NOTE}>{STANCE_LINE}</p>}
     </div>
   );
 }

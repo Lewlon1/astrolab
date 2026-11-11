@@ -43,7 +43,7 @@ export default function VariantB({ hero, market }: { hero: HeroCopy; market: Mar
           <Testimonials />
           <About />
           <Faq />
-          <ApplicationForm captured={captured} />
+          <ApplicationForm captured={captured} autoStart />
         </div>
       )}
     </div>

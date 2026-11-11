@@ -1189,3 +1189,38 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Variant assignment needs a request header as well as the cookie: on the first hit, the cookie is only on the response, so the page can't see it.
 - Programmatic `focus()` doesn't always fire React `onFocus` in an unfocused tab. Fire "started" events on first input too.
 - A banned-word test must ignore ids and comments. `id: "is-this-therapy"` tripped the word-boundary check.
+
+### Lab demo in variant A (2026-11-11)
+
+**Plan:** `docs/superpowers/plans/2026-11-11-apply-lab-demo.md`. Built on `feat/apply-lp`, with PR #20 (report card) merged into the branch, because #20 wasn't merged to `main` yet. Once #20 merges, its commits drop out of PR #21's diff.
+
+**What changed**
+- Variant A's static "How it works" is replaced by `components/apply/LabDemo.tsx`, a hands-on run of the method: Draw → Map → Read → [email] → Test. It has a sticky progress rail, and each step has an "In the Lab" line and an "In the programme" line (the second is behind a toggle on phones). After step 4 there's a bridge line and "Apply for a place".
+- The demo is optional. The hero keeps "Apply for a place" and adds "Or try the method first ↓".
+- One email state is shared by the demo and the application. Email given in the demo means application step 1 is skipped; email given in the application means the demo skips its gate.
+- `components/lab/Reading.tsx` gets two optional props, `showPractice` and `showStance`, both default `true`. `/lab` renders exactly as before (render test in `components/apply/__tests__/reading-props.test.ts`).
+- **Compliance fix:** PR #20 changed the stance line to "astrology, read through a therapist's eyes". `Reading` showed it on /apply too, including variant B, which breaks Hard rule 4. Both /apply readings now pass `showStance={false}`.
+- The draw logic moved into `components/apply/useLabDraw.ts`, shared by B's `LabMiniDraw` and A's `LabDemo`.
+- New copy: `content/apply/demo.ts` (DRAFT). New event: `lp_demo_step` with `{ step: 1–4 }` (1 = scrolled into view, 2 = card picked, 3 = reading shown, 4 = email given). `lp_draw_started`, `lp_reading_viewed` and `lp_email_captured` now carry `placement: "demo"` or `"mini"`.
+- `lp_application_started` now fires on the first answer as well. It fires straight away only in B (`autoStart`), so a demo email in A no longer counts as starting the application.
+- `supabase/sql/lp_demo_report_v1.sql` (SELECT only): A's demo drop-off by step. Checked on seeded PGlite data.
+
+**What the split test now asks:** both variants contain the draw. A = offer first, with an optional demo mid-page. B = draw first, then the offer. So the test reads "does leading with the experience beat leading with the offer?" The metric (email rate per visitor) and the decision rule are unchanged. Emails from A's demo count as A's emails.
+
+**QA:** `tsc` clean, lint clean, Vitest 348 passed / 1 skipped. Browser checks with placeholder env and stubbed email saves:
+- At 375 px the full demo works, with the rail advancing.
+- No practice step before the email, and no "therapist" line.
+- After the email, step 4 shows and the application starts at step 2 of 6.
+- The reverse path works: email in the application first, so the demo skips its gate.
+- On desktop the programme notes show open.
+- All eight events fire in order.
+
+**Open items (new)**
+- Gabs to review `content/apply/demo.ts`, especially the programme lines, which promise monthly draws, readings and experiment reviews. They must match the final offer.
+- The stance line still names therapy on `/lab` itself. That's outside these pages and is Gabs/Lewis's call. /apply hides it.
+- Merge PR #20 to `main`.
+
+**Lessons learned**
+- Merging upstream copy changes can break compliance on pages that reuse the component. Grep the merged copy against the banned list, not only `content/apply`.
+- `<details open>` driven by a one-time phone check is simpler and kinder than closing notes on every re-render, which would undo what the visitor opened.
+- Vitest here compiles JSX with the classic runtime. A render test needs `globalThis.React` set before rendering.
