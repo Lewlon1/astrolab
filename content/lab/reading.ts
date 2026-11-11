@@ -18,7 +18,8 @@ export const LAYER_LABELS = {
 } as const;
 
 export const LAB_NOTE_LABEL = "A Lab note";
-export const STANCE_LINE = "the chart is a prompt, not a cause";
+// DRAFT (2026-11-08) — Gabs to confirm: positive wording replaces "the chart is a prompt, not a cause".
+export const STANCE_LINE = "astrology, read through a therapist's eyes";
 
 /** Look up a sign record by name. */
 export function signInfo(name: string): SignInfo | undefined {
@@ -49,40 +50,6 @@ export function headline(card: Card, sunName: string): string {
 /** Opening line: the card's "what you're reaching for" sentence. */
 export function openingLine(card: Card): string {
   return card.now;
-}
-
-/** "a sign" when the attribution is a zodiac sign, otherwise "a planet" (as in the prototype). */
-export function attributionKind(card: Card): "a sign" | "a planet" {
-  return elementOf(card.attribution) ? "a sign" : "a planet";
-}
-
-/**
- * Mirror, agree or tension sentence.
- * @param rel result of relationOf
- * @param ctx card and the Sun sign name
- */
-export function relationText(rel: Relation, ctx: { card: Card; sunName: string }): string {
-  const { card, sunName } = ctx;
-  if (rel.kind === "mirror") {
-    return (
-      `There's an interesting overlap here: in the Golden Dawn tradition, ${card.name} corresponds to ${card.attribution}, which is your own ${rel.with}` +
-      ` sign. You may have reached for a theme that already feels familiar. Ask yourself: are you looking for confirmation of what you know, or a new way to work with it?`
-    );
-  }
-  if (rel.kind === "agree") {
-    return `Your ${sunName} Sun and this card point in a similar direction. The useful question may not be what you want, but what needs to shift for you to act on it.`;
-  }
-  return `This card introduces a different perspective from your ${sunName} Sun. That contrast is worth exploring: what might you be reaching for that doesn't come naturally to your usual way of operating?`;
-}
-
-/**
- * Second paragraph: tradition link, Sun baseline, then the relation sentence.
- * @param card the drawn card
- * @param sun the Sun sign record
- * @param relation the relationText output
- */
-export function traditionParagraph(card: Card, sun: SignInfo, relation: string): string {
-  return `In the Golden Dawn tradition, ${card.name} is associated with ${card.attribution} (${attributionKind(card)}). Your Sun in ${sun.name} ${sun.baseline}. Read together, they offer two perspectives on what may be taking up space in your life right now. ${relation}`;
 }
 
 /**
