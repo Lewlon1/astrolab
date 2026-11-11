@@ -1,7 +1,6 @@
-// The Lab report: an optional signed quote, then a table of specimen rows (card, Sun,
-// Moon) and the two lenses. "Put it into practice" is not a table row: it renders as a
-// PracticeCallout, right under the table when `test` is given, or wherever the caller
-// places it. Reused on the profile page. Server-safe (no hooks).
+// The Lab report card: an optional signed quote, a table of specimen rows (card, Sun,
+// Moon), the two lenses, then "Put it into practice" as the card's bottom band when
+// `test` is given. Reused on the profile page. Server-safe (no hooks).
 import { LAB_NOTE_LABEL, LAYER_LABELS } from "@/content/lab/reading";
 import { cx } from "./classes";
 import PracticeCallout from "./PracticeCallout";
@@ -12,7 +11,7 @@ export type LabNoteProps = {
   title: string;
   astro: string;
   psych: string;
-  /** When given, the practice callout follows the table. Omit it to place the callout yourself. */
+  /** When given, "Put it into practice" closes the card as its bottom band. */
   test?: string;
   /** Rows above the lenses, e.g. Card / Sun / Moon. */
   specimen?: readonly SpecimenRow[];
@@ -77,8 +76,8 @@ export default function LabNote({
             <dd className="m-0 min-w-0">{psych}</dd>
           </div>
         </dl>
+        {test && <PracticeCallout text={test} />}
       </article>
-      {test && <PracticeCallout text={test} />}
     </div>
   );
 }

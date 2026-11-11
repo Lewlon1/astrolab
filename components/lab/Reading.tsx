@@ -1,6 +1,6 @@
 // Renders the instant reading (composeReading output) as a Lab report card:
-// title, Gabs's signed card line + the report table (card, Sun, Moon, both lenses),
-// the remaining text, then "Put it into practice" set apart so it stands out.
+// title, then the report card (Gabs's signed card line, card/Sun/Moon, both lenses and
+// "Put it into practice" as its bottom band), then the remaining text.
 import type { InstantReading } from "@/lib/lab/reading";
 import type { Card } from "@/content/lab/cards";
 import CardFace from "./CardFace";
@@ -8,7 +8,6 @@ import styles from "./lab.module.css";
 import { STANCE_LINE } from "@/content/lab/reading";
 import { READING_NOTES, REPORT } from "@/content/lab/ui";
 import LabNote from "./LabNote";
-import PracticeCallout from "./PracticeCallout";
 import { HAND_NOTE } from "./classes";
 
 type Props = {
@@ -45,7 +44,6 @@ export default function Reading({ reading, card, headingId }: Props) {
 
       <LabNote
         {...reading.labNote}
-        test={undefined}
         label={REPORT.label}
         quote={opening ? { text: opening.text, by: REPORT.signature } : undefined}
         specimen={reading.chips}
@@ -64,8 +62,6 @@ export default function Reading({ reading, card, headingId }: Props) {
 
       {reading.cuspNote && <p className={UNCERTAIN}>{reading.cuspNote}</p>}
       {reading.approximateZone && <p className={UNCERTAIN}>{READING_NOTES.approximateZone}</p>}
-
-      <PracticeCallout text={reading.labNote.test} />
 
       <p className={HAND_NOTE}>{STANCE_LINE}</p>
     </div>
