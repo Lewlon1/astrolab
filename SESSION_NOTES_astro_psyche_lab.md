@@ -1048,3 +1048,77 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### /apply landing pages and the lp_r1 split test (2026-11-11)
+
+**Branch:** `feat/apply-lp`, cut from `origin/main` (dfc93f8). It doesn't contain the Lab report-card work on `claude/determined-galileo-hix9nz`. Not pushed.
+
+**Files created**
+- Content (all `// DRAFT — Gabs to rewrite in her voice`): `content/apply/{concepts,offer,proof,faq,application,ui}.ts`, `content/apply/__tests__/content.test.ts` (DRAFT banner + Hard rule 4 banned-word check).
+- Page: `app/apply/layout.tsx` (no site nav; consent banner and analytics), `app/apply/[market]/page.tsx` (server-resolved hero, `noindex`).
+- Components: `components/apply/{LpContext,Hero,OfferBlocks,Proof,Faq,EmailCapture,ApplicationForm,LabMiniDraw,VariantA,VariantB}.tsx`.
+- API: `app/api/apply/partial/route.ts` (step 1 email), `app/api/apply/route.ts` (application), `app/api/apply/route.test.ts`.
+- Lib: `lib/experiments.ts` (+ test), `lib/apply/{validate,events,mailerlite,cal,booking,rateLimit,requestContext}.ts` (+ tests).
+- SQL: `supabase/sql/lp_variants_v1.sql` (additive), `supabase/sql/lp_report_v1.sql` (SELECT only). Docs: `docs/ads/url-template.md`.
+
+**Files changed**
+- `middleware.ts`: `/apply/*` gets variant assignment and skips the Supabase session refresh (no auth there). Every other path still goes to `updateSession`.
+- `lib/fbpixel.ts`: `trackLead` takes an optional `content_name`; new `trackSchedule`. Existing callers are unchanged.
+- `app/api/webhooks/cal/route.ts`: after the normal booking sync, `recordLpBooking` logs `lp_call_booked` and tags `bookings`, but only when the booking's metadata has an /apply `lead_id`. It never throws.
+- Unchanged (checked with `git diff origin/main`): `components/lab`, `content/lab`, `lib/lab`, `lib/astro`, `app/(public)`, `lib/booking.ts`, the homepage cards.
+
+**How it differs from the session prompt**
+- No `lib/events.ts` exists. The Lab helper is `lib/lab/events.ts`; it was left alone, and `lib/apply/events.ts` follows the same pattern and adds the experiment fields.
+- `leads.source` stays `'website_form'` for /apply leads. A new `'apply'` value would need `DROP CONSTRAINT`. /apply leads are the rows with `experiment_id` set.
+- `analytics_sessions` gets no new columns. Its rows are written by the `analytics_touch_session` RPC, so new columns would need that RPC replaced. Every `lp_*` analytics event carries `lp_variant`, `experiment_id`, `concept`, `market`, `qa` and the UTMs in `props` instead, and the readout uses those.
+- Booking uses the Cal **embed popup** with a plain link as fallback, not a redirect. That way `bookingSuccessful` fires on our page, giving `lp_call_booked` plus Meta `Schedule` after consent. Name and email are prefilled. The metadata keys are `lead_id`, `lp_variant`, `experiment_id`, `concept`, `market` and `utm_*`.
+- Variant B has its own email gate (`EmailCapture`), because the Lab `Gate` creates a Lab profile. It reuses `LabDeck`, `BirthForm`, `Reading` and `/api/lab/compute` unchanged.
+
+**Dependencies added:** none. (PGlite 0.2.17, Apache-2.0, was installed only in a scratch folder to check the SQL. It is not in `package.json`.)
+
+**SQL to run by hand:** `supabase/sql/lp_variants_v1.sql`. **Not run yet.** Until it runs, /api/apply still keeps every email (it falls back to a plain lead, and the answers go in `leads.notes`), but those rows have no variant tag. `lp_report_v1.sql` is read-only; run it whenever you want a readout.
+
+**New env vars (set in Vercel, Production + Preview)**
+- `LP_SPLIT`: `off` sends everyone to A. Leave it unset for the 50/50 test.
+- `MAILERLITE_APPLY_PARTIAL_GROUP_ID` ("Apply — partial") and `MAILERLITE_APPLY_COMPLETE_GROUP_ID` ("Apply — complete"). Create both groups in MailerLite first.
+- `NEXT_PUBLIC_APPLY_CAL_LINK`: the 15-minute event, e.g. `theastropsychelab/discovery-15`. It defaults to `theastropsychelab/15min`, which may not exist.
+
+**QA (Phase 4)**
+- Pass: `/apply/uk?c=c2` and `/apply/us?c=c2` show the c2 hero with £ / $. `?c=zzz` gives the default hero, and `/apply/fr` gives a 404.
+- Pass: the variant is sticky (a cookie is never rewritten). `?v=b` forces B and sets `lp_qa=1`. `LP_SPLIT=off` gives A (unit test only; the server wasn't restarted with it).
+- Pass: 200 real first visits through middleware split 99 A / 101 B. A seeded unit test also checks the 40–60% band.
+- Pass: B flow draw → reading → email → offer → application, with and without a birth time (real compute route, place given as `geo`). The unknown-place message shows. The `/api/apply*` responses were stubbed in the browser, so no prod writes happened.
+- Pass (unit test): the step 1 email upserts `leads` and calls MailerLite "Apply — partial". If the SQL hasn't run, the email is still kept. **Not checked against the live DB or MailerLite.**
+- Pass (unit + browser): the Cal config carries `lead_id`, `lp_variant`, `concept` and the UTMs. **A real Cal booking and webhook weren't tested.**
+- Pass: no request to facebook.com before consent. After "Sounds good", PageView loads and `Lead` fires on step 1 with `content_name=lp_r1_email`. A dummy pixel ID was used.
+- Pass: the server logs held no test emails, birth data or answers. The route tests also assert that.
+- Pass: `/lab` and the homepage are unchanged (git diff).
+- **Not run:** Lighthouse. `next build` can't download Google Fonts inside the sandbox. Run it locally: `npx lighthouse https://<preview-url>/apply/uk?v=a --preset=perf --form-factor=mobile` (and `v=b`).
+- Pass: the banned-word Vitest over `content/apply/*`. `tsc` clean, lint clean, full suite 342 passed / 1 skipped.
+
+**Decision rule (fixed now, so nobody moves the goalposts)**
+- Don't look before **300 unique visitors per variant**. (At 20% vs 30% email rate, about 290 per variant gives 80% power at 5% significance.)
+- If one variant's email rate is **≥ 1.4×** the other's, **and** its calls booked aren't lower, send 100% of traffic to it.
+- Otherwise keep A, the simpler page, and move on to testing heroes.
+- Booked-call rate and close rate are **not** decision metrics before January. Log them; don't act on them.
+- "Unique visitor" = one analytics session (sessionStorage, cookieless), the same for both variants.
+
+**Open items**
+- Final offer, price, instalments and cap in `content/apply/offer.ts` (all placeholders, `£TBC` / `$TBC`). The budget question's options must match the price.
+- The c1–c5 heroes in `content/apply/concepts.ts` (TODO, from the Acquisition Bible).
+- Gabs's voice pass on all of `content/apply/*`.
+- Testimonial consents (`TESTIMONIALS` is empty, so the block is hidden).
+- Credential wording in `content/apply/proof.ts` (Lewis + Gabs to confirm).
+- The 60–90 s video (a fixed 16:9 placeholder box is in place).
+- Set `NEXT_PUBLIC_APPLY_CAL_LINK`. Check that the Cal webhook subscription covers the 15-minute event, then book a test call and confirm a `lp_call_booked` row and that `bookings.lead_id` is filled.
+- The B email promises "your full reading". Someone has to send it: a MailerLite automation on "Apply — partial" using `lab_card` / `sun_sign` / `moon_sign`.
+- The `lp_v` / `lp_qa` cookies are set without consent. A/B-testing cookies are arguably not "strictly necessary" under PECR, so add them to the cookie notice, or confirm this is acceptable.
+- One Lab theme line (`content/lab/themes.ts`, "Acceptance-based therapies…") can appear in B's reading. It's about research, not the offer, but check it's fine on an ad page.
+- Decision-rule check date: when both variants pass 300 visitors. At current budgets, estimate it after week 1 and diary it.
+
+**Lessons learned**
+- Read the shared plumbing before planning the schema. A CHECK constraint on `leads.source` and an RPC-written `analytics_sessions` would each have forced a DROP or an RPC rewrite. Putting the fields in event props and using an existing source value avoided both.
+- `.env.local` points at production Supabase and the real MailerLite key. Any local test of a write route would create real leads and subscribers. Run the dev server with placeholder Supabase/MailerLite env and stub the write calls in the browser; test the server side with mocked route tests.
+- Variant assignment needs a request header as well as the cookie: on the first hit, the cookie is only on the response, so the page can't see it.
+- Programmatic `focus()` doesn't always fire React `onFocus` in an unfocused tab. Fire "started" events on first input too.
+- A banned-word test must ignore ids and comments. `id: "is-this-therapy"` tripped the word-boundary check.
