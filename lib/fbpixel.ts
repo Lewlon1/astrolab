@@ -28,7 +28,7 @@ export const track = (event: string, params?: Record<string, unknown>) => {
  *
  * No-ops safely if fbq hasn't loaded (i.e. before cookie consent).
  */
-export const trackLead = (email?: string) => {
+export const trackLead = (email?: string, contentName = "newsletter_signup") => {
   if (!ready()) return;
   const normalized = email?.trim().toLowerCase();
   if (FB_PIXEL_ID && normalized) {
@@ -36,5 +36,10 @@ export const trackLead = (email?: string) => {
     // `em` before it is sent. Does not re-fire PageView.
     window.fbq!("init", FB_PIXEL_ID, { em: normalized });
   }
-  window.fbq!("track", "Lead", { content_name: "newsletter_signup" });
+  window.fbq!("track", "Lead", { content_name: contentName });
+};
+
+/** A booked call (Cal embed `bookingSuccessful`). No-ops before consent, like everything here. */
+export const trackSchedule = (params?: Record<string, unknown>) => {
+  if (ready()) window.fbq!("track", "Schedule", params);
 };

@@ -53,5 +53,5 @@ export const OFFER = {
   ],
   /** Variant B only: ties the instant reading to the offer. `{card}` and `{sun}` are filled in. */
   bridgeLine:
-    "Your {card} and {sun} Sun are a starting point. The programme reads the whole chart, month by month, through 2027.",
+    "{card} and your {sun} Sun are a starting point. The programme reads the whole chart, month by month, through 2027.",
 } as const;
