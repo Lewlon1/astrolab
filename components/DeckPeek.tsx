@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 const CARDS = [
   { src: "/images/The_fool.JPG", rot: -8, offset: -14, delay: "0s" },
   { src: "/images/The_star.jpg", rot: 0, offset: 0, delay: "-1.5s" },
@@ -54,16 +56,17 @@ export default function DeckPeek() {
               } as React.CSSProperties
             }
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* next/image serves a ~58px-wide copy instead of the full card scans
+                (1.2 MB for the three); readiness plan change 10. */}
+            <Image
               src={c.src}
               alt=""
+              fill
+              sizes={`${CARD_W}px`}
+              priority
               style={{
-                width: "100%",
-                height: "100%",
                 objectFit: "cover",
                 filter: "sepia(.15) contrast(1.05)",
-                display: "block",
               }}
             />
           </div>

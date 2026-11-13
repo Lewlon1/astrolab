@@ -1048,3 +1048,12 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+## 2026-11-13 — Readiness plan changes 6, 7 (code part), 10
+
+Branch `claude/readiness-site` (off main; separate from the apply-page PR #21).
+
+- **Change 6, fonts:** only Spectral, Fraunces and DM Mono are preloaded now; Cormorant, Outfit, Syne, Instrument and Caveat load on demand. Preloaded per page: 17 files / 429 KB → 10 files / 186 KB (measured from the production build's HTML). Still to do: one Lighthouse run on the apply page on the Vercel preview.
+- **Change 7, cookie choice:** accepting or declining the banner now records an `interaction` / `cookie_choice` event with `{choice, path}` in our own analytics (no DB change; respects `?internal=1`). `?internal=1` already existed, so flagging our devices is a manual step. Running the two SQL files and deleting the 6 test bookings stay manual for Lewis (no prod writes from Claude).
+- **Change 10, homepage:** the welcome letter no longer opens by itself; it opens from the envelope. The three hero card thumbnails use next/image at 128px: about 28 KB in total instead of 1.2 MB.
+- Not done: change 12's gate logging touches `app/lab` / `components/lab`, which v3 puts off-limits; needs Lewis's call.
