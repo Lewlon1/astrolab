@@ -25,7 +25,7 @@ export type Assignment = {
 /**
  * Decides the variant for one /apply request.
  * - `?v=a|b` forces it and flags the browser as QA.
- * - LP_SPLIT=off sends everyone to A and writes nothing.
+ * - splitOff (middleware: LP_SPLIT is not "on") sends everyone to A and writes nothing.
  * - Otherwise an existing lp_v cookie wins; a first visit gets a 50/50 draw.
  */
 export function assignVariant(input: {

@@ -35,7 +35,7 @@ describe("assignVariant", () => {
     expect(assignVariant({ ...base, cookie: "b", override: "c" }).variant).toBe("b");
   });
 
-  it("LP_SPLIT=off gives A to everyone, even with a B cookie", () => {
+  it("split off (LP_SPLIT not \"on\") gives A to everyone, even with a B cookie", () => {
     expect(assignVariant({ ...base, cookie: "b", splitOff: true })).toEqual({ variant: "a", qa: false, setVariantCookie: null, setQaCookie: false });
   });
 

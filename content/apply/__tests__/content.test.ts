@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CONCEPTS, CONCEPT_KEYS, resolveConcept } from "../concepts";
 import { FAQ } from "../faq";
-import { QUESTIONS } from "../application";
+import { QUESTIONS, STEPS } from "../application";
 import { CREDENTIAL } from "../proof";
 import { OFFER } from "../offer";
 
@@ -74,17 +74,27 @@ describe("content/apply", () => {
     expect(ids).toEqual(expect.arrayContaining(["what-kind-of-work", "birth-time", "the-call", "not-for-me"]));
   });
 
-  it("application has 5–7 questions incl. budget and end-of-2027", () => {
-    expect(QUESTIONS.length).toBeGreaterThanOrEqual(5);
-    expect(QUESTIONS.length).toBeLessThanOrEqual(7);
-    expect(QUESTIONS.some((q) => q.id === "budget_ready" && q.kind === "choice")).toBe(true);
-    expect(QUESTIONS.some((q) => q.id === "end_2027" && q.kind === "textarea")).toBe(true);
+  it("application is v3's three steps: by April, what repeats, birth date and place", () => {
+    expect(STEPS.map((st) => st.id)).toEqual(["april", "repeats", "birth"]);
+    expect(QUESTIONS.find((q) => q.id === "want_by_april")?.kind).toBe("textarea");
+    expect(QUESTIONS.find((q) => q.id === "keeps_repeating")?.kind).toBe("textarea");
+    expect(QUESTIONS.find((q) => q.id === "birth_date")).toMatchObject({ kind: "date", required: true });
+    expect(QUESTIONS.find((q) => q.id === "birth_place")).toMatchObject({ required: true });
+    expect(QUESTIONS.find((q) => q.id === "birth_time")).toMatchObject({ kind: "time", required: false });
+    expect(QUESTIONS.some((q) => q.kind === "choice")).toBe(false);
     expect(new Set(QUESTIONS.map((q) => q.id)).size).toBe(QUESTIONS.length);
   });
 
+  it("no placeholder copy ships", () => {
+    for (const file of FILES) {
+      const text = shippedText(readFileSync(join(DIR, file), "utf8"));
+      expect(text, file).not.toMatch(/\bTODO\b|\bTBC\b|coming soon/i);
+    }
+  });
+
   it("both markets have a price", () => {
-    expect(OFFER.price.uk.full).toMatch(/^£/);
-    expect(OFFER.price.us.full).toMatch(/^\$/);
+    expect(OFFER.price.uk.full).toMatch(/^£\d/);
+    expect(OFFER.price.us.full).toMatch(/^\$\d/);
   });
 
   it("the banned-word check catches a violation", () => {

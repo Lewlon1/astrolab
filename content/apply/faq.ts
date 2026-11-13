@@ -17,7 +17,13 @@ export const FAQ: FaqItem[] = [
   {
     id: "the-call",
     q: "What happens on the call?",
-    a: "Fifteen minutes on video with Gabs. She asks what you want from 2027, explains how the programme works, and you both decide whether it fits. There's no hard sell.",
+    a: "Fifteen minutes on video with Gabs. She asks three questions about what you want to be different by April, explains how the Q1 Lab works, and you both decide whether it fits. There's no hard sell.",
+  },
+  {
+    // Draft rule in Acquisition Bible v3 section 3; Gabs confirms it in OQ 3.
+    id: "flexible-start",
+    q: "What if I can't start in January?",
+    a: "Say so on the call. If the week of 11 January doesn't suit you, Gabs can agree a later start date with you, with the same four sessions over about twelve weeks.",
   },
   {
     id: "not-for-me",

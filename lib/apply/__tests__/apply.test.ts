@@ -7,11 +7,11 @@ import { APPLICATION_UI } from "@/content/apply/application";
 
 const LEAD = "3f2b8a1c-1d2e-4f5a-9b6c-7d8e9f0a1b2c";
 const goodAnswers = {
-  first_name: "Sam",
-  astro_familiarity: "some",
-  focus: "work",
-  end_2027: "Less second-guessing.",
-  budget_ready: "instalments",
+  want_by_april: "Less second-guessing.",
+  keeps_repeating: "I say yes to everything, then resent it.",
+  birth_date: "1988-03-14",
+  birth_place: "Leeds",
+  birth_time: "07:30",
 };
 
 describe("validatePartial", () => {
@@ -50,12 +50,25 @@ describe("validateApplication", () => {
   });
 
   it("names the question to fix", () => {
-    const v = validateApplication({ ...base, answers: { ...goodAnswers, end_2027: "  " } });
-    expect(v).toEqual({ ok: false, field: "end_2027", message: APPLICATION_UI.errors.required });
-    const c = validateApplication({ ...base, answers: { ...goodAnswers, budget_ready: "maybe" } });
-    expect(c).toEqual({ ok: false, field: "budget_ready", message: APPLICATION_UI.errors.choice });
-    const long = validateApplication({ ...base, answers: { ...goodAnswers, end_2027: "x".repeat(1001) } });
+    const v = validateApplication({ ...base, answers: { ...goodAnswers, want_by_april: "  " } });
+    expect(v).toEqual({ ok: false, field: "want_by_april", message: APPLICATION_UI.errors.required });
+    const p = validateApplication({ ...base, answers: { ...goodAnswers, birth_place: "" } });
+    expect(p).toEqual({ ok: false, field: "birth_place", message: APPLICATION_UI.errors.required });
+    const long = validateApplication({ ...base, answers: { ...goodAnswers, keeps_repeating: "x".repeat(1001) } });
     expect(long.ok === false && long.message).toBe("Shorten this answer to 1000 characters or fewer.");
+  });
+
+  it("birth time is optional; date and time must be real", () => {
+    const noTime: Record<string, string> = { ...goodAnswers };
+    delete noTime.birth_time;
+    const ok = validateApplication({ ...base, answers: noTime });
+    expect(ok.ok && "birth_time" in ok.value.answers).toBe(false);
+    for (const bad of ["14/03/1988", "1988-02-30", "1899-12-31", "2999-01-01"]) {
+      const v = validateApplication({ ...base, answers: { ...goodAnswers, birth_date: bad } });
+      expect(v).toEqual({ ok: false, field: "birth_date", message: APPLICATION_UI.errors.date });
+    }
+    const t = validateApplication({ ...base, answers: { ...goodAnswers, birth_time: "25:00" } });
+    expect(t).toEqual({ ok: false, field: "birth_time", message: APPLICATION_UI.errors.time });
   });
 
   it("needs a real lead id and drops unknown answers", () => {

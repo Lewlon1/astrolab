@@ -42,18 +42,18 @@ export async function POST(request: Request) {
   const saved = await saveApplication(admin, leadId, email, answers);
   if (!saved) return NextResponse.json({ error: APPLICATION_UI.errors.generic }, { status: 500 });
 
-  const name = answers.first_name ?? null;
   await Promise.all([
     // Only non-free-text answers go in the event, so the analytics never hold personal prose.
     recordLpEvent(admin, {
       leadId,
       type: "lp_application_submitted",
       ctx,
-      extra: { budget_ready: answers.budget_ready ?? null, focus: answers.focus ?? null },
+      extra: { has_birth_time: Boolean(answers.birth_time) },
     }),
-    moveToComplete(email, { name }),
+    moveToComplete(email, { name: null }),
   ]);
 
-  const prefill = { leadId, name, email, lp_variant: ctx.lp_variant, concept: ctx.concept, market: ctx.market, utm: ctx.utm };
+  // No name question any more: Cal asks for it on the booking form.
+  const prefill = { leadId, name: null, email, lp_variant: ctx.lp_variant, concept: ctx.concept, market: ctx.market, utm: ctx.utm };
   return NextResponse.json({ ok: true, cal: { link: APPLY_CAL_LINK, params: calParams(prefill), url: calUrl(prefill) } });
 }

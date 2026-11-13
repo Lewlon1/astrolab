@@ -1224,3 +1224,23 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Merging upstream copy changes can break compliance on pages that reuse the component. Grep the merged copy against the banned list, not only `content/apply`.
 - `<details open>` driven by a one-time phone check is simpler and kinder than closing notes on every re-render, which would undo what the visitor opened.
 - Vitest here compiles JSX with the classic runtime. A render test needs `globalThis.React` set before rendering.
+
+### /apply page A for the Q1 Lab: readiness plan changes 1–3 (2026-11-13)
+
+**Branch:** `claude/apply-q1-lab`, off `feat/apply-lp` (PR #21, which already holds #20).
+
+**What changed**
+- Offer (`content/apply/offer.ts`): the Q1 Lab from Acquisition Bible v3 section 3. £429 / $549 paid in full, 10 places, four sessions in the weeks of 11 Jan, 1 Feb, 22 Feb, 29 Mar. No more "2027 Lab Programme", "£TBC" or instalments.
+- Heroes c1–c5: hook 1 of each v3 concept, except c2, which uses hook 3 because its other hooks name Gabs's training (waits on OQ 5).
+- Application: email + consent, then v3's three steps (by April / what keeps repeating / birth date and place, time optional). The name, chart-familiarity, focus and budget questions are gone; Cal asks for the name. Server checks the date is real (1900 to today) and the time is HH:MM.
+- The Cal.com calendar now shows inline after the application (no pop-up), with the same metadata params.
+- Proof sits straight after the price: the three site testimonials translated from Spanish and marked so, Gabs's photo, "Applying is free". `PRICE_TERMS.refund` and `termsHref` are null until OQ 7 and the terms page exist; each shows once set.
+- Video box removed. Demo and FAQ copy now describe the Q1 Lab (FAQ gains a flexible-start answer from v3's draft rule, OQ 3).
+- Split test is now OFF unless `LP_SPLIT=on` (was: on unless `LP_SPLIT=off`), so page A is safe without touching Vercel env.
+- `lp_application_submitted` event detail is now `{ has_birth_time }` (was budget_ready, focus).
+
+**Still open:** Gabs approves the translated testimonials, the c2 hero and OQ 1 (price, name, dates). `NEXT_PUBLIC_APPLY_CAL_LINK` must point at the real 15-minute event (Mon 16 Nov). The inline calendar was only seen with a made-up link (Cal shows its 404); check it in the fake-person test on Fri 20 Nov.
+
+**Lessons**
+- The browser pane refused `navigate` to the worktree's dev server, but `preview_start` with a `url` opened it.
+- Translating a testimonial can import banned words ("acertada" → "accurate", "mejores" → "best"). Cut those phrases and mark the cut with "…".

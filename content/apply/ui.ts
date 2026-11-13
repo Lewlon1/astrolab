@@ -3,7 +3,7 @@
 
 export const PAGE_META = {
   title: "Apply | The Astro Psyche Lab",
-  description: "Apply for a place in the 2027 programme with Gabs.",
+  description: "Apply for a place in the Q1 Lab with Gabs: four private sessions, January to March 2027.",
 } as const;
 
 export const CTA = {
@@ -12,14 +12,13 @@ export const CTA = {
 } as const;
 
 export const SECTIONS = {
-  video: "Meet Gabs",
-  // Shown until the 60–90 s video is filmed.
-  videoPlaceholder: "Video coming soon: Gabs explains the programme in 90 seconds.",
   forWho: "Who it's for",
   notFor: "Who it's not for",
   inclusions: "What you get",
   howItWorks: "How it works",
   proof: "What clients say",
+  /** Under testimonials that were given in Spanish. */
+  translated: "Translated from Spanish",
   faq: "Questions",
   priceLabel: "Price",
 } as const;
@@ -31,8 +30,8 @@ export const MINI_DRAW = {
   birthTitle: "Your birth date and place",
   birthHint: "Time is optional. It adds your rising sign.",
   readingTitle: "Your card, Sun and Moon",
-  gateTitle: "Get your full reading and see if the 2027 programme fits you",
-  gateBody: "We'll email your reading, then show you the programme below.",
+  gateTitle: "Get your full reading and see if the Q1 Lab fits you",
+  gateBody: "We'll email your reading, then show you the Q1 Lab below.",
   gateCta: "Show me",
   gateDone: "Sent. Your reading is on its way to {email}.",
 } as const;

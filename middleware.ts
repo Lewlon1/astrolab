@@ -15,7 +15,8 @@ function applyVariant(request: NextRequest): NextResponse {
     cookie: request.cookies.get(VARIANT_COOKIE)?.value,
     qaCookie: request.cookies.get(QA_COOKIE)?.value,
     override: request.nextUrl.searchParams.get("v"),
-    splitOff: process.env.LP_SPLIT === "off",
+    // Acquisition Bible v3: page A only until the January retro. The 50/50 test runs only with LP_SPLIT=on.
+    splitOff: process.env.LP_SPLIT !== "on",
   });
 
   const headers = new Headers(request.headers);

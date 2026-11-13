@@ -81,6 +81,18 @@ export function validatePartial(body: unknown): Validated<PartialInput> {
   };
 }
 
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** YYYY-MM-DD (what <input type="date"> sends), a real calendar day, 1900 to today. */
+export function isBirthDate(v: string, now: Date = new Date()): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== mo - 1 || dt.getUTCDate() !== d) return false;
+  return y >= 1900 && dt.getTime() <= now.getTime();
+}
+
 export type ApplicationInput = {
   leadId: string;
   email: string;
@@ -106,6 +118,10 @@ export function validateApplication(body: unknown): Validated<ApplicationInput> 
     }
     if (q.kind === "choice") {
       if (!q.options.some((o) => o.value === v)) return fail(q.id, APPLICATION_UI.errors.choice);
+    } else if (q.kind === "date") {
+      if (!isBirthDate(v)) return fail(q.id, APPLICATION_UI.errors.date);
+    } else if (q.kind === "time") {
+      if (!TIME_RE.test(v)) return fail(q.id, APPLICATION_UI.errors.time);
     } else if (v.length > q.maxLength) {
       return fail(q.id, APPLICATION_UI.errors.tooLong.replace("{max}", String(q.maxLength)));
     }

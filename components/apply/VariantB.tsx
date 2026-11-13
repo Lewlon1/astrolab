@@ -10,7 +10,7 @@ import { cx } from "@/components/lab/classes";
 import styles from "@/components/lab/lab.module.css";
 import Hero from "./Hero";
 import LabMiniDraw from "./LabMiniDraw";
-import { HowItWorks, Inclusions, VideoSlot, WhoFor } from "./OfferBlocks";
+import { HowItWorks, Inclusions, WhoFor } from "./OfferBlocks";
 import { About, Testimonials } from "./Proof";
 import Faq from "./Faq";
 import ApplicationForm from "./ApplicationForm";
@@ -36,12 +36,11 @@ export default function VariantB({ hero, market }: { hero: HeroCopy; market: Mar
       {captured && (
         <div ref={offerRef} className={cx("flex scroll-mt-6 flex-col gap-12", styles.reveal)}>
           <p className="m-0 max-w-[40ch] font-heading text-[clamp(22px,4.5vw,28px)] italic leading-[1.3] text-coral2">{bridge}</p>
-          <VideoSlot />
           <WhoFor />
           <Inclusions market={market} />
-          <HowItWorks />
           <Testimonials />
           <About />
+          <HowItWorks />
           <Faq />
           <ApplicationForm captured={captured} autoStart />
         </div>

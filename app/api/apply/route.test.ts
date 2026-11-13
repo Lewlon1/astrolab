@@ -85,7 +85,8 @@ describe("/api/apply", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
-  const answers = { first_name: "Sam", astro_familiarity: "new", focus: "self", end_2027: SECRET_TEXT, budget_ready: "ready" };
+  const answers = { want_by_april: SECRET_TEXT, keeps_repeating: SECRET_TEXT, birth_date: "1990-06-01", birth_place: "Austin", birth_time: "" };
+  const saved = { want_by_april: SECRET_TEXT, keeps_repeating: SECRET_TEXT, birth_date: "1990-06-01", birth_place: "Austin" };
 
   it("saves answers, logs the event without free text, and returns Cal metadata", async () => {
     const res = await apply(post("http://x/api/apply", { leadId: LEAD, email: SECRET_EMAIL, answers, market: "us", concept: "c1", utm: { utm_campaign: "lp_r1" } }));
@@ -93,7 +94,8 @@ describe("/api/apply", () => {
     const body = await res.json();
     expect(body.cal.params).toMatchObject({ "metadata[lead_id]": LEAD, "metadata[lp_variant]": "b", "metadata[concept]": "c1", "metadata[utm_campaign]": "lp_r1" });
     const upd = calls.find((c) => c.table === "leads" && c.op === "update")!;
-    expect(upd.args[0]).toMatchObject({ application: answers, name: "Sam" });
+    expect(upd.args[0]).toMatchObject({ application: saved });
+    expect(JSON.stringify(calls.find((c) => c.table === "lead_events")!.args[0])).not.toContain("Austin");
     const ev = calls.find((c) => c.table === "lead_events")!;
     expect(JSON.stringify(ev.args[0])).not.toContain(SECRET_TEXT);
     expect(ml.moveToComplete).toHaveBeenCalled();
@@ -101,8 +103,8 @@ describe("/api/apply", () => {
   });
 
   it("names the field to fix", async () => {
-    const res = await apply(post("http://x/api/apply", { leadId: LEAD, email: SECRET_EMAIL, answers: { ...answers, focus: "" }, market: "us" }));
+    const res = await apply(post("http://x/api/apply", { leadId: LEAD, email: SECRET_EMAIL, answers: { ...answers, birth_place: "" }, market: "us" }));
     expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ field: "focus" });
+    expect(await res.json()).toMatchObject({ field: "birth_place" });
   });
 });

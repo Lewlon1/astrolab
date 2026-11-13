@@ -1,25 +1,13 @@
-// Offer sections shared by both variants: who it's for, what you get, how it works.
+// Offer sections shared by both variants: who it's for, what you get (with the price and
+// its terms), how it works.
 // All copy comes from content/apply/offer.ts.
 import { OFFER, type Market } from "@/content/apply/offer";
+import { PRICE_TERMS } from "@/content/apply/proof";
 import { SECTIONS } from "@/content/apply/ui";
 import { EYEBROW, cx } from "@/components/lab/classes";
 
 export const H2 = "m-0 font-fraunces text-[clamp(26px,5.5vw,36px)] font-medium leading-[1.1] !text-deepBrown [text-wrap:balance]";
 export const SECTION = "flex flex-col gap-4 border-t-[1.5px] border-deepBrown pt-6";
-
-export function VideoSlot() {
-  return (
-    <section aria-labelledby="lp-video" className={SECTION}>
-      <h2 id="lp-video" className={H2}>
-        {SECTIONS.video}
-      </h2>
-      {/* Fixed 16:9 box so the real video drops in without moving the page. */}
-      <div className="flex aspect-video w-full items-center justify-center rounded-[14px] border-[1.5px] border-cardBorder bg-sagePale p-6 text-center text-[15px] text-midBrown">
-        {SECTIONS.videoPlaceholder}
-      </div>
-    </section>
-  );
-}
 
 function List({ items, mark }: { items: readonly string[]; mark: string }) {
   return (
@@ -73,9 +61,20 @@ export function Inclusions({ market }: { market: Market }) {
       <p className="m-0 flex flex-wrap items-baseline gap-x-3">
         <span className="font-dm-mono text-[12px] uppercase tracking-[0.12em] text-midBrown">{SECTIONS.priceLabel}</span>
         <span className="font-fraunces text-[26px] font-medium text-deepBrown">{price.full}</span>
-        {price.instalments && <span className="text-[15px] text-midBrown">{price.instalments}</span>}
+        <span className="text-[15px] text-midBrown">{price.instalments ?? OFFER.priceNote}</span>
       </p>
-      {OFFER.cap && <p className="m-0 text-[14px] text-midBrown">{OFFER.cap}</p>}
+      <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[14px] text-midBrown">
+        {OFFER.cap && <li>{OFFER.cap}</li>}
+        {PRICE_TERMS.refund && <li>{PRICE_TERMS.refund}</li>}
+        <li>{PRICE_TERMS.reassurance}</li>
+        {PRICE_TERMS.termsHref && (
+          <li>
+            <a href={PRICE_TERMS.termsHref} className="text-midBrown underline underline-offset-[3px]">
+              {PRICE_TERMS.termsLabel}
+            </a>
+          </li>
+        )}
+      </ul>
     </section>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 // Variant A — Apply: long-form page, with the Lab method as an optional hands-on demo
-// mid-page (in place of a static "How it works"), then the multi-step application.
+// mid-page (in place of a static "How it works"), the price with proof straight after
+// it, then the application and the inline calendar.
 // One email state is shared by the demo and the application, so it's never asked twice.
 import { useState } from "react";
 import type { Hero as HeroCopy } from "@/content/apply/concepts";
@@ -9,7 +10,7 @@ import { OFFER, type Market } from "@/content/apply/offer";
 import { CTA, SECTIONS } from "@/content/apply/ui";
 import { DEMO_UI } from "@/content/apply/demo";
 import Hero from "./Hero";
-import { Inclusions, VideoSlot, WhoFor } from "./OfferBlocks";
+import { Inclusions, WhoFor } from "./OfferBlocks";
 import { About, Testimonials } from "./Proof";
 import Faq from "./Faq";
 import ApplicationForm from "./ApplicationForm";
@@ -24,11 +25,10 @@ export default function VariantA({ hero, market }: { hero: HeroCopy; market: Mar
       <Hero
         hero={hero}
         eyebrow={OFFER.name}
-        price={{ label: SECTIONS.priceLabel, ...price }}
+        price={{ label: SECTIONS.priceLabel, full: price.full, instalments: price.instalments ?? OFFER.priceNote }}
         cta={{ label: CTA.apply, href: "#apply" }}
         secondary={{ label: `${DEMO_UI.heroLink} ↓`, href: "#demo" }}
       />
-      <VideoSlot />
       <WhoFor />
       <LabDemo captured={captured} onCaptured={setCaptured} />
       <Inclusions market={market} />

@@ -1,6 +1,7 @@
 // DRAFT — Gabs to rewrite in her voice
-// PLACEHOLDER OFFER. The final offer (Lab Programme vs 2027 Map / Roadmap), price,
-// inclusions and cap are not decided. Change them here; no component holds offer copy.
+// The Q1 Lab, as set in Acquisition Bible v3 section 3 (12 Nov 2026). Name, price, places
+// and session weeks wait on Gabs's answer to OQ 1 (due Sun 15 Nov). Change them here;
+// no component holds offer copy.
 
 export const MARKETS = ["uk", "us"] as const;
 export type Market = (typeof MARKETS)[number];
@@ -10,48 +11,54 @@ export function isMarket(v: unknown): v is Market {
 }
 
 export type Price = {
-  /** Full price as shown, e.g. "£1,200". */
+  /** Full price as shown, e.g. "£429". */
   full: string;
   /** Instalment option as shown, or null to hide it. */
   instalments: string | null;
 };
 
 export const OFFER = {
-  // PLACEHOLDER: name not final.
-  name: "The 2027 Lab Programme",
-  // PLACEHOLDER: outcome line. Describe what they do, not a result they are promised.
+  // Working name (OQ 1).
+  name: "The Q1 Lab",
+  // Describes what they do, not a result they are promised.
   outcome:
-    "Twelve months of working with your chart as a map of your patterns, with Gabs alongside you to plan the year.",
-  // PLACEHOLDER: deliverables not final.
+    "Ninety days with your own chart, read through psychology and timed to the turning points of early 2027. Reflective coaching that uses astrology, not prediction. You leave with a tested understanding of the pattern behind one goal, the evidence in your own tracker, and a plan for April onwards.",
   inclusions: [
-    { title: "Your 2027 Map", body: "A written map of your natal chart and the year's main transits, read through a psychological lens." },
-    { title: "Monthly 1:1 sessions", body: "Twelve 60-minute video sessions with Gabs, one a month." },
-    { title: "Quarterly planning", body: "Four check-ins to review what you noticed and adjust the plan." },
-    { title: "Between-session notes", body: "Short written prompts after each session so the work keeps going." },
+    { title: "Your chart, prepared", body: "An intake and full chart preparation before your first session." },
+    {
+      title: "Four private sessions",
+      body: "On video, in the weeks of 11 January (75 minutes), 1 February, 22 February and 29 March (60 minutes each).",
+    },
+    { title: "Your Q1 sky calendar", body: "The dates in early 2027 that matter for your chart." },
+    { title: "The weekly Lab tracker", body: "Five minutes a week to note what you see, so each session starts from evidence." },
+    { title: "Two voice-note check-ins", body: "Between sessions, for when something comes up." },
+    { title: "A written Lab report", body: "What you tested, what you found, and your plan for April onwards." },
   ],
-  // PLACEHOLDER: prices not final. Market sets currency only.
+  // Paid in full. Dollar price is v3's guess until Gabs confirms (OQ 1, OQ 6).
   price: {
-    uk: { full: "£TBC", instalments: "or 3 payments of £TBC" },
-    us: { full: "$TBC", instalments: "or 3 payments of $TBC" },
+    uk: { full: "£429", instalments: null },
+    us: { full: "$549", instalments: null },
   } satisfies Record<Market, Price>,
-  /** Real cap only. Set to null if Gabs does not confirm one. PLACEHOLDER. */
-  cap: "10 places for 2027" as string | null,
+  /** Shown beside the price. */
+  priceNote: "Paid in full",
+  /** Real cap only. Set to null if Gabs does not confirm one. */
+  cap: "10 places in the January cohort." as string | null,
   forWho: [
-    "You already know yourself fairly well and want a sharper lens on the patterns that keep coming back.",
-    "You're curious about astrology and want it read alongside psychology, not as prediction.",
-    "You want a structured year with someone to think it through with.",
+    "You've done real inner work and still meet the same pattern.",
+    "You want a framework, not a fortune.",
+    "You can give four sessions and five minutes a week, from January to March.",
   ],
   notFor: [
-    "You're looking for predictions about specific events.",
-    "You need clinical mental-health support right now. We'll point you to the right professional instead.",
+    "You want predictions or quick answers.",
+    "You need support through a crisis. Gabs will point you to the right help instead.",
     "You want a one-off reading. The Lab Draw or a single session suits that better.",
   ],
   howItWorks: [
-    { title: "Apply", body: "Five short questions. It takes about three minutes." },
-    { title: "15-minute call", body: "A short video call with Gabs to see if the programme fits you." },
-    { title: "Start", body: "If it's a fit on both sides, you get your welcome pack and first session date." },
+    { title: "Apply", body: "Your email and three short questions. About two minutes." },
+    { title: "15-minute call", body: "A short video call with Gabs to see whether the Q1 Lab fits you." },
+    { title: "Start", body: "If it fits on both sides, you pay and get your welcome note. Sessions start the week of 11 January." },
   ],
   /** Variant B only: ties the instant reading to the offer. `{card}` and `{sun}` are filled in. */
   bridgeLine:
-    "{card} and your {sun} Sun are a starting point. The programme reads the whole chart, month by month, through 2027.",
+    "{card} and your {sun} Sun are a starting point. The Q1 Lab reads your whole chart over four sessions, January to March.",
 } as const;
