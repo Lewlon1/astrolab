@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { track } from "@/lib/analytics/track";
 
 /**
  * Marketing-cookie consent for GDPR / ePrivacy.
@@ -35,6 +36,20 @@ type ConsentContextValue = {
 const ConsentContext = createContext<ConsentContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "apl.consent.marketing.v1";
+
+/**
+ * Records the banner choice in our own (cookieless, first-party) analytics, so we
+ * know what share of ad visitors the Meta pixel can see at all (readiness plan
+ * change 7). Holds no identifier beyond the analytics session; skipped for
+ * browsers flagged with ?internal=1, like every other event.
+ */
+function logChoice(choice: "granted" | "denied") {
+  try {
+    track("interaction", "cookie_choice", { choice, path: window.location.pathname });
+  } catch {
+    // analytics must never break the banner
+  }
+}
 
 export function ConsentProvider({ children }: { children: ReactNode }) {
   // Start "unset" with the banner hidden so server and first client render match;
@@ -69,12 +84,14 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
     setConsent("granted");
     setBannerVisible(false);
     persist("granted");
+    logChoice("granted");
   }, [persist]);
 
   const reject = useCallback(() => {
     setConsent("denied");
     setBannerVisible(false);
     persist("denied");
+    logChoice("denied");
     // If the pixel already loaded earlier this session (withdrawal), tell Meta to
     // stop sending. On the next page load it won't be mounted at all.
     try {

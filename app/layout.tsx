@@ -15,12 +15,19 @@ import MetaPixel from "@/components/MetaPixel";
 import { ConsentProvider } from "@/context/ConsentContext";
 import "./globals.css";
 
+// Font preloading (readiness plan change 6): every page used to preload all 17
+// font files (~430 KB) before showing text. Only the three families the first
+// screen of the public and /apply pages needs are preloaded now: Spectral (the
+// .editorial-page body), Fraunces (headlines) and DM Mono (labels). The rest still
+// load, on demand, when a page actually uses them; display: "swap" shows a
+// fallback meanwhile.
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   style: ["normal", "italic"],
   variable: "--font-cormorant",
   display: "swap",
+  preload: false,
 });
 
 const outfit = Outfit({
@@ -28,6 +35,7 @@ const outfit = Outfit({
   weight: ["200", "300", "400", "500", "600"],
   variable: "--font-outfit",
   display: "swap",
+  preload: false,
 });
 
 const syne = Syne({
@@ -35,6 +43,7 @@ const syne = Syne({
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-syne",
   display: "swap",
+  preload: false,
 });
 
 // Editorial Cosmic fonts (public homepage redesign)
@@ -52,6 +61,7 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
   variable: "--font-instrument",
   display: "swap",
+  preload: false,
 });
 
 const spectral = Spectral({
@@ -74,6 +84,7 @@ const caveat = Caveat({
   weight: ["400", "500", "600", "700"],
   variable: "--font-caveat",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

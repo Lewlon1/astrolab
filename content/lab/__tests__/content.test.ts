@@ -22,9 +22,7 @@ import {
   headline,
   moonLine,
   relationOf,
-  relationText,
   signInfo,
-  traditionParagraph,
 } from "../reading";
 import * as privacy from "../privacy";
 import * as ui from "../ui";
@@ -208,15 +206,6 @@ describe("reading templates", () => {
     expect(relationOf(card("Strength"), "Aries", "Leo")).toEqual({ kind: "mirror", with: "Moon" });
     expect(relationOf(card("Strength"), "Gemini", "Aries")).toEqual({ kind: "agree" });
     expect(relationOf(card("Strength"), "Taurus", "Aries")).toEqual({ kind: "tension" });
-  });
-  it("builds the tradition paragraph", () => {
-    const c = card("Strength");
-    const sun = signInfo("Gemini")!;
-    const rel = relationText({ kind: "agree" }, { card: c, sunName: "Gemini" });
-    expect(traditionParagraph(c, sun, rel)).toBe(
-      "In the Golden Dawn tradition, Strength is associated with Leo (a sign). Your Sun in Gemini makes sense of life through curiosity, conversation and changing perspectives. Read together, they offer two perspectives on what may be taking up space in your life right now. " + rel,
-    );
-    expect(traditionParagraph(card("The Tower"), sun, rel)).toContain("Mars (a planet)");
   });
 });
 

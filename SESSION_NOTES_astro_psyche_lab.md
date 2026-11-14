@@ -1048,3 +1048,207 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Persona check: can P1–P4 follow the Lab experiment? (2026-11-07)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. Research session; no code or SQL changed.
+
+**Question:** how to make sure every persona in the Acquisition Bible (P1 Therapy-Literate Seeker, P2 Love-Pattern Looper, P3 Crossroads Planner, P4 Gift-Giver) can follow the Lab concept. Sources: the Bible and Ad Bank docs, plus the Lab code. The Acquisition Journey Map doc could not be read from this session (Claude Docs `access` refusal), so the DM route was not audited.
+
+**Findings**
+- The experiment's three beats go by three sets of names. Ad Bank: "Astrology says / Psychology studies / Test it this week". Instant-reading Lab note: "The astrological lens / The psychological lens / Put it into practice" (`content/lab/reading.ts` `LAYER_LABELS`, Gabs-voice final). Profile: "The card / The chart / The test" (`content/lab/ui.ts` `PROFILE_FLOW.layers`). The Ad Bank says its ads mirror the site's Lab note. They don't.
+- "Hypothesis" never appears on `/lab`. "Test" appears only on the profile, after the email gate. The words the ads lead with are gone by the time the visitor reaches the page.
+- `LAB_META.description` still says "three face-down" cards, but the deck deals six face-up (`components/lab/LabDeck.tsx` `HAND_SIZE = 6`). The same stale comment is in `components/lab/LabDraw.tsx`. Ad 2's hook ("Left, middle or right", "30 seconds") is out of date too, and the hero says "A two-minute experiment".
+- There is no result step. The test ends with "Bring what you notice to a session". The monthly Lab note email, which could ask "what did you notice?", was still unwritten in the Lab Draw notes above.
+- `/lab` and the homepage `LabTeaser` are English only (no `LangText`). Spanish-speaking P2 and P4 only ever see "LAB" as a DM keyword.
+- The profile's offer ladder has no 2027 Map or Travel Magazine (`content/lab/offers.ts`), so a P3 who comes in through the Lab is offered the Blend.
+- `parseLabSrc` only accepts `manychat | bio | ad | lora` (`lib/lab/validate.ts`). `lab_profiles.src` is unconstrained `text`, so adding a `gift` source is a code-only change with no SQL.
+- Each analytics session already stores `utm_content` and `lang` (`analytics_sessions`, joined to `analytics_events` on `session_key`). A per-ad, per-language Lab step funnel needs a read-only query, not new tracking.
+
+**Recommendation given:** pick one spine sentence and one set of beat names, in EN and ES, and check every ad, DM script and page label against it. Before creative locks on 11 Nov, run an "explain it back" test with two people per persona. Add a per-ad drop-off row to the Sunday scorecard. Don't build a Spanish Lab or a result logger before 7 Jan: the Bible parks both. Put the result beat in the first MailerLite email and in the voice note instead.
+
+**Lessons learned**
+- Audit a funnel's concept across artefacts, not inside one. The ad copy lives in Claude Docs and the page copy lives in the repo, so each one reads as consistent on its own. The mismatch only shows when you read them side by side.
+- Before calling a concept broken, check where its key words first appear in the user's path. A grep for "hypothes" and "test" across `components/lab` and `content/lab` showed the gap in one step.
+- Some companion docs can't be opened from a cloud session. Ask for them to be shared, or start the chat from the doc's own page, before auditing the route they describe.
+
+### Lab flow simplification review, by persona (2026-11-08)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. This was a review session, so no code changed.
+
+**Trigger:** early testers said the Lab flow feels complicated. The feedback didn't say which step, so the review worked from the code.
+
+**What a visitor faces before the email gate:** a hero with a three-sentence abstract lede, then six face-up cards (two taps on a phone), "Deal six more", and an intro explaining "projective choice". Next come three birth fields (date, place, optional time), sometimes followed by a pick between places with the same name. The reading itself has a headline, three chips, the card line, a Golden Dawn paragraph, a Moon paragraph, a three-row Lab note, a stance line and a thumbs vote. The gate has an eyebrow, a title, a lede, three tiles, an email field, the birth time a second time, and consent. After the gate, the profile shows up to five booking buttons.
+
+**Main findings**
+- Birth time is asked twice: in `BirthForm` and again in `Gate`.
+- "Projective choice" is explained twice (`DRAW.intro`, `PROFILE_FLOW.cardLine`). The Lab stance appears three times: `STANCE` in the footer, `STANCE_LINE` under the reading, and `STANCE` on the profile.
+- The pre-gate reading is about five text blocks before the Lab note, and the Lab note is the part that carries the experiment.
+- The hero lede never says what the visitor gets, how long it takes, or that it's free.
+
+**Recommendations given:** pre-launch, copy-only changes. A concrete hero promise. Ask for birth time once, at the gate. Trim the reading to headline + card line + Lab note, and move the Golden Dawn and Moon paragraphs to the profile. Cut the gate down to email + consent. Show the stance once. One booking button before the offer ladder. Before cutting anything, ask testers which step lost them, and read the drop-off in the `lab_*` events.
+
+**Lessons learned**
+- Count every decision and field per screen before you redesign. In this flow, a lot of the complexity is repetition (the same question or explanation shown twice), not depth.
+- Testing feedback like "it's complicated" needs a step and a persona attached before it can drive cuts. Ask testers where they hesitated, not whether they liked it.
+
+### Lab report card plan, awaiting approval (2026-11-08)
+
+**Files touched:** `docs/superpowers/plans/2026-11-08-lab-report-card.md` (new), this file. No code changed.
+
+- Lewis's call: the confusion is mostly the instant reading. The plan restyles it as a Lab report card: Gabs's card line as a signed quote, a table (Card/Sun/Moon + the two lenses), then the remaining text, then a standout "Put it into practice". The profile's test section gets the same look.
+- Also agreed: remove `DRAW.intro`, slim the gate, and replace all four defensive lines ("no proven power", "prompt, not a cause", two "not a forecast") with positive astrology-through-psychology wording (drafts for Gabs). Still to decide: E (where the stance appears) and F (profile booking buttons and order).
+
+**Lessons learned**
+- Brand stance matters as much as accuracy: the site should promote the astrology × psychology fusion, never talk astrology down. Disclaimers like "not a cause" or "not a forecast" read as negative even when the intent is careful.
+
+### Lab report card built (2026-11-08)
+
+**Files touched:** `components/lab/{LabNote,Reading,LabDraw,Gate}.tsx`, `components/lab/PracticeCallout.tsx` (new), `content/lab/ui.ts`, `content/lab/reading.ts`, `docs/superpowers/plans/2026-11-08-lab-report-card.md`.
+
+- **Instant reading = Lab report card:** title → report (theme title, "Lab report" label, Gabs's card line as a quote signed "— Gabs", Card/Sun/Moon rows replacing the chips, astrological + psychological lens) → tradition and Moon paragraphs → cusp/zone notes → standout gold "Put it into practice" callout → stance line → thumbs vote. `composeReading` is unchanged; only the rendering moved.
+- **`LabNote`** now takes optional `specimen`, `quote` and `label`. `test` is no longer a table row: when passed, it renders as a `PracticeCallout` under the table. Because of that, the profile's test section and the Big Three "Read the full note" notes picked up the new look automatically. That's the one profile change; F3 left everything else on the profile alone.
+- **Removed:** `DRAW.intro` (the "Six of the 22 major arcana… projective choice" paragraph), the gate's "Step 04" eyebrow and its three tiles (folded into the lede). Email, birth time and consent are unchanged.
+- **Positive tone (drafts for Gabs):** `STANCE`, `STANCE_LINE` ("astrology, read through a therapist's eyes"; this one is in her GABS VOICE file, so it needs her OK), `PROFILE_FLOW.chartLine`, `PROFILE_FLOW.upcomingLine`. The stance still shows in all three places (E3).
+- **Verified:** `tsc` clean, vitest 299 passed, `next lint` clean, and a Playwright run through draw → birth → reading → gate at 390×844 and 1280×900 (compute route given a `geo`, dummy Supabase env). The profile wasn't checked visually because it needs the DB.
+
+**Lessons learned**
+- The reading's content functions were already separate from its layout (`composeReading` returns parts, `Reading.tsx` arranges them), so a full restyle needed no change to Gabs's copy or the tests. Keep that split.
+- Changing a shared component changes every place it's used. `LabNote` sits inside profile `<details>` blocks too. Grep for usages before calling a change "reading only".
+
+### /apply landing pages and the lp_r1 split test (2026-11-11)
+
+**Branch:** `feat/apply-lp`, cut from `origin/main` (dfc93f8). It doesn't contain the Lab report-card work on `claude/determined-galileo-hix9nz`. Not pushed.
+
+**Files created**
+- Content (all `// DRAFT — Gabs to rewrite in her voice`): `content/apply/{concepts,offer,proof,faq,application,ui}.ts`, `content/apply/__tests__/content.test.ts` (DRAFT banner + Hard rule 4 banned-word check).
+- Page: `app/apply/layout.tsx` (no site nav; consent banner and analytics), `app/apply/[market]/page.tsx` (server-resolved hero, `noindex`).
+- Components: `components/apply/{LpContext,Hero,OfferBlocks,Proof,Faq,EmailCapture,ApplicationForm,LabMiniDraw,VariantA,VariantB}.tsx`.
+- API: `app/api/apply/partial/route.ts` (step 1 email), `app/api/apply/route.ts` (application), `app/api/apply/route.test.ts`.
+- Lib: `lib/experiments.ts` (+ test), `lib/apply/{validate,events,mailerlite,cal,booking,rateLimit,requestContext}.ts` (+ tests).
+- SQL: `supabase/sql/lp_variants_v1.sql` (additive), `supabase/sql/lp_report_v1.sql` (SELECT only). Docs: `docs/ads/url-template.md`.
+
+**Files changed**
+- `middleware.ts`: `/apply/*` gets variant assignment and skips the Supabase session refresh (no auth there). Every other path still goes to `updateSession`.
+- `lib/fbpixel.ts`: `trackLead` takes an optional `content_name`; new `trackSchedule`. Existing callers are unchanged.
+- `app/api/webhooks/cal/route.ts`: after the normal booking sync, `recordLpBooking` logs `lp_call_booked` and tags `bookings`, but only when the booking's metadata has an /apply `lead_id`. It never throws.
+- Unchanged (checked with `git diff origin/main`): `components/lab`, `content/lab`, `lib/lab`, `lib/astro`, `app/(public)`, `lib/booking.ts`, the homepage cards.
+
+**How it differs from the session prompt**
+- No `lib/events.ts` exists. The Lab helper is `lib/lab/events.ts`; it was left alone, and `lib/apply/events.ts` follows the same pattern and adds the experiment fields.
+- `leads.source` stays `'website_form'` for /apply leads. A new `'apply'` value would need `DROP CONSTRAINT`. /apply leads are the rows with `experiment_id` set.
+- `analytics_sessions` gets no new columns. Its rows are written by the `analytics_touch_session` RPC, so new columns would need that RPC replaced. Every `lp_*` analytics event carries `lp_variant`, `experiment_id`, `concept`, `market`, `qa` and the UTMs in `props` instead, and the readout uses those.
+- Booking uses the Cal **embed popup** with a plain link as fallback, not a redirect. That way `bookingSuccessful` fires on our page, giving `lp_call_booked` plus Meta `Schedule` after consent. Name and email are prefilled. The metadata keys are `lead_id`, `lp_variant`, `experiment_id`, `concept`, `market` and `utm_*`.
+- Variant B has its own email gate (`EmailCapture`), because the Lab `Gate` creates a Lab profile. It reuses `LabDeck`, `BirthForm`, `Reading` and `/api/lab/compute` unchanged.
+
+**Dependencies added:** none. (PGlite 0.2.17, Apache-2.0, was installed only in a scratch folder to check the SQL. It is not in `package.json`.)
+
+**SQL to run by hand:** `supabase/sql/lp_variants_v1.sql`. **Not run yet.** Until it runs, /api/apply still keeps every email (it falls back to a plain lead, and the answers go in `leads.notes`), but those rows have no variant tag. `lp_report_v1.sql` is read-only; run it whenever you want a readout.
+
+**New env vars (set in Vercel, Production + Preview)**
+- `LP_SPLIT`: `off` sends everyone to A. Leave it unset for the 50/50 test.
+- `MAILERLITE_APPLY_PARTIAL_GROUP_ID` ("Apply — partial") and `MAILERLITE_APPLY_COMPLETE_GROUP_ID` ("Apply — complete"). Create both groups in MailerLite first.
+- `NEXT_PUBLIC_APPLY_CAL_LINK`: the 15-minute event, e.g. `theastropsychelab/discovery-15`. It defaults to `theastropsychelab/15min`, which may not exist.
+
+**QA (Phase 4)**
+- Pass: `/apply/uk?c=c2` and `/apply/us?c=c2` show the c2 hero with £ / $. `?c=zzz` gives the default hero, and `/apply/fr` gives a 404.
+- Pass: the variant is sticky (a cookie is never rewritten). `?v=b` forces B and sets `lp_qa=1`. `LP_SPLIT=off` gives A (unit test only; the server wasn't restarted with it).
+- Pass: 200 real first visits through middleware split 99 A / 101 B. A seeded unit test also checks the 40–60% band.
+- Pass: B flow draw → reading → email → offer → application, with and without a birth time (real compute route, place given as `geo`). The unknown-place message shows. The `/api/apply*` responses were stubbed in the browser, so no prod writes happened.
+- Pass (unit test): the step 1 email upserts `leads` and calls MailerLite "Apply — partial". If the SQL hasn't run, the email is still kept. **Not checked against the live DB or MailerLite.**
+- Pass (unit + browser): the Cal config carries `lead_id`, `lp_variant`, `concept` and the UTMs. **A real Cal booking and webhook weren't tested.**
+- Pass: no request to facebook.com before consent. After "Sounds good", PageView loads and `Lead` fires on step 1 with `content_name=lp_r1_email`. A dummy pixel ID was used.
+- Pass: the server logs held no test emails, birth data or answers. The route tests also assert that.
+- Pass: `/lab` and the homepage are unchanged (git diff).
+- **Not run:** Lighthouse. `next build` can't download Google Fonts inside the sandbox. Run it locally: `npx lighthouse https://<preview-url>/apply/uk?v=a --preset=perf --form-factor=mobile` (and `v=b`).
+- Pass: the banned-word Vitest over `content/apply/*`. `tsc` clean, lint clean, full suite 342 passed / 1 skipped.
+
+**Decision rule (fixed now, so nobody moves the goalposts)**
+- Don't look before **300 unique visitors per variant**. (At 20% vs 30% email rate, about 290 per variant gives 80% power at 5% significance.)
+- If one variant's email rate is **≥ 1.4×** the other's, **and** its calls booked aren't lower, send 100% of traffic to it.
+- Otherwise keep A, the simpler page, and move on to testing heroes.
+- Booked-call rate and close rate are **not** decision metrics before January. Log them; don't act on them.
+- "Unique visitor" = one analytics session (sessionStorage, cookieless), the same for both variants.
+
+**Open items**
+- Final offer, price, instalments and cap in `content/apply/offer.ts` (all placeholders, `£TBC` / `$TBC`). The budget question's options must match the price.
+- The c1–c5 heroes in `content/apply/concepts.ts` (TODO, from the Acquisition Bible).
+- Gabs's voice pass on all of `content/apply/*`.
+- Testimonial consents (`TESTIMONIALS` is empty, so the block is hidden).
+- Credential wording in `content/apply/proof.ts` (Lewis + Gabs to confirm).
+- The 60–90 s video (a fixed 16:9 placeholder box is in place).
+- Set `NEXT_PUBLIC_APPLY_CAL_LINK`. Check that the Cal webhook subscription covers the 15-minute event, then book a test call and confirm a `lp_call_booked` row and that `bookings.lead_id` is filled.
+- The B email promises "your full reading". Someone has to send it: a MailerLite automation on "Apply — partial" using `lab_card` / `sun_sign` / `moon_sign`.
+- The `lp_v` / `lp_qa` cookies are set without consent. A/B-testing cookies are arguably not "strictly necessary" under PECR, so add them to the cookie notice, or confirm this is acceptable.
+- One Lab theme line (`content/lab/themes.ts`, "Acceptance-based therapies…") can appear in B's reading. It's about research, not the offer, but check it's fine on an ad page.
+- Decision-rule check date: when both variants pass 300 visitors. At current budgets, estimate it after week 1 and diary it.
+
+**Lessons learned**
+- Read the shared plumbing before planning the schema. A CHECK constraint on `leads.source` and an RPC-written `analytics_sessions` would each have forced a DROP or an RPC rewrite. Putting the fields in event props and using an existing source value avoided both.
+- `.env.local` points at production Supabase and the real MailerLite key. Any local test of a write route would create real leads and subscribers. Run the dev server with placeholder Supabase/MailerLite env and stub the write calls in the browser; test the server side with mocked route tests.
+- Variant assignment needs a request header as well as the cookie: on the first hit, the cookie is only on the response, so the page can't see it.
+- Programmatic `focus()` doesn't always fire React `onFocus` in an unfocused tab. Fire "started" events on first input too.
+- A banned-word test must ignore ids and comments. `id: "is-this-therapy"` tripped the word-boundary check.
+
+### Lab demo in variant A (2026-11-11)
+
+**Plan:** `docs/superpowers/plans/2026-11-11-apply-lab-demo.md`. Built on `feat/apply-lp`, with PR #20 (report card) merged into the branch, because #20 wasn't merged to `main` yet. Once #20 merges, its commits drop out of PR #21's diff.
+
+**What changed**
+- Variant A's static "How it works" is replaced by `components/apply/LabDemo.tsx`, a hands-on run of the method: Draw → Map → Read → [email] → Test. It has a sticky progress rail, and each step has an "In the Lab" line and an "In the programme" line (the second is behind a toggle on phones). After step 4 there's a bridge line and "Apply for a place".
+- The demo is optional. The hero keeps "Apply for a place" and adds "Or try the method first ↓".
+- One email state is shared by the demo and the application. Email given in the demo means application step 1 is skipped; email given in the application means the demo skips its gate.
+- `components/lab/Reading.tsx` gets two optional props, `showPractice` and `showStance`, both default `true`. `/lab` renders exactly as before (render test in `components/apply/__tests__/reading-props.test.ts`).
+- **Compliance fix:** PR #20 changed the stance line to "astrology, read through a therapist's eyes". `Reading` showed it on /apply too, including variant B, which breaks Hard rule 4. Both /apply readings now pass `showStance={false}`.
+- The draw logic moved into `components/apply/useLabDraw.ts`, shared by B's `LabMiniDraw` and A's `LabDemo`.
+- New copy: `content/apply/demo.ts` (DRAFT). New event: `lp_demo_step` with `{ step: 1–4 }` (1 = scrolled into view, 2 = card picked, 3 = reading shown, 4 = email given). `lp_draw_started`, `lp_reading_viewed` and `lp_email_captured` now carry `placement: "demo"` or `"mini"`.
+- `lp_application_started` now fires on the first answer as well. It fires straight away only in B (`autoStart`), so a demo email in A no longer counts as starting the application.
+- `supabase/sql/lp_demo_report_v1.sql` (SELECT only): A's demo drop-off by step. Checked on seeded PGlite data.
+
+**What the split test now asks:** both variants contain the draw. A = offer first, with an optional demo mid-page. B = draw first, then the offer. So the test reads "does leading with the experience beat leading with the offer?" The metric (email rate per visitor) and the decision rule are unchanged. Emails from A's demo count as A's emails.
+
+**QA:** `tsc` clean, lint clean, Vitest 348 passed / 1 skipped. Browser checks with placeholder env and stubbed email saves:
+- At 375 px the full demo works, with the rail advancing.
+- No practice step before the email, and no "therapist" line.
+- After the email, step 4 shows and the application starts at step 2 of 6.
+- The reverse path works: email in the application first, so the demo skips its gate.
+- On desktop the programme notes show open.
+- All eight events fire in order.
+
+**Open items (new)**
+- Gabs to review `content/apply/demo.ts`, especially the programme lines, which promise monthly draws, readings and experiment reviews. They must match the final offer.
+- The stance line still names therapy on `/lab` itself. That's outside these pages and is Gabs/Lewis's call. /apply hides it.
+- Merge PR #20 to `main`.
+
+**Lessons learned**
+- Merging upstream copy changes can break compliance on pages that reuse the component. Grep the merged copy against the banned list, not only `content/apply`.
+- `<details open>` driven by a one-time phone check is simpler and kinder than closing notes on every re-render, which would undo what the visitor opened.
+- Vitest here compiles JSX with the classic runtime. A render test needs `globalThis.React` set before rendering.
+
+### /apply page A for the Q1 Lab: readiness plan changes 1–3 (2026-11-13)
+
+**Branch:** `claude/apply-q1-lab`, off `feat/apply-lp` (PR #21, which already holds #20).
+
+**What changed**
+- Offer (`content/apply/offer.ts`): the Q1 Lab from Acquisition Bible v3 section 3. £429 / $549 paid in full, 10 places, four sessions in the weeks of 11 Jan, 1 Feb, 22 Feb, 29 Mar. No more "2027 Lab Programme", "£TBC" or instalments.
+- Heroes c1–c5: hook 1 of each v3 concept, except c2, which uses hook 3 because its other hooks name Gabs's training (waits on OQ 5).
+- Application: email + consent, then v3's three steps (by April / what keeps repeating / birth date and place, time optional). The name, chart-familiarity, focus and budget questions are gone; Cal asks for the name. Server checks the date is real (1900 to today) and the time is HH:MM.
+- The Cal.com calendar now shows inline after the application (no pop-up), with the same metadata params.
+- Proof sits straight after the price: the three site testimonials translated from Spanish and marked so, Gabs's photo, "Applying is free". `PRICE_TERMS.refund` and `termsHref` are null until OQ 7 and the terms page exist; each shows once set.
+- Video box removed. Demo and FAQ copy now describe the Q1 Lab (FAQ gains a flexible-start answer from v3's draft rule, OQ 3).
+- Split test is now OFF unless `LP_SPLIT=on` (was: on unless `LP_SPLIT=off`), so page A is safe without touching Vercel env.
+- `lp_application_submitted` event detail is now `{ has_birth_time }` (was budget_ready, focus).
+
+**Still open:** Gabs approves the translated testimonials, the c2 hero and OQ 1 (price, name, dates). `NEXT_PUBLIC_APPLY_CAL_LINK` must point at the real 15-minute event (Mon 16 Nov). The inline calendar was only seen with a made-up link (Cal shows its 404); check it in the fake-person test on Fri 20 Nov.
+
+**Lessons**
+- The browser pane refused `navigate` to the worktree's dev server, but `preview_start` with a `url` opened it.
+- Translating a testimonial can import banned words ("acertada" → "accurate", "mejores" → "best"). Cut those phrases and mark the cut with "…".
+## 2026-11-13 — Readiness plan changes 6, 7 (code part), 10
+
+Branch `claude/readiness-site` (off main; separate from the apply-page PR #21).
+
+- **Change 6, fonts:** only Spectral, Fraunces and DM Mono are preloaded now; Cormorant, Outfit, Syne, Instrument and Caveat load on demand. Preloaded per page: 17 files / 429 KB → 10 files / 186 KB (measured from the production build's HTML). Still to do: one Lighthouse run on the apply page on the Vercel preview.
+- **Change 7, cookie choice:** accepting or declining the banner now records an `interaction` / `cookie_choice` event with `{choice, path}` in our own analytics (no DB change; respects `?internal=1`). `?internal=1` already existed, so flagging our devices is a manual step. Running the two SQL files and deleting the 6 test bookings stay manual for Lewis (no prod writes from Claude).
+- **Change 10, homepage:** the welcome letter no longer opens by itself; it opens from the envelope. The three hero card thumbnails use next/image at 128px: about 28 KB in total instead of 1.2 MB.
+- Not done: change 12's gate logging touches `app/lab` / `components/lab`, which v3 puts off-limits; needs Lewis's call.
