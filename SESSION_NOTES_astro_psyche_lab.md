@@ -1244,3 +1244,11 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 **Lessons**
 - The browser pane refused `navigate` to the worktree's dev server, but `preview_start` with a `url` opened it.
 - Translating a testimonial can import banned words ("acertada" → "accurate", "mejores" → "best"). Cut those phrases and mark the cut with "…".
+## 2026-11-13 — Readiness plan changes 6, 7 (code part), 10
+
+Branch `claude/readiness-site` (off main; separate from the apply-page PR #21).
+
+- **Change 6, fonts:** only Spectral, Fraunces and DM Mono are preloaded now; Cormorant, Outfit, Syne, Instrument and Caveat load on demand. Preloaded per page: 17 files / 429 KB → 10 files / 186 KB (measured from the production build's HTML). Still to do: one Lighthouse run on the apply page on the Vercel preview.
+- **Change 7, cookie choice:** accepting or declining the banner now records an `interaction` / `cookie_choice` event with `{choice, path}` in our own analytics (no DB change; respects `?internal=1`). `?internal=1` already existed, so flagging our devices is a manual step. Running the two SQL files and deleting the 6 test bookings stay manual for Lewis (no prod writes from Claude).
+- **Change 10, homepage:** the welcome letter no longer opens by itself; it opens from the envelope. The three hero card thumbnails use next/image at 128px: about 28 KB in total instead of 1.2 MB.
+- Not done: change 12's gate logging touches `app/lab` / `components/lab`, which v3 puts off-limits; needs Lewis's call.
