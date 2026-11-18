@@ -62,6 +62,8 @@ export default async function NotesPage({ searchParams }: { searchParams: Search
     else {
       list = list.neq("status", "archived");
       if (area) list = list.eq("area", area);
+      // Unfiltered, inbox notes already show in the Inbox above — don't list them twice.
+      if (!q && !area) list = list.neq("status", "inbox");
     }
     if (q) list = list.textSearch("search", q, { config: "simple", type: "websearch" });
 
