@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { isMissingTable, type QueryError } from "@/lib/notes/errors";
 import { effectiveStatus, openTodos, type TodoWithNote } from "@/lib/notes/status";
 import { todayInMadrid } from "@/lib/dailyActions";
 import { NOTE_AREAS, type Note, type NoteCapture, type NoteTask } from "@/types/notes";
@@ -11,18 +12,6 @@ import TodoList from "@/components/admin/notes/TodoList";
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
-
-type QueryError = { code?: string; message?: string } | null;
-
-/** The notes tables don't exist yet (migration 019 not run). */
-function isMissingTable(error: QueryError): boolean {
-  if (!error) return false;
-  return (
-    error.code === "42P01" ||
-    error.code === "PGRST205" ||
-    /does not exist|schema cache/i.test(error.message ?? "")
-  );
-}
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
