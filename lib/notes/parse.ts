@@ -29,7 +29,8 @@ function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-function validDate(v: unknown): string | null {
+/** A real calendar date as YYYY-MM-DD, else null. */
+export function validDate(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const s = v.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;

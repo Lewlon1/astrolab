@@ -57,6 +57,52 @@ export async function invokeModel(
   return textBlock.text as string;
 }
 
+export type ImageInput = {
+  bytes: Uint8Array;
+  format: "jpeg" | "png" | "webp";
+};
+
+// Vision call: image blocks first, then the instruction text. Temperature 0 —
+// transcription should be faithful, not creative.
+export async function invokeModelWithImages(
+  modelId: ModelId,
+  systemPrompt: string,
+  userPrompt: string,
+  images: ImageInput[],
+  maxTokens: number = 8192
+): Promise<string> {
+  const command = new ConverseCommand({
+    modelId,
+    system: [{ text: systemPrompt }],
+    messages: [
+      {
+        role: "user",
+        content: [
+          ...images.map((img) => ({
+            image: { format: img.format, source: { bytes: img.bytes } },
+          })),
+          { text: userPrompt },
+        ],
+      },
+    ],
+    inferenceConfig: {
+      maxTokens,
+      temperature: 0,
+    },
+  });
+
+  const response = await client.send(command);
+
+  const textBlock = response.output?.message?.content?.find(
+    (block) => "text" in block
+  );
+  if (!textBlock || !("text" in textBlock) || !textBlock.text) {
+    throw new Error("No text content in Bedrock response");
+  }
+
+  return textBlock.text;
+}
+
 // Helper to invoke and parse JSON response
 export async function invokeModelJSON<T>(
   modelId: ModelId,
