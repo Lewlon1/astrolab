@@ -3,8 +3,11 @@ import Link from "next/link";
 import type { Lead, Event, ActionItem } from "@/types";
 import type { Booking } from "@/lib/payments/types";
 import { needsAttention } from "@/lib/payments/bookingView";
-import { getOrCreateTodayBatch } from "@/lib/dailyActions";
+import { todayTodos, type TodoWithNote } from "@/lib/notes/status";
+import { isMissingTable } from "@/lib/notes/errors";
+import { getOrCreateTodayBatch, todayInMadrid } from "@/lib/dailyActions";
 import GetPaidCard from "@/components/admin/today/GetPaidCard";
+import NotesCard from "@/components/admin/today/NotesCard";
 import TodayChecklist from "@/components/admin/today/TodayChecklist";
 import {
   timeAgo,
@@ -47,6 +50,22 @@ export default async function AdminDashboardPage() {
     .then((b) => b.items)
     .catch(() => null);
 
+  // Notes data for the Today card. Any failure (missing table or otherwise) yields
+  // null so the card hides and Today never breaks because of notes.
+  const notesData: Promise<{ todos: TodoWithNote[]; inbox: number; today: string } | null> = (async () => {
+    const [tasks, inbox] = await Promise.all([
+      supabase
+        .from("note_tasks")
+        .select("*, note:notes!inner(id, title, area, status)")
+        .is("done_at", null)
+        .returns<TodoWithNote[]>(),
+      supabase.from("notes").select("*", { count: "exact", head: true }).eq("status", "inbox"),
+    ]);
+    if (isMissingTable(tasks.error) || isMissingTable(inbox.error) || tasks.error || inbox.error) return null;
+    const today = todayInMadrid();
+    return { todos: todayTodos(tasks.data ?? [], today), inbox: inbox.count ?? 0, today };
+  })().catch(() => null);
+
   const [
     { count: leadsThisWeek },
     { count: totalLeads },
@@ -56,6 +75,7 @@ export default async function AdminDashboardPage() {
     { data: bookings },
     { count: paidBookings30d },
     actionItems,
+    notes,
   ] = await Promise.all([
     supabase
       .from("leads")
@@ -90,6 +110,7 @@ export default async function AdminDashboardPage() {
       .in("payment_status", ["paid", "manual"])
       .gte("paid_at", monthAgo.toISOString()),
     todayItems,
+    notesData,
   ]);
 
   const attentionBookings = (bookings ?? []).filter(needsAttention);
@@ -114,6 +135,8 @@ export default async function AdminDashboardPage() {
       </div>
 
       <GetPaidCard bookings={attentionBookings} />
+
+      <NotesCard data={notes} />
 
       <TodayChecklist initialItems={actionItems} />
 

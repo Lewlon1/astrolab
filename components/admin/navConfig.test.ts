@@ -4,9 +4,9 @@ import { activeGroup, activeItem, NAV_GROUPS, visibleNavGroups } from "./navConf
 const hrefs = (labs?: string) => visibleNavGroups(labs).flatMap((g) => g.items.map((i) => i.href));
 
 describe("visibleNavGroups", () => {
-  it("has five groups, none empty", () => {
+  it("has six groups, none empty", () => {
     const groups = visibleNavGroups(undefined);
-    expect(groups.map((g) => g.label)).toEqual(["Today", "Clients", "Content", "Website", "Insights"]);
+    expect(groups.map((g) => g.label)).toEqual(["Today", "Notes", "Clients", "Content", "Website", "Insights"]);
     for (const g of groups) expect(g.items.length).toBeGreaterThan(0);
   });
 
@@ -39,6 +39,11 @@ describe("activeGroup / activeItem", () => {
     expect(activeGroup("/admin/blog/abc", groups)).toBe("Website");
     expect(activeGroup("/admin/engagement/accounts", groups)).toBe("Content");
     expect(activeItem("/admin/services/new", groups)?.label).toBe("Services & prices");
+  });
+
+  it("matches notes pages to the Notes group", () => {
+    expect(activeGroup("/admin/notes", groups)).toBe("Notes");
+    expect(activeGroup("/admin/notes/abc", groups)).toBe("Notes");
   });
 
   it("does not match on a shared prefix", () => {

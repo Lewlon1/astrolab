@@ -7,7 +7,7 @@
  */
 import { isAdminFeatureOn, type AdminFeature } from "@/lib/admin/features";
 
-export type NavIcon = "today" | "clients" | "content" | "website" | "insights";
+export type NavIcon = "today" | "notes" | "clients" | "content" | "website" | "insights";
 
 export interface NavItem {
   label: string;
@@ -23,6 +23,7 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   { label: "Today", icon: "today", items: [{ label: "Today", href: "/admin" }] },
+  { label: "Notes", icon: "notes", items: [{ label: "Notes", href: "/admin/notes" }] },
   {
     label: "Clients",
     icon: "clients",
