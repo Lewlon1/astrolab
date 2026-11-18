@@ -17,7 +17,7 @@
 
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('note-photos', 'note-photos', false)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET public = false;
 
 DROP POLICY IF EXISTS "Admin: upload note photos" ON storage.objects;
 CREATE POLICY "Admin: upload note photos"

@@ -70,6 +70,7 @@ export default function NotesCard({ data }: Props) {
                     ) : (
                       <span className="text-amber-700 font-medium">today</span>
                     )}
+                    {t.note.status === "inbox" && <span className="text-amber-700"> · unchecked</span>}
                   </p>
                 </div>
               </li>

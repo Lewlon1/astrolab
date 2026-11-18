@@ -215,18 +215,21 @@ export default function NoteEditor({
       setList((prev) =>
         prev.map((x) => (x.id === t.id ? { ...x, done_at: done ? new Date().toISOString() : null } : x))
       );
+      router.refresh();
     });
 
   const saveTask = (t: NoteTask, patch: { text: string; due_on: string | null }) =>
     run(async () => {
       const updated = await send<NoteTask>(`/api/admin/notes/tasks/${t.id}`, "PATCH", patch);
       setList((prev) => prev.map((x) => (x.id === t.id ? { ...x, ...updated } : x)));
+      router.refresh();
     });
 
   const deleteTask = (t: NoteTask) =>
     run(async () => {
       await send(`/api/admin/notes/tasks/${t.id}`, "DELETE");
       setList((prev) => prev.filter((x) => x.id !== t.id));
+      router.refresh();
     });
 
   const addTask = () =>
@@ -239,6 +242,7 @@ export default function NoteEditor({
       setList((prev) => [...prev, created]);
       setNewText("");
       setNewDue("");
+      router.refresh();
     });
 
   return (

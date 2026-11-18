@@ -20,8 +20,18 @@ async function postJson(url: string, body?: unknown) {
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
-  const json = await res.json().catch(() => ({}));
-  return { res, json: json as { capture_id?: string; ok?: boolean; error?: string } };
+  let json: unknown = null;
+  let isJson = true;
+  try {
+    json = await res.json();
+  } catch {
+    isJson = false;
+  }
+  if (typeof json !== "object" || json === null) {
+    isJson = false;
+    json = {};
+  }
+  return { res, isJson, json: json as { capture_id?: string; ok?: boolean; error?: string } };
 }
 
 /**
@@ -100,17 +110,27 @@ export default function CaptureButton() {
     }
 
     // 2. Ask the API to read them. From here the photos are safe in storage.
+    // Never invite a re-send once a capture may exist — that would duplicate it.
+    const mayStillBeReading =
+      "It may still be reading — check below in a few minutes. If it says it couldn't read the page, tap Try again.";
     try {
-      const { res, json } = await postJson("/api/admin/notes/captures", { photo_paths: paths });
+      const { res, json, isJson } = await postJson("/api/admin/notes/captures", { photo_paths: paths });
       if (json.capture_id) {
         // The capture exists: success, or a failed capture with Try again below.
         clearPages();
         if (!json.ok) setError(`Couldn't read the page: ${json.error ?? "unknown error"}. Your photos are saved — tap Try again below.`);
+      } else if (!isJson || res.status === 502 || res.status === 504) {
+        // A gateway timeout or platform error page: the capture may well exist.
+        clearPages();
+        setNotice(mayStillBeReading);
       } else {
+        // Our own JSON error before the capture was created: safe to send again.
         setError(json.error ?? `Something went wrong (${res.status}). Try Send again.`);
       }
     } catch {
-      setError("Lost the connection while reading. If the page isn't listed below in a minute, send it again.");
+      // The connection dropped mid-request: the server may still be reading.
+      clearPages();
+      setNotice(mayStillBeReading);
     } finally {
       setSending(false);
       router.refresh();

@@ -102,7 +102,13 @@ export default async function NotesPage({ searchParams }: { searchParams: Search
               <span className="text-sm text-[#6b6560]">{inboxNotes.length} to check</span>
             </div>
             {inboxNotes.map(({ note_tasks, ...note }) => (
-              <InboxCard key={note.id} note={note} tasks={note_tasks ?? []} />
+              // Keyed on its task ids so the card's seeded task state resets
+              // when tasks are added or removed elsewhere (e.g. the detail page).
+              <InboxCard
+                key={note.id + ":" + (note_tasks ?? []).map((t) => t.id).join(",")}
+                note={note}
+                tasks={note_tasks ?? []}
+              />
             ))}
           </section>
         )}
