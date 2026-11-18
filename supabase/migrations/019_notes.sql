@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS note_captures (
   raw_transcript  text NULL,                      -- full verbatim transcript from the model
   model           text NULL,
   created_at      timestamptz NOT NULL DEFAULT now(),
+  started_at      timestamptz NOT NULL DEFAULT now(),  -- start of the latest run (reset on retry)
   processed_at    timestamptz NULL
 );
 

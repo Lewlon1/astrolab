@@ -11,6 +11,22 @@ describe("effectiveStatus", () => {
   it("processing over 5 min is failed", () => {
     expect(effectiveStatus({ status: "processing", created_at: ago(STALE_MS + 1000) }, now)).toBe("failed");
   });
+  it("old created_at but recent started_at stays processing", () => {
+    expect(
+      effectiveStatus(
+        { status: "processing", created_at: ago(STALE_MS * 10), started_at: ago(1000) },
+        now
+      )
+    ).toBe("processing");
+  });
+  it("processing with stale started_at is failed", () => {
+    expect(
+      effectiveStatus(
+        { status: "processing", created_at: ago(STALE_MS * 10), started_at: ago(STALE_MS + 1000) },
+        now
+      )
+    ).toBe("failed");
+  });
   it("done/failed unchanged", () => {
     expect(effectiveStatus({ status: "done", created_at: ago(STALE_MS * 10) }, now)).toBe("done");
     expect(effectiveStatus({ status: "failed", created_at: ago(1000) }, now)).toBe("failed");

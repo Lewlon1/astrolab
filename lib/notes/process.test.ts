@@ -10,7 +10,11 @@ type Row = Record<string, unknown>;
  * from().insert().select().single(), from().insert(rows), from().update().eq(),
  * storage.from().download().
  */
-function fakeSupabase(seed: { captures: Row[]; files: Record<string, string> }) {
+function fakeSupabase(seed: {
+  captures: Row[];
+  files: Record<string, string>;
+  failInsertInto?: string;
+}) {
   const tables: Record<string, Row[]> = {
     note_captures: seed.captures.map((c) => ({ ...c })),
     notes: [],
@@ -28,6 +32,9 @@ function fakeSupabase(seed: { captures: Row[]; files: Record<string, string> }) 
     const run = (): { data: unknown; error: { message: string } | null } => {
       const match = (r: Row) => !filter || r[filter[0]] === filter[1];
       if (op === "insert") {
+        if (seed.failInsertInto === table) {
+          return { data: null, error: { message: `insert into ${table} failed` } };
+        }
         const list = (Array.isArray(payload) ? payload : [payload]) as Row[];
         const inserted = list.map((r) => ({ id: `${table}-${++seq}`, ...r }));
         rows.push(...inserted);
@@ -121,12 +128,19 @@ const MODEL_JSON = JSON.stringify({
   ],
 });
 
-function setup(opts: { transcribe?: ProcessDeps["transcribe"]; files?: Record<string, string> } = {}) {
+function setup(
+  opts: {
+    transcribe?: ProcessDeps["transcribe"];
+    files?: Record<string, string>;
+    failInsertInto?: string;
+  } = {}
+) {
   const fake = fakeSupabase({
     captures: [
       { id: "cap-1", photo_paths: ["captures/a.jpg", "captures/b.jpg"], status: "processing", error: null },
     ],
     files: opts.files ?? { "captures/a.jpg": "img-a", "captures/b.jpg": "img-b" },
+    failInsertInto: opts.failInsertInto,
   });
   const calls: { images: number; date: string }[] = [];
   const deps: ProcessDeps = {
@@ -209,6 +223,20 @@ describe("processCapture", () => {
     const cap = tables.note_captures[0];
     expect(cap.status).toBe("failed");
     expect(cap.error).toContain("captures/b.jpg");
+    expect(cap.photo_paths).toEqual(["captures/a.jpg", "captures/b.jpg"]);
+  });
+
+  it("leaves no partial notes when a task insert fails", async () => {
+    const { deps, tables, calls } = setup({ failInsertInto: "note_tasks" });
+    const res = await processCapture(deps, "cap-1");
+
+    expect(res.ok).toBe(false);
+    expect(calls).toHaveLength(1);
+    expect(tables.notes.filter((n) => n.capture_id === "cap-1")).toHaveLength(0);
+    expect(tables.note_tasks).toHaveLength(0);
+    const cap = tables.note_captures[0];
+    expect(cap.status).toBe("failed");
+    expect(cap.error).toContain("note_tasks");
     expect(cap.photo_paths).toEqual(["captures/a.jpg", "captures/b.jpg"]);
   });
 });

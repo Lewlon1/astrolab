@@ -31,6 +31,7 @@ export interface NoteCapture {
   raw_transcript: string | null;
   model: string | null;
   created_at: string;
+  started_at: string;
   processed_at: string | null;
 }
 

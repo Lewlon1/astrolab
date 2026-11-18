@@ -1,7 +1,8 @@
 /**
  * Runs one capture through the model: download photos, transcribe, parse, write
  * notes + tasks. Retry-safe — earlier notes for the same capture are replaced.
- * On any error the capture is marked `failed` (photos kept) so the UI can retry.
+ * On any error its notes are removed and the capture is marked `failed`
+ * (photos kept) so the UI can retry.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -104,6 +105,12 @@ export async function processCapture(
     return { ok: true, noteIds };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
+    // A failed capture never keeps partial notes (their tasks cascade).
+    try {
+      await supabase.from("notes").delete().eq("capture_id", captureId);
+    } catch {
+      // Best effort; a retry clears them anyway.
+    }
     try {
       await supabase
         .from("note_captures")

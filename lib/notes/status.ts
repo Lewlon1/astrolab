@@ -2,14 +2,17 @@ import type { CaptureStatus, Note, NoteCapture, NoteTask } from "@/types/notes";
 
 export const STALE_MS = 5 * 60 * 1000;
 
-/** A capture stuck in "processing" for over 5 minutes is treated as failed. */
+/**
+ * A capture stuck in "processing" for over 5 minutes since its latest run
+ * started (started_at; created_at if absent) is treated as failed.
+ */
 export function effectiveStatus(
-  c: Pick<NoteCapture, "status" | "created_at">,
+  c: Pick<NoteCapture, "status" | "created_at"> & { started_at?: string | null },
   now: Date = new Date()
 ): CaptureStatus {
   if (
     c.status === "processing" &&
-    now.getTime() - new Date(c.created_at).getTime() > STALE_MS
+    now.getTime() - new Date(c.started_at ?? c.created_at).getTime() > STALE_MS
   ) {
     return "failed";
   }
