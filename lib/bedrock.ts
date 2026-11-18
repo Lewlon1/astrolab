@@ -1,6 +1,7 @@
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  type ConverseCommandOutput,
 } from "@aws-sdk/client-bedrock-runtime";
 
 const client = new BedrockRuntimeClient({
@@ -62,6 +63,29 @@ export type ImageInput = {
   format: "jpeg" | "png" | "webp";
 };
 
+/**
+ * Abort a vision call after this long so the caller can record the failure and
+ * reply before Vercel kills the function at its 300s maxDuration.
+ */
+export const VISION_TIMEOUT_MS = 240_000;
+
+export const TOO_LONG_MESSAGE =
+  "This capture was too long to read in one go — try sending fewer pages at a time.";
+
+/** Text of a Converse reply; throws if it was cut off at the token cap or empty. */
+export function readVisionResponse(
+  response: Pick<ConverseCommandOutput, "output" | "stopReason">
+): string {
+  if (response.stopReason === "max_tokens") throw new Error(TOO_LONG_MESSAGE);
+  const textBlock = response.output?.message?.content?.find(
+    (block) => "text" in block
+  );
+  if (!textBlock || !("text" in textBlock) || !textBlock.text) {
+    throw new Error("No text content in Bedrock response");
+  }
+  return textBlock.text;
+}
+
 // Vision call: image blocks first, then the instruction text. Temperature 0 —
 // transcription should be faithful, not creative.
 export async function invokeModelWithImages(
@@ -91,16 +115,23 @@ export async function invokeModelWithImages(
     },
   });
 
-  const response = await client.send(command);
-
-  const textBlock = response.output?.message?.content?.find(
-    (block) => "text" in block
-  );
-  if (!textBlock || !("text" in textBlock) || !textBlock.text) {
-    throw new Error("No text content in Bedrock response");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), VISION_TIMEOUT_MS);
+  let response: ConverseCommandOutput;
+  try {
+    response = await client.send(command, { abortSignal: controller.signal });
+  } catch (e) {
+    if (controller.signal.aborted) {
+      throw new Error(
+        `Reading the page took longer than ${VISION_TIMEOUT_MS / 1000}s and was stopped.`
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
 
-  return textBlock.text;
+  return readVisionResponse(response);
 }
 
 // Helper to invoke and parse JSON response

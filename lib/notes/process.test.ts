@@ -133,11 +133,12 @@ function setup(
     transcribe?: ProcessDeps["transcribe"];
     files?: Record<string, string>;
     failInsertInto?: string;
+    createdAt?: string;
   } = {}
 ) {
   const fake = fakeSupabase({
     captures: [
-      { id: "cap-1", photo_paths: ["captures/a.jpg", "captures/b.jpg"], status: "processing", error: null },
+      { id: "cap-1", photo_paths: ["captures/a.jpg", "captures/b.jpg"], status: "processing", error: null, created_at: opts.createdAt ?? "2026-11-18T09:00:00Z" },
     ],
     files: opts.files ?? { "captures/a.jpg": "img-a", "captures/b.jpg": "img-b" },
     failInsertInto: opts.failInsertInto,
@@ -238,5 +239,12 @@ describe("processCapture", () => {
     expect(cap.status).toBe("failed");
     expect(cap.error).toContain("note_tasks");
     expect(cap.photo_paths).toEqual(["captures/a.jpg", "captures/b.jpg"]);
+  });
+
+  it("resolves dates against the capture's Madrid date, not the run date", async () => {
+    // 23:30 UTC on the 16th is 00:30 on the 17th in Madrid; the retry runs on the 18th.
+    const { deps, calls } = setup({ createdAt: "2026-11-16T23:30:00Z" });
+    await processCapture(deps, "cap-1");
+    expect(calls).toEqual([{ images: 2, date: "2026-11-17" }]);
   });
 });

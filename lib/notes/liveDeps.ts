@@ -17,7 +17,8 @@ export function liveDeps(supabase: SupabaseClient): ProcessDeps {
         buildSystemPrompt(),
         buildUserPrompt(captureDate),
         images,
-        8192
+        // Room for the verbatim transcript plus the notes JSON for six pages.
+        16000
       ),
   };
 }

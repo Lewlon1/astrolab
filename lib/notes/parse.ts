@@ -40,9 +40,8 @@ export function validDate(v: unknown): string | null {
 }
 
 function toArea(v: unknown): NoteArea {
-  return typeof v === "string" && (NOTE_AREAS as readonly string[]).includes(v.trim())
-    ? (v.trim() as NoteArea)
-    : "unsorted";
+  const key = typeof v === "string" ? v.trim().toLowerCase() : "";
+  return (NOTE_AREAS as readonly string[]).includes(key) ? (key as NoteArea) : "unsorted";
 }
 
 function fallbackNote(title: string, body: string): ParsedNote {
@@ -70,7 +69,7 @@ function parseTasks(v: unknown): ParsedTask[] {
 
 function parseNote(n: Record<string, unknown>): ParsedNote {
   const body = str(n.body);
-  let title = str(n.title);
+  let title = str(n.title).slice(0, TITLE_MAX).trim();
   if (!title) {
     title = (body.split("\n")[0] ?? "").trim().slice(0, TITLE_MAX).trim();
   }
@@ -91,13 +90,25 @@ function stripFences(raw: string): string {
   return m ? m[1] : t;
 }
 
+/** JSON.parse, retrying on the outermost {...} if the model wrapped it in prose. */
+function parseLoose(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start === -1 || end <= start) throw e;
+    return JSON.parse(text.slice(start, end + 1));
+  }
+}
+
 /** Turns the model's JSON output into safe, typed notes. Never throws. */
 export function parseCaptureResponse(raw: string): ParsedCapture {
   const input = typeof raw === "string" ? raw : "";
   try {
     let data: unknown;
     try {
-      data = JSON.parse(stripFences(input));
+      data = parseLoose(stripFences(input));
     } catch {
       return { transcript: input, notes: [fallbackNote("Unreadable page", input)] };
     }

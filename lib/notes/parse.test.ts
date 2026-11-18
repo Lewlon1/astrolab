@@ -147,4 +147,26 @@ describe("parseCaptureResponse", () => {
     expect(r.transcript).toBe("");
     expect(r.notes).toHaveLength(1);
   });
+
+  it("recovers JSON wrapped in prose", () => {
+    const wrapped = "Here is the JSON you asked for:\n" + JSON.stringify(clean) + "\nLet me know if you need more.";
+    const r = parseCaptureResponse(wrapped);
+    expect(r.transcript).toBe("raw text");
+    expect(r.notes.map((n) => n.title)).toEqual(["Call with Sam", "Invoices"]);
+  });
+
+  it("caps a model-supplied title at 80 chars", () => {
+    const long = "A".repeat(200);
+    const r = parseCaptureResponse(
+      JSON.stringify({ transcript: "t", notes: [{ ...clean.notes[0], title: long }] }),
+    );
+    expect(r.notes[0].title).toHaveLength(80);
+  });
+
+  it("matches areas case-insensitively", () => {
+    const r = parseCaptureResponse(
+      JSON.stringify({ transcript: "t", notes: [{ ...clean.notes[0], area: " Clients " }] }),
+    );
+    expect(r.notes[0].area).toBe("clients");
+  });
 });

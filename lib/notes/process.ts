@@ -25,6 +25,14 @@ export type ProcessResult =
   | { ok: true; noteIds: string[] }
   | { ok: false; error: string };
 
+/** A timestamp as its Europe/Madrid calendar date (YYYY-MM-DD), or null. */
+export function captureDateOf(createdAt: string | null | undefined): string | null {
+  if (!createdAt) return null;
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-CA", { timeZone: "Europe/Madrid" });
+}
+
 export async function processCapture(
   deps: ProcessDeps,
   captureId: string
@@ -34,9 +42,9 @@ export async function processCapture(
   try {
     const { data: capture, error: readError } = await supabase
       .from("note_captures")
-      .select("id, photo_paths")
+      .select("id, photo_paths, created_at")
       .eq("id", captureId)
-      .single<{ id: string; photo_paths: string[] }>();
+      .single<{ id: string; photo_paths: string[]; created_at: string | null }>();
     if (readError || !capture) {
       throw new Error(`Capture not found: ${readError?.message ?? captureId}`);
     }
@@ -53,7 +61,9 @@ export async function processCapture(
       images.push({ bytes: new Uint8Array(await data.arrayBuffer()), format: "jpeg" });
     }
 
-    const raw = await deps.transcribe(images, deps.today());
+    // Relative dates ("Friday") resolve against the day the page was captured,
+    // so a retry on a later day still reads them the same way.
+    const raw = await deps.transcribe(images, captureDateOf(capture.created_at) ?? deps.today());
     const parsed = parseCaptureResponse(raw);
 
     // Retry idempotence: drop notes (and, by cascade, tasks) from an earlier run.
