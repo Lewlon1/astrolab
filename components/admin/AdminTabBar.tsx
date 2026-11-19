@@ -71,7 +71,7 @@ export default function AdminTabBar() {
         aria-label="Admin sections"
         className="fixed left-0 right-0 bottom-0 z-50 bg-white border-t border-[#e8e5df] pb-[env(safe-area-inset-bottom)]"
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}>
           {groups.map((group) => {
             const isActive = sheet ? sheet === group.label : current === group.label;
             const cls = `flex flex-col items-center justify-center gap-0.5 h-16 w-full text-[11px] ${

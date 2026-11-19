@@ -7,6 +7,12 @@ const paths: Record<NavIcon, React.ReactNode> = {
       <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4" />
     </>
   ),
+  notes: (
+    <>
+      <rect x="4.5" y="2.5" width="11" height="15" rx="1.75" />
+      <path d="M8 2.5v15M10.5 7h2.5M10.5 10h2.5" />
+    </>
+  ),
   clients: (
     <>
       <circle cx="7.5" cy="7" r="2.75" />

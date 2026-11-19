@@ -7,12 +7,14 @@
  */
 import { isAdminFeatureOn, type AdminFeature } from "@/lib/admin/features";
 
-export type NavIcon = "today" | "clients" | "content" | "website" | "insights";
+export type NavIcon = "today" | "notes" | "clients" | "content" | "website" | "insights";
 
 export interface NavItem {
   label: string;
   href: string;
   feature?: AdminFeature;
+  /** Other routes that count as this item (e.g. Notes pages live under Today). */
+  also?: string[];
 }
 
 export interface NavGroup {
@@ -22,7 +24,8 @@ export interface NavGroup {
 }
 
 export const NAV_GROUPS: NavGroup[] = [
-  { label: "Today", icon: "today", items: [{ label: "Today", href: "/admin" }] },
+  // Notes is reached from the top of Today (snap / review buttons), not its own tab.
+  { label: "Today", icon: "today", items: [{ label: "Today", href: "/admin", also: ["/admin/notes"] }] },
   {
     label: "Clients",
     icon: "clients",
@@ -74,15 +77,19 @@ export function visibleNavGroups(
   })).filter((g) => g.items.length > 0);
 }
 
-function matches(pathname: string, href: string): boolean {
+function matchesHref(pathname: string, href: string): boolean {
   if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function matches(pathname: string, item: NavItem): boolean {
+  return [item.href, ...(item.also ?? [])].some((h) => matchesHref(pathname, h));
 }
 
 /** The item for the current path (e.g. /admin/blog/123 → Blog), or null. */
 export function activeItem(pathname: string, groups: NavGroup[]): NavItem | null {
   for (const g of groups) {
-    const item = g.items.find((i) => matches(pathname, i.href));
+    const item = g.items.find((i) => matches(pathname, i));
     if (item) return item;
   }
   return null;
@@ -91,7 +98,7 @@ export function activeItem(pathname: string, groups: NavGroup[]): NavItem | null
 /** The group label for the current path, or null. */
 export function activeGroup(pathname: string, groups: NavGroup[]): string | null {
   for (const g of groups) {
-    if (g.items.some((i) => matches(pathname, i.href))) return g.label;
+    if (g.items.some((i) => matches(pathname, i))) return g.label;
   }
   return null;
 }
