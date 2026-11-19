@@ -41,6 +41,13 @@ describe("activeGroup / activeItem", () => {
     expect(activeItem("/admin/services/new", groups)?.label).toBe("Services & prices");
   });
 
+  it("matches notes pages to Today, where Notes lives", () => {
+    expect(activeGroup("/admin/notes", groups)).toBe("Today");
+    expect(activeGroup("/admin/notes/abc", groups)).toBe("Today");
+    expect(activeItem("/admin/notes", groups)?.label).toBe("Today");
+    expect(activeGroup("/admin/notesx", groups)).toBeNull();
+  });
+
   it("does not match on a shared prefix", () => {
     // /admin/leads must not light up for /admin/lead-queue
     expect(activeItem("/admin/lead-queue", groups)?.label).toBe("Lead Queue");

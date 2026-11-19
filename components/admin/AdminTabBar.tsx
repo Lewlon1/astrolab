@@ -19,6 +19,27 @@ export default function AdminTabBar() {
   const currentItem = activeItem(pathname, groups);
   const openGroup = groups.find((g) => g.label === sheet);
 
+  // Hide the bar while the keyboard is up (a text field has focus): on iPhone a fixed
+  // bottom bar otherwise floats above the keyboard and covers what's being typed.
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    const isField = (el: Element | null) =>
+      el instanceof HTMLTextAreaElement ||
+      el instanceof HTMLSelectElement ||
+      (el instanceof HTMLInputElement &&
+        !["checkbox", "radio", "button", "submit", "file", "range", "color"].includes(el.type)) ||
+      (el instanceof HTMLElement && el.isContentEditable);
+    const update = () => setTyping(isField(document.activeElement));
+    document.addEventListener("focusin", update);
+    // focusout fires before focus lands on the next field; check once it has.
+    const onOut = () => setTimeout(update, 0);
+    document.addEventListener("focusout", onOut);
+    return () => {
+      document.removeEventListener("focusin", update);
+      document.removeEventListener("focusout", onOut);
+    };
+  }, []);
+
   useEffect(() => setSheet(null), [pathname]);
   useEffect(() => {
     if (!sheet) return;
@@ -41,7 +62,7 @@ export default function AdminTabBar() {
           <div
             role="dialog"
             aria-label={openGroup.label}
-            className="fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-2xl border-t border-[#e8e5df] shadow-lg pb-[calc(4.5rem+env(safe-area-inset-bottom))]"
+            className="fixed left-0 right-0 bottom-0 z-50 bg-white rounded-t-2xl border-t border-[#e8e5df] shadow-lg pb-[calc(3.5rem+max(env(safe-area-inset-bottom),0.5rem))]"
           >
             <p className="px-5 pt-4 pb-2 text-xs font-medium uppercase tracking-wider text-[#b8b0a4]">
               {openGroup.label}
@@ -69,12 +90,15 @@ export default function AdminTabBar() {
       {/* Tab bar */}
       <nav
         aria-label="Admin sections"
-        className="fixed left-0 right-0 bottom-0 z-50 bg-white border-t border-[#e8e5df] pb-[env(safe-area-inset-bottom)]"
+        hidden={typing}
+        className="fixed left-0 right-0 bottom-0 z-50 bg-white border-t border-[#e8e5df] pb-[max(env(safe-area-inset-bottom),0.5rem)]"
       >
-        <ul className="grid grid-cols-5">
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${groups.length}, minmax(0, 1fr))` }}>
           {groups.map((group) => {
             const isActive = sheet ? sheet === group.label : current === group.label;
-            const cls = `flex flex-col items-center justify-center gap-0.5 h-16 w-full text-[11px] ${
+            // Full-cell targets with press feedback; the safe-area padding below keeps
+            // them clear of the iPhone home-indicator swipe zone, which eats taps.
+            const cls = `flex flex-col items-center justify-center gap-1 h-14 w-full text-[11px] select-none [-webkit-tap-highlight-color:transparent] active:bg-[#f5f3ef] transition-colors ${
               isActive ? "text-[#1a1a18] font-medium" : "text-[#8a837b]"
             }`;
             const inner = (
