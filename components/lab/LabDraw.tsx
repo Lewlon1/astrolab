@@ -118,7 +118,7 @@ export default function LabDraw({ src, authError }: Props) {
 
   const card = hand && pickedIndex !== null ? hand[pickedIndex] : null;
 
-  // Shuffle only after mount, so the server renders three identical face-down backs.
+  // Shuffle only after mount, so the server and first client render match.
   useEffect(() => {
     setHand(drawCards(CARDS, HAND_SIZE));
     const pending = timers.current;
@@ -250,8 +250,7 @@ export default function LabDraw({ src, authError }: Props) {
 
       <section aria-labelledby="lab-step-draw" className="flex flex-col gap-4">
         <StepHead n="01" id="lab-step-draw" title={STEP_TITLES.draw} />
-        {/* Phones: the cards come straight after the step title so the whole arch is in the first view; the intro follows. */}
-        <p className="m-0 max-w-[62ch] max-sm:order-2">{DRAW.intro}</p>
+        {/* Phones: the cards come straight after the step title so the whole arch is in the first view. */}
         <div className="max-sm:order-1">
           <LabDeck hand={hand} pickedIndex={pickedIndex} onPick={handlePick} />
         </div>

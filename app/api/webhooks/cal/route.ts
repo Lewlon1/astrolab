@@ -11,6 +11,7 @@ import { confirmInCal, recordCalEvent } from "@/lib/payments/bookingStore";
 import { supabaseBookingsRepo } from "@/lib/payments/supabaseRepo";
 import { calApi } from "@/lib/payments/calApi";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { recordLpBooking } from "@/lib/apply/booking";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,8 +39,11 @@ export async function POST(req: NextRequest) {
   if (!event) return NextResponse.json({ received: true, ignored: true });
 
   try {
-    const repo = supabaseBookingsRepo(createAdminClient());
+    const admin = createAdminClient();
+    const repo = supabaseBookingsRepo(admin);
     const booking = await recordCalEvent(repo, event);
+    // /apply landing-page attribution (lp_call_booked). Never throws.
+    await recordLpBooking(admin, body);
     // A paid booking rescheduled onto a requires-confirmation event comes back
     // pending in Cal: re-confirm it now that payment is already on file.
     if (booking.payment_status !== "unpaid" && booking.cal_status === "pending") {

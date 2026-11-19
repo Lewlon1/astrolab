@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LangText from "@/components/LangText";
 import { useLang } from "@/context/LangContext";
 import EnvelopePenArt from "@/components/EnvelopePenArt";
@@ -24,16 +24,9 @@ export default function Hero({ editorialDate }: Props) {
   // When opened from the envelope mock-up, the letter unfolds on its own.
   const [autoUnfold, setAutoUnfold] = useState(false);
 
-  // On first mount: open the welcome letter unless the user has already dismissed it.
-  useEffect(() => {
-    try {
-      const dismissed = window.localStorage.getItem("apl.welcome.dismissed");
-      if (dismissed !== "true") setLetterOpen(true);
-    } catch {
-      // localStorage unavailable (private mode, etc.) — fall back to auto-open
-      setLetterOpen(true);
-    }
-  }, []);
+  // The letter no longer opens by itself on first visit: it covered the homepage
+  // and cost three taps before any content (readiness plan change 10). It opens
+  // only from the envelope below.
 
   const handleEnter = () => {
     setLetterOpen(false);

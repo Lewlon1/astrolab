@@ -5,7 +5,7 @@ import { forwardRef, useState, type FormEvent } from "react";
 import { CONSENT_TEXT } from "@/content/lab/privacy";
 import { ERRORS, GATE, GATE_EXTRA, SENT } from "@/content/lab/ui";
 import type { FormError } from "./BirthForm";
-import { BTN_DARK, ERROR_DARK, EYEBROW, INPUT_DARK, LABEL, LABEL_ASIDE, LEDE, cx } from "./classes";
+import { BTN_DARK, ERROR_DARK, INPUT_DARK, LABEL, LABEL_ASIDE, LEDE, cx } from "./classes";
 import { MOTIF_COLORS, SunMotif } from "./motifs";
 import styles from "./lab.module.css";
 
@@ -68,7 +68,6 @@ const Gate = forwardRef<HTMLHeadingElement, Props>(function Gate(
       )}
     >
       <SunMotif color={MOTIF_COLORS.gold2} rays={24} className={styles.sunmark} />
-      <p className={cx(EYEBROW, "text-goldLight")}>{GATE.eyebrow}</p>
       <h2
         id="lab-gate-title"
         className="m-0 font-fraunces text-[clamp(28px,6vw,40px)] font-medium leading-[1.05] !text-cream2 [text-wrap:balance]"
@@ -77,14 +76,6 @@ const Gate = forwardRef<HTMLHeadingElement, Props>(function Gate(
       </h2>
       <p className={cx(LEDE, "text-coralLight")}>{GATE.lede}</p>
 
-      <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-3">
-        {GATE.gets.map((g) => (
-          <li key={g.title} className="rounded-xl border border-cream2/20 px-[14px] py-3 text-[14px] text-sageLight">
-            <b className="mb-0.5 block text-[15px] font-medium text-cream2">{g.title}</b>
-            {g.body}
-          </li>
-        ))}
-      </ul>
 
       {sent ? (
         <SentState ref={sentRef} sent={sent} />
