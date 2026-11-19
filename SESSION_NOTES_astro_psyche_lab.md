@@ -1048,3 +1048,21 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Admin UX: notes autosave, tab bar, home-screen app (2026-11-19)
+
+**Files touched:** `lib/admin/autosave.ts` (new) + `autosave.test.ts` (new), `lib/admin/useAutosave.ts` (new), `components/admin/notes/NoteEditor.tsx`, `components/admin/AdminTabBar.tsx`, `app/admin/layout.tsx`, `app/admin/notes/[id]/page.tsx`, `public/lab-admin.webmanifest` (new), `public/admin-icons/icon-{180,192,512}.png` (new). No database changes.
+
+- **Notes autosave:** title, client and note text save 1s after typing stops. The status line ("Saving… / Saved ✓ / Couldn't save: … Retry / Add a title to save") is sticky at the top of the editor. Pending edits are also flushed with a `keepalive` fetch when the page is hidden (app sent to background, phone locked), on `pagehide`, and when the editor unmounts (back link, tab tap). The "Save changes" button is gone.
+- **No more shared busy flag:** to-dos, area, add and archive/delete each have their own busy state and their own inline error. Ticking a to-do and changing the area are optimistic and roll back on failure. Delete uses `ConfirmModal`, not `window.confirm`.
+- **Layout fixes:** the note textarea grows with its content. Date inputs no longer overflow on iOS (`min-w-0 appearance-none`). Tick and delete targets are 44px. Phone side margins are now 16px (`px-4 md:px-6`). The note page has a "Today › Notes" breadcrumb.
+- **Tab bar:** hidden while any text field has focus, so it no longer floats over the iPhone keyboard. It has press feedback and at least 8px of bottom padding, plus the real home-indicator inset.
+- **Home-screen app:** Gabs uses `/admin` from her iPhone home screen. The admin layout now sets `viewport-fit=cover` (without it `env(safe-area-inset-bottom)` is 0, so the tab bar sat in the swipe-up zone, which eats taps), `appleWebApp` meta, a manifest and an apple-touch icon. **Gabs must delete the home-screen icon and add it again** (Share → Add to Home Screen) to pick these up.
+- **Verified:** Playwright on iPhone 13 emulation against a temporary harness page with stubbed APIs (removed before commit): debounced single save, empty-title block, error + Retry, to-dos usable mid-save, flush on hide, no horizontal overflow. **Not verified:** real iOS keyboard and home-indicator behaviour; check on Gabs's phone.
+
+**Lessons learned**
+- The `/admin` middleware check is `pathname.startsWith("/admin")`, so a public file like `/admin.webmanifest` would be redirected to login (manifest fetches send no cookies). Keep admin assets outside the `/admin` prefix (`/lab-admin.webmanifest`, `/admin-icons/*.png`; PNGs are excluded from the matcher anyway).
+- With autosave, don't copy the server's normalised value (trimmed title) back into the input: it eats a trailing space mid-typing. Track what the user typed as "saved".
+- Don't `dispose()` an autosaver in a React effect cleanup: strict mode runs cleanup then re-runs the effect on the same instance. Flush in cleanup, dispose only on an explicit discard (e.g. after delete).
+- Avoid `router.refresh()` after every autosave on the note page: it re-runs the server component and re-signs the photo URLs, so the images reload. Refresh once on unmount instead.
+- Vitest runs in `node` here, with no testing-library. Put hook logic in a framework-free controller (`createAutosaver`) with injectable timers and test that.

@@ -64,9 +64,16 @@ export default async function NoteDetailPage({ params }: { params: { id: string 
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 pb-24 md:pb-8">
-      <Link href="/admin/notes" className="inline-block text-sm text-[#6b6560] underline">
-        &larr; Back to notes
-      </Link>
+      {/* Notes live under the Today tab; the trail says so and gives a big back target. */}
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-sm text-[#6b6560]">
+        <Link href="/admin" className="py-2 pr-1 underline-offset-2 active:underline">
+          Today
+        </Link>
+        <span aria-hidden>›</span>
+        <Link href="/admin/notes" className="py-2 px-1 underline underline-offset-2">
+          Notes
+        </Link>
+      </nav>
       {content}
     </div>
   );
