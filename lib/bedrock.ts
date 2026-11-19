@@ -14,7 +14,7 @@ const client = new BedrockRuntimeClient({
 
 // Model IDs — check your Bedrock console for exact IDs available in your region
 export const MODELS = {
-  SONNET: "eu.anthropic.claude-sonnet-4-20250514-v1:0", // creative + analytical tasks
+  SONNET: "eu.anthropic.claude-sonnet-4-6", // creative + analytical tasks (Sonnet 4 retired Nov 2026)
   HAIKU: "eu.anthropic.claude-haiku-4-5-20251001-v1:0", // fast + cheap tasks
 } as const;
 
