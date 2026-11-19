@@ -146,9 +146,11 @@ due-soon first, each linking back to its note; tick to complete.
 **Today (`/admin`)** — a small "From your notes" section: overdue and due-today
 tasks, plus a count of notes waiting in the inbox, linking to Notes.
 
-**Navigation** — Notes becomes its own top-level item (desktop top bar and a sixth
-mobile tab), because it is the capture entry point and must be one tap away. Adding it
-to an existing group would make it two taps, or turn Today into a menu.
+**Navigation** — *(changed by Lewis, 2026-11-19)* Notes is not its own tab. It sits at
+the top of Today as a "Notes" card with two buttons: **Snap a new note** (capture; after
+sending it opens the Notes page) and **Review notes & to-dos** (opens `/admin/notes`,
+with a count of new inbox notes), followed by any to-dos due today or overdue. The
+Notes pages light up the Today tab and have a "← Today" link.
 
 ### Agent readiness
 

@@ -150,7 +150,10 @@ export default async function NotesPage({ searchParams }: { searchParams: Search
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="font-heading text-2xl text-[#1a1a18]">Notes</h1>
+        <Link href="/admin" className="text-sm text-[#6b6560] hover:text-[#1a1a18]">
+          &larr; Today
+        </Link>
+        <h1 className="font-heading text-2xl text-[#1a1a18] mt-1">Notes</h1>
         <p className="text-[#6b6560] mt-1">Snap a paper page; it&apos;s typed up and filed for you.</p>
       </div>
 

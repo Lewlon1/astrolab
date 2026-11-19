@@ -134,9 +134,9 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <GetPaidCard bookings={attentionBookings} />
-
       <NotesCard data={notes} />
+
+      <GetPaidCard bookings={attentionBookings} />
 
       <TodayChecklist initialItems={actionItems} />
 

@@ -38,7 +38,17 @@ async function postJson(url: string, body?: unknown) {
  * "Snap a page": collect up to six photos, shrink them, upload straight to
  * storage, then ask the API to read them. Photos never pass through the API body.
  */
-export default function CaptureButton() {
+export default function CaptureButton({
+  label = "Snap a page",
+  afterSend,
+  bare = false,
+}: {
+  label?: string;
+  /** Where to go once the capture exists (e.g. the Notes page, to see the inbox or Try again). */
+  afterSend?: string;
+  /** Drop the card frame, for use inside another card. */
+  bare?: boolean;
+} = {}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [pages, setPages] = useState<Page[]>([]);
@@ -118,10 +128,18 @@ export default function CaptureButton() {
       if (json.capture_id) {
         // The capture exists: success, or a failed capture with Try again below.
         clearPages();
+        if (afterSend) {
+          router.push(afterSend);
+          return;
+        }
         if (!json.ok) setError(`Couldn't read the page: ${json.error ?? "unknown error"}. Your photos are saved — tap Try again below.`);
       } else if (!isJson || res.status === 502 || res.status === 504) {
         // A gateway timeout or platform error page: the capture may well exist.
         clearPages();
+        if (afterSend) {
+          router.push(afterSend);
+          return;
+        }
         setNotice(mayStillBeReading);
       } else {
         // Our own JSON error before the capture was created: safe to send again.
@@ -130,15 +148,20 @@ export default function CaptureButton() {
     } catch {
       // The connection dropped mid-request: the server may still be reading.
       clearPages();
+      if (afterSend) {
+        router.push(afterSend);
+        return;
+      }
       setNotice(mayStillBeReading);
     } finally {
       setSending(false);
-      router.refresh();
+      if (!afterSend) router.refresh();
     }
   }
 
+  const Frame = bare ? "div" : "section";
   return (
-    <section className="bg-white border border-[#e8e5df] rounded-xl p-4 sm:p-5 space-y-4">
+    <Frame className={bare ? "space-y-4" : "bg-white border border-[#e8e5df] rounded-xl p-4 sm:p-5 space-y-4"}>
       <input
         ref={inputRef}
         type="file"
@@ -160,7 +183,7 @@ export default function CaptureButton() {
           className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white text-base font-medium py-4 rounded-xl hover:bg-emerald-700 active:bg-emerald-800 transition-colors disabled:opacity-60"
         >
           <CameraIcon />
-          Snap a page
+          {label}
         </button>
       ) : (
         <>
@@ -232,7 +255,7 @@ export default function CaptureButton() {
           {error}
         </p>
       )}
-    </section>
+    </Frame>
   );
 }
 
