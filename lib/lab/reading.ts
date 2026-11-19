@@ -8,10 +8,8 @@ import {
   moonLine,
   openingLine,
   relationOf,
-  relationText,
   signChip,
   signInfo,
-  traditionParagraph,
   LAYER_LABELS,
 } from "@/content/lab/reading";
 import { RESULT } from "@/content/lab/ui";
@@ -60,7 +58,6 @@ export function composeReading(cardName: string, chart: ReadingChart): InstantRe
   if (!sunInfo || !moonInfo) throw new Error("Unknown sign");
 
   const rel = relationOf(card, sunInfo.name, moonInfo.name);
-  const relText = relationText(rel, { card, sunName: sunInfo.name });
   const theme = THEMES[card.theme];
 
   return {
@@ -72,7 +69,6 @@ export function composeReading(cardName: string, chart: ReadingChart): InstantRe
     ],
     paragraphs: [
       { kind: "open", text: openingLine(card) },
-      { kind: "body", text: traditionParagraph(card, sunInfo, relText) },
       { kind: "body", text: moonLine(moon, moonInfo) },
     ],
     cuspNote: sun.length > 1 ? cuspNoteText(sun[0]) : null,

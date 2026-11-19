@@ -1048,3 +1048,70 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - On phones the draw section shows the cards directly under the step title, with the intro after them (CSS `order`, so desktop and source order are unchanged).
 - Measured on first load: at 390×844 the cards are at 452–610 and the bar starts at 717, so the cards are fully visible. At 375×667 (iPhone SE) the bar still covers the bottom ~70px of the arch until the visitor answers it or scrolls.
 - The banner still shows on first visit on purpose. Deferring it would protect the first view, but visitors who leave before answering would never fire a Pixel PageView. The law requires no marketing cookies before consent and an equally easy reject; it does not require the banner to block content.
+
+### Persona check: can P1–P4 follow the Lab experiment? (2026-11-07)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. Research session; no code or SQL changed.
+
+**Question:** how to make sure every persona in the Acquisition Bible (P1 Therapy-Literate Seeker, P2 Love-Pattern Looper, P3 Crossroads Planner, P4 Gift-Giver) can follow the Lab concept. Sources: the Bible and Ad Bank docs, plus the Lab code. The Acquisition Journey Map doc could not be read from this session (Claude Docs `access` refusal), so the DM route was not audited.
+
+**Findings**
+- The experiment's three beats go by three sets of names. Ad Bank: "Astrology says / Psychology studies / Test it this week". Instant-reading Lab note: "The astrological lens / The psychological lens / Put it into practice" (`content/lab/reading.ts` `LAYER_LABELS`, Gabs-voice final). Profile: "The card / The chart / The test" (`content/lab/ui.ts` `PROFILE_FLOW.layers`). The Ad Bank says its ads mirror the site's Lab note. They don't.
+- "Hypothesis" never appears on `/lab`. "Test" appears only on the profile, after the email gate. The words the ads lead with are gone by the time the visitor reaches the page.
+- `LAB_META.description` still says "three face-down" cards, but the deck deals six face-up (`components/lab/LabDeck.tsx` `HAND_SIZE = 6`). The same stale comment is in `components/lab/LabDraw.tsx`. Ad 2's hook ("Left, middle or right", "30 seconds") is out of date too, and the hero says "A two-minute experiment".
+- There is no result step. The test ends with "Bring what you notice to a session". The monthly Lab note email, which could ask "what did you notice?", was still unwritten in the Lab Draw notes above.
+- `/lab` and the homepage `LabTeaser` are English only (no `LangText`). Spanish-speaking P2 and P4 only ever see "LAB" as a DM keyword.
+- The profile's offer ladder has no 2027 Map or Travel Magazine (`content/lab/offers.ts`), so a P3 who comes in through the Lab is offered the Blend.
+- `parseLabSrc` only accepts `manychat | bio | ad | lora` (`lib/lab/validate.ts`). `lab_profiles.src` is unconstrained `text`, so adding a `gift` source is a code-only change with no SQL.
+- Each analytics session already stores `utm_content` and `lang` (`analytics_sessions`, joined to `analytics_events` on `session_key`). A per-ad, per-language Lab step funnel needs a read-only query, not new tracking.
+
+**Recommendation given:** pick one spine sentence and one set of beat names, in EN and ES, and check every ad, DM script and page label against it. Before creative locks on 11 Nov, run an "explain it back" test with two people per persona. Add a per-ad drop-off row to the Sunday scorecard. Don't build a Spanish Lab or a result logger before 7 Jan: the Bible parks both. Put the result beat in the first MailerLite email and in the voice note instead.
+
+**Lessons learned**
+- Audit a funnel's concept across artefacts, not inside one. The ad copy lives in Claude Docs and the page copy lives in the repo, so each one reads as consistent on its own. The mismatch only shows when you read them side by side.
+- Before calling a concept broken, check where its key words first appear in the user's path. A grep for "hypothes" and "test" across `components/lab` and `content/lab` showed the gap in one step.
+- Some companion docs can't be opened from a cloud session. Ask for them to be shared, or start the chat from the doc's own page, before auditing the route they describe.
+
+### Lab flow simplification review, by persona (2026-11-08)
+
+**Files touched:** `SESSION_NOTES_astro_psyche_lab.md` only. This was a review session, so no code changed.
+
+**Trigger:** early testers said the Lab flow feels complicated. The feedback didn't say which step, so the review worked from the code.
+
+**What a visitor faces before the email gate:** a hero with a three-sentence abstract lede, then six face-up cards (two taps on a phone), "Deal six more", and an intro explaining "projective choice". Next come three birth fields (date, place, optional time), sometimes followed by a pick between places with the same name. The reading itself has a headline, three chips, the card line, a Golden Dawn paragraph, a Moon paragraph, a three-row Lab note, a stance line and a thumbs vote. The gate has an eyebrow, a title, a lede, three tiles, an email field, the birth time a second time, and consent. After the gate, the profile shows up to five booking buttons.
+
+**Main findings**
+- Birth time is asked twice: in `BirthForm` and again in `Gate`.
+- "Projective choice" is explained twice (`DRAW.intro`, `PROFILE_FLOW.cardLine`). The Lab stance appears three times: `STANCE` in the footer, `STANCE_LINE` under the reading, and `STANCE` on the profile.
+- The pre-gate reading is about five text blocks before the Lab note, and the Lab note is the part that carries the experiment.
+- The hero lede never says what the visitor gets, how long it takes, or that it's free.
+
+**Recommendations given:** pre-launch, copy-only changes. A concrete hero promise. Ask for birth time once, at the gate. Trim the reading to headline + card line + Lab note, and move the Golden Dawn and Moon paragraphs to the profile. Cut the gate down to email + consent. Show the stance once. One booking button before the offer ladder. Before cutting anything, ask testers which step lost them, and read the drop-off in the `lab_*` events.
+
+**Lessons learned**
+- Count every decision and field per screen before you redesign. In this flow, a lot of the complexity is repetition (the same question or explanation shown twice), not depth.
+- Testing feedback like "it's complicated" needs a step and a persona attached before it can drive cuts. Ask testers where they hesitated, not whether they liked it.
+
+### Lab report card plan, awaiting approval (2026-11-08)
+
+**Files touched:** `docs/superpowers/plans/2026-11-08-lab-report-card.md` (new), this file. No code changed.
+
+- Lewis's call: the confusion is mostly the instant reading. The plan restyles it as a Lab report card: Gabs's card line as a signed quote, a table (Card/Sun/Moon + the two lenses), then the remaining text, then a standout "Put it into practice". The profile's test section gets the same look.
+- Also agreed: remove `DRAW.intro`, slim the gate, and replace all four defensive lines ("no proven power", "prompt, not a cause", two "not a forecast") with positive astrology-through-psychology wording (drafts for Gabs). Still to decide: E (where the stance appears) and F (profile booking buttons and order).
+
+**Lessons learned**
+- Brand stance matters as much as accuracy: the site should promote the astrology × psychology fusion, never talk astrology down. Disclaimers like "not a cause" or "not a forecast" read as negative even when the intent is careful.
+
+### Lab report card built (2026-11-08)
+
+**Files touched:** `components/lab/{LabNote,Reading,LabDraw,Gate}.tsx`, `components/lab/PracticeCallout.tsx` (new), `content/lab/ui.ts`, `content/lab/reading.ts`, `docs/superpowers/plans/2026-11-08-lab-report-card.md`.
+
+- **Instant reading = Lab report card:** title → report (theme title, "Lab report" label, Gabs's card line as a quote signed "— Gabs", Card/Sun/Moon rows replacing the chips, astrological + psychological lens) → tradition and Moon paragraphs → cusp/zone notes → standout gold "Put it into practice" callout → stance line → thumbs vote. `composeReading` is unchanged; only the rendering moved.
+- **`LabNote`** now takes optional `specimen`, `quote` and `label`. `test` is no longer a table row: when passed, it renders as a `PracticeCallout` under the table. Because of that, the profile's test section and the Big Three "Read the full note" notes picked up the new look automatically. That's the one profile change; F3 left everything else on the profile alone.
+- **Removed:** `DRAW.intro` (the "Six of the 22 major arcana… projective choice" paragraph), the gate's "Step 04" eyebrow and its three tiles (folded into the lede). Email, birth time and consent are unchanged.
+- **Positive tone (drafts for Gabs):** `STANCE`, `STANCE_LINE` ("astrology, read through a therapist's eyes"; this one is in her GABS VOICE file, so it needs her OK), `PROFILE_FLOW.chartLine`, `PROFILE_FLOW.upcomingLine`. The stance still shows in all three places (E3).
+- **Verified:** `tsc` clean, vitest 299 passed, `next lint` clean, and a Playwright run through draw → birth → reading → gate at 390×844 and 1280×900 (compute route given a `geo`, dummy Supabase env). The profile wasn't checked visually because it needs the DB.
+
+**Lessons learned**
+- The reading's content functions were already separate from its layout (`composeReading` returns parts, `Reading.tsx` arranges them), so a full restyle needed no change to Gabs's copy or the tests. Keep that split.
+- Changing a shared component changes every place it's used. `LabNote` sits inside profile `<details>` blocks too. Grep for usages before calling a change "reading only".

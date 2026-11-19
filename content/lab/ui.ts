@@ -16,8 +16,6 @@ export const STEP_TITLES = {
 } as const;
 
 export const DRAW = {
-  intro:
-    "Six of the 22 major arcana. Don't deliberate: choose the one that pulls you first. In psychology this is called a projective choice: what you reach for in an image says something about what's on your mind.",
   deal: "Deal six more",
   hold: "Hold that thought.",
   chosenLabel: "chosen",
@@ -58,14 +56,8 @@ export const RESULT = {
 } as const;
 
 export const GATE = {
-  eyebrow: "Step 04 · Keep going",
   title: "Save this as your Lab profile.",
-  lede: "Free. Your card read against your chart, your rising sign, and a monthly Lab note.",
-  gets: [
-    { title: "Your card, read against your chart", body: "What your pick suggests is on your mind, read through your Sun, Moon and Rising." },
-    { title: "Your rising sign", body: "Needs your birth time. Add it below or later." },
-    { title: "Your next two seasons", body: "The transit themes coming up for you, and when." },
-  ],
+  lede: "Free: your card read through your Sun, Moon and Rising, your next two seasons, and a monthly Lab note.",
   emailLabel: "Email",
   emailPlaceholder: "you@example.com",
   timeLabel: "Birth time",
@@ -73,8 +65,15 @@ export const GATE = {
   submit: "Create my free profile",
 } as const;
 
+// DRAFT — Gabs to rewrite in her voice. Positive fusion stance: never talk astrology down.
 export const STANCE =
-  "The Lab position: astrology has no proven power to predict events. We use the chart the way a therapist uses a good question, as a structured prompt for noticing your own patterns. Every reading separates what astrology says from what psychology actually studies.";
+  "The Lab reads your chart the way a psychotherapist reads a pattern: astrology names it, psychology helps you work with it. Every reading brings the two lenses together, with one thing to try in your own life.";
+
+/** Labels for the instant reading's Lab report card (new draft). */
+export const REPORT = {
+  label: "Lab report",
+  signature: "— Gabs",
+} as const;
 
 /** Homepage teaser line (new draft). */
 export const HOME_TEASER = {
@@ -266,7 +265,7 @@ export const PROFILE_FLOW = {
     "In psychology, what you reach for in an ambiguous image is called a projective choice: it says something about what is on your mind. So we start with your card.",
   heroTitle: (card: string) => `You reached for ${card}`,
   themeLabel: "The theme it points to",
-  chartLine: "The chart is read as a map of patterns, not a forecast. Here we read it through your card.",
+  chartLine: "Your chart is a map of your patterns. Here we read it through your card.",
   chartTitle: (card: string) => `${card} × your Big Three`,
   readNote: "Read the full note",
   reflectionLabel: "The Lab's reflection",
@@ -275,7 +274,7 @@ export const PROFILE_FLOW = {
   testClose: "Bring what you notice to a session with Gabs. It is the best place to start.",
   upcomingLabel: "What's next",
   upcomingTitle: "Your next two seasons",
-  upcomingLine: "A transit is read as a prompt to notice, not a forecast. These are the next two themes in your chart.",
+  upcomingLine: "Each transit opens a season for a theme in your chart. These are your next two.",
   upcomingClose: "Want to meet these seasons with a plan? This is exactly what Gabs works through in a session.",
   now: "Now",
   fullChart: "See your full chart",
