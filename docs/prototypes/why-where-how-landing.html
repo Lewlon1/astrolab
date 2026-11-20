@@ -1,0 +1,343 @@
+<title>Why Where How Landing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Spectral:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&family=Outfit:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow reading column (VSL funnel). Above the fold: hook → offer line → video → quiz. Then proof, mechanism, stack, guarantee, FAQ, repeat CTA. Sticky CTA on phones. */
+:root{
+  --paper:#F4EFE6; --paper-2:#E8E0D2; --card:#FBF8F2;
+  --ink:#1A1814; --ink-soft:#3A352D; --mute:#6B6358;
+  --rust:#A84A2C; --rust-deep:#7F3425; --ochre:#C8954A; --sage:#5C6B4E;
+  --rule:rgba(26,24,20,.14); --on-rust:#FBF8F2; --tbc:#C8954A;
+  --f-display:"Fraunces",Georgia,serif; --f-body:"Spectral",Georgia,serif;
+  --f-mono:"DM Mono",ui-monospace,monospace; --f-ui:"Outfit",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#17140F; --paper-2:#221D16; --card:#1F1A14; --ink:#F1EADD; --ink-soft:#D8CEBD; --mute:#A39A8B;
+  --rust:#D9764F; --rust-deep:#E89470; --ochre:#D9A85C; --sage:#9BAA8A; --rule:rgba(241,234,221,.14); --on-rust:#17140F; --tbc:#D9A85C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#17140F; --paper-2:#221D16; --card:#1F1A14; --ink:#F1EADD; --ink-soft:#D8CEBD; --mute:#A39A8B;
+  --rust:#D9764F; --rust-deep:#E89470; --ochre:#D9A85C; --sage:#9BAA8A; --rule:rgba(241,234,221,.14); --on-rust:#17140F; --tbc:#D9A85C; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:18px;line-height:1.6}
+.wrap{max-width:680px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+section{padding-block:56px;border-top:1px solid var(--rule)}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;line-height:1.12;margin:0}
+h1{font-size:clamp(2rem,6.4vw,3.1rem);letter-spacing:-.01em}
+h2{font-size:clamp(1.6rem,4.6vw,2.2rem)}
+h3{font-size:1.2rem}
+p{margin:0}
+.stack{display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rust)}
+.mute{color:var(--mute)}
+em.k{font-style:italic;color:var(--rust)}
+/* draft markers */
+.tbc{background:linear-gradient(transparent 60%,color-mix(in srgb,var(--tbc) 35%,transparent) 60%);}
+.tbc-note{font-family:var(--f-mono);font-size:.7rem;color:var(--mute);letter-spacing:.04em}
+.draftbar{background:var(--ink);color:var(--paper);font-family:var(--f-mono);font-size:.72rem;letter-spacing:.04em;padding-block:8px;text-align:center}
+.draftbar .wrap{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.draftbar button{font:inherit;background:none;border:1px solid currentColor;color:inherit;border-radius:999px;padding:1px 10px;cursor:pointer}
+body.clean .tbc{background:none} body.clean .tbc-note{display:none}
+/* hero */
+.hero{padding-block:28px 40px;border-top:0}
+.who{display:inline-flex;align-items:center;gap:10px;font-family:var(--f-ui);font-size:.9rem;font-weight:500}
+.who img{width:38px;height:38px;border-radius:50%;object-fit:cover;object-position:50% 30%}
+.who small{display:block;color:var(--mute);font-weight:400;font-size:.8rem}
+.offerline{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--f-mono);font-size:.82rem;color:var(--ink-soft)}
+.offerline b{color:var(--rust);font-weight:500}
+.video{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:6px;overflow:hidden;background:#2a1d14;display:grid;place-items:center;color:#F4EFE6}
+.video img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 38%;opacity:.55}
+.video .play{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;font-family:var(--f-ui);font-size:.85rem}
+.video .btn-play{width:64px;height:64px;border-radius:50%;background:var(--rust);border:0;display:grid;place-items:center;cursor:pointer}
+.video .btn-play::after{content:"";border-left:18px solid #FBF8F2;border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
+.video .len{position:absolute;top:10px;left:10px;font-family:var(--f-mono);font-size:.72rem;background:rgba(26,24,20,.7);padding:3px 9px;border-radius:999px}
+.video .cap{position:absolute;bottom:10px;left:10px;right:10px;font-family:var(--f-ui);font-weight:600;font-size:clamp(.8rem,2.6vw,.95rem);text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+/* quiz */
+.quiz{background:var(--card);border:1.5px solid var(--rust);border-radius:10px;padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px;font-family:var(--f-ui)}
+.quiz .top{display:flex;flex-direction:column;gap:4px}
+.quiz .top h3{font-family:var(--f-display)}
+.bar{height:4px;background:var(--paper-2);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--rust);width:16%;transition:width .3s}
+.q{display:flex;flex-direction:column;gap:10px}
+.q[hidden]{display:none}
+.q label.qt{font-weight:600;font-size:1rem}
+.q .hint{font-size:.82rem;color:var(--mute);margin-top:-6px}
+.opt{display:block;width:100%;text-align:left;font:inherit;font-size:.95rem;padding:12px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);cursor:pointer}
+.opt:hover,.opt[aria-pressed="true"]{border-color:var(--rust);background:color-mix(in srgb,var(--rust) 8%,var(--paper))}
+.q textarea,.q input{font:inherit;font-size:.95rem;padding:12px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);width:100%}
+.q textarea{min-height:84px;resize:vertical}
+.row{display:flex;gap:10px;align-items:center}
+.btn{font-family:var(--f-ui);font-weight:600;font-size:1rem;border:0;border-radius:8px;padding:14px 18px;background:var(--rust);color:var(--on-rust);cursor:pointer;flex:1;text-align:center;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--rust-deep)}
+.ghost{background:none;border:0;color:var(--mute);font:inherit;font-size:.9rem;cursor:pointer;padding:8px}
+:focus-visible{outline:2px solid var(--ochre);outline-offset:2px}
+.slot{border:1px dashed var(--rule);border-radius:8px;padding:18px;text-align:center;color:var(--mute);font-size:.9rem}
+/* sections */
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pair > div{border:1px solid var(--rule);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.quote{font-family:var(--f-display);font-size:clamp(1.4rem,4vw,1.8rem);font-style:italic;font-weight:400;line-height:1.25;border-left:3px solid var(--rust);padding-left:18px}
+.www{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
+.www > div{display:grid;grid-template-columns:96px 1fr;gap:16px;padding-block:18px;border-bottom:1px solid var(--rule)}
+.www .w{font-family:var(--f-display);font-size:1.7rem;color:var(--rust);line-height:1}
+.www .src{font-family:var(--f-mono);font-size:.72rem;color:var(--mute);letter-spacing:.06em;text-transform:uppercase;display:block;margin-top:4px}
+.stackl{list-style:none;margin:0;padding:0;border:1px solid var(--rule);border-radius:10px;background:var(--card)}
+.stackl li{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 18px;border-bottom:1px solid var(--rule);align-items:baseline}
+.stackl li:last-child{border-bottom:0}
+.stackl .v{font-family:var(--f-mono);font-size:.85rem;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.stackl small{display:block;color:var(--mute);font-size:.88rem}
+.price{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.price .big{font-family:var(--f-display);font-size:2.6rem;color:var(--ink)}
+.price s{color:var(--mute);font-family:var(--f-mono);font-size:.9rem}
+.guar{border:1.5px solid var(--sage);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.guar .eyebrow{color:var(--sage)}
+.about{display:grid;grid-template-columns:200px 1fr;gap:24px;align-items:start}
+.about img{width:100%;border-radius:6px;aspect-ratio:3/4;object-fit:cover;object-position:50% 40%}
+.creds{display:flex;flex-wrap:wrap;gap:8px}
+.creds span{font-family:var(--f-mono);font-size:.74rem;border:1px solid var(--rule);border-radius:999px;padding:3px 10px;color:var(--ink-soft)}
+.testi{display:grid;gap:12px}
+.testi blockquote{margin:0;padding:16px 18px;border:1px dashed var(--rule);border-radius:8px;display:flex;flex-direction:column;gap:6px}
+.testi cite{font-family:var(--f-mono);font-size:.75rem;color:var(--mute);font-style:normal}
+details{border-bottom:1px solid var(--rule);padding-block:14px}
+details:first-of-type{border-top:1px solid var(--rule)}
+summary{cursor:pointer;font-family:var(--f-ui);font-weight:600;font-size:1rem;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";color:var(--rust);font-weight:400}
+details[open] summary::after{content:"–"}
+details p{margin-top:10px;color:var(--ink-soft)}
+.final{text-align:center;align-items:center}
+.final .btn{flex:none;padding-inline:28px}
+footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color:var(--mute);border-top:1px solid var(--rule)}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--rule);padding-top:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:none;z-index:5}
+.sticky .btn{width:100%}
+@media (max-width:640px){
+  body{font-size:17px}
+  .pair{grid-template-columns:1fr}
+  .about{grid-template-columns:1fr}
+  .about img{max-width:220px}
+  .www > div{grid-template-columns:72px 1fr}
+  .sticky.on{display:block}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="draftbar"><div class="wrap"><span>MOCKUP · highlighted text = placeholder for Gabs to confirm</span><button type="button" id="toggleTbc">Hide highlights</button></div></div>
+
+<main>
+<div class="wrap">
+
+<!-- 1. HERO: continue the ad's scent. Same caption bar, same promise, price up front. -->
+<section class="hero stack">
+  <div class="who"><img src="__IMG__" alt="Gabriela"><span>Gabriela<small>Psychotherapist &amp; Astrologer · 10+ years</small></span></div>
+  <h1>It isn't discipline. It's a story about yourself that isn't true, <em class="k">and you still believe it.</em></h1>
+  <p class="mute">90 days, 1:1, to find out why you still believe it, where it started, and how you move forward so it doesn't run 2027 for you.</p>
+  <div class="offerline"><span><b>€499</b> for 90 days</span><span>4 sessions · 1:1</span><span>Free 20-min fit call first</span><span class="tbc">Only [X] places, starts Jan 2027</span></div>
+
+  <div class="video" role="img" aria-label="Video placeholder">
+    <img src="__IMG__" alt="">
+    <div class="play"><button class="btn-play" type="button" aria-label="Play video: watch first, 1 min 30"></button></div>
+    <span class="len">Watch first · 1:30</span>
+    <div class="cap">"Your chart can show you where and when it started."</div>
+  </div>
+  <p class="tbc-note">VIDEO: the ad's shared body + 60 s more (who it's for, what happens on the call). Autoplay muted with captions.</p>
+
+  <!-- 2. QUIZ above the fold: lowest-friction question first, price qualifier mid-way -->
+  <form class="quiz" id="quiz" novalidate>
+    <div class="top">
+      <span class="eyebrow">Start here</span>
+      <h3>See if the 90 days is right for you</h3>
+      <span class="mute" style="font-size:.85rem">Takes 60 seconds, then pick a time for your free call.</span>
+    </div>
+    <div class="bar"><i id="barFill"></i></div>
+
+    <div class="q" data-step="1">
+      <label class="qt">Which sounds more like you?</label>
+      <button type="button" class="opt" data-next>I've done the work and I keep hitting the same wall</button>
+      <button type="button" class="opt" data-next>I got past the wall, and the satisfaction never arrived</button>
+      <button type="button" class="opt" data-next>A bit of both</button>
+    </div>
+
+    <div class="q" data-step="2" hidden>
+      <label class="qt" for="q-goal">What's the one goal you most want to move in early 2027?</label>
+      <textarea id="q-goal" placeholder="e.g. Finally start the business I keep planning"></textarea>
+      <div class="row"><button type="button" class="ghost" data-back>Back</button><button type="button" class="btn" data-next>Continue</button></div>
+    </div>
+
+    <div class="q" data-step="3" hidden>
+      <label class="qt" for="q-tried">Have you tried before? What happened?</label>
+      <textarea id="q-tried" placeholder="A sentence or two is plenty"></textarea>
+      <div class="row"><button type="button" class="ghost" data-back>Back</button><button type="button" class="btn" data-next>Continue</button></div>
+    </div>
+
+    <div class="q" data-step="4" hidden>
+      <label class="qt">Have you had a chart reading or done therapy before?</label>
+      <button type="button" class="opt" data-next>Both</button>
+      <button type="button" class="opt" data-next>Therapy only</button>
+      <button type="button" class="opt" data-next>A chart reading only</button>
+      <button type="button" class="opt" data-next>Neither, this is new to me</button>
+      <button type="button" class="ghost" data-back style="align-self:flex-start">Back</button>
+    </div>
+
+    <div class="q" data-step="5" hidden>
+      <label class="qt">The program is €499 for 90 days. Is that within reach right now?</label>
+      <button type="button" class="opt" data-next>Yes</button>
+      <button type="button" class="opt" data-next>I'd need a payment plan</button>
+      <button type="button" class="opt" data-notnow>Not right now</button>
+      <button type="button" class="ghost" data-back style="align-self:flex-start">Back</button>
+    </div>
+
+    <div class="q" data-step="6" hidden>
+      <label class="qt" for="q-name">Where should Gabriela send your call details?</label>
+      <input id="q-name" placeholder="First name" autocomplete="given-name">
+      <input id="q-email" type="email" placeholder="Email" autocomplete="email">
+      <input id="q-birth" placeholder="Birth date, time and place (optional)">
+      <span class="hint">Optional, but it lets her look at your chart before the call.</span>
+      <div class="row"><button type="button" class="ghost" data-back>Back</button><button type="button" class="btn" data-next>Pick a time</button></div>
+    </div>
+
+    <div class="q" data-step="7" hidden>
+      <label class="qt">Pick a time for your free 20-minute call</label>
+      <div class="slot">Cal.com inline embed goes here (prefilled with name + email)</div>
+    </div>
+
+    <div class="q" data-step="nn" hidden>
+      <label class="qt">That's fair. Start with the free Lab instead.</label>
+      <p class="mute" style="font-size:.95rem">Draw your card and see your chart free. You'll hear first when the next 90-day group opens.</p>
+      <a class="btn" href="#">Open the free Lab</a>
+      <button type="button" class="ghost" data-back style="align-self:flex-start">Back</button>
+    </div>
+  </form>
+</div>
+
+<div class="wrap">
+<!-- 3. WHO IT'S FOR: the two avatars named in Hook 1 -->
+<section class="stack">
+  <span class="eyebrow">Who this is for</span>
+  <h2>Two kinds of people</h2>
+  <div class="pair">
+    <div><h3>The same wall</h3><p>You've done the work on yourself. You know what you need to do. You set the same goal three Januaries in a row, and it still didn't move.</p></div>
+    <div><h3>Past the wall, still empty</h3><p>You reached the thing you wanted. The satisfaction you expected still hasn't arrived, and you can't say why.</p></div>
+  </div>
+  <p class="mute">Not for you if you want a prediction, a horoscope, or someone to tell you this is a sign. It isn't. It's 90 days of real work.</p>
+</section>
+
+<!-- 4. PROBLEM: name it in the customer's words -->
+<section class="stack">
+  <span class="eyebrow">What I hear most, after 10 years in a therapy room</span>
+  <p class="quote">"I know exactly what I need to do. I just don't do it."</p>
+  <p>The reason is almost always the same. It isn't effort, and it isn't discipline. It's a narrative about yourself that isn't true, but you still believe it. Usually it's the one you're sure you've already worked through.</p>
+  <p>So here's the question I ask every client first: <strong>what would you have to stop believing about yourself to reach this goal?</strong> Most people go quiet.</p>
+</section>
+
+<!-- 5. MECHANISM: the named, unique vehicle -->
+<section class="stack">
+  <span class="eyebrow">The Astropsyche Lab method</span>
+  <h2>Like any good investigation, it comes down to three questions</h2>
+  <div class="www">
+    <div><span class="w">Why</span><p>Why you still believe it. <span class="src">Psychology</span>What the story protects you from, and what it costs you now.</p></div>
+    <div><span class="w">Where</span><p>Where and when it started. <span class="src">Your chart</span>The chart is the map: it shows where and when the pattern took hold.</p></div>
+    <div><span class="w">How</span><p>How you move forward. <span class="src">1:1 work</span>Knowing isn't enough. What matters is how you change it, before it runs 2027 for you.</p></div>
+  </div>
+</section>
+
+<!-- 6. VALUE STACK -->
+<section class="stack">
+  <span class="eyebrow">Everything you get</span>
+  <h2>90 days, 1:1, built around your goal</h2>
+  <ul class="stackl">
+    <li><span>4 × 1:1 sessions across 90 days<small>Each one designed around your needs and goal. <span class="tbc">60 min each, online</span></small></span><span class="v tbc">€___</span></li>
+    <li><span class="tbc">Your natal chart, read for this one pattern<small>Where and when the story started, prepared before session 1</small></span><span class="v tbc">€___</span></li>
+    <li><span class="tbc">Between-session prompts<small>Short written exercises so the work continues between calls</small></span><span class="v tbc">€___</span></li>
+    <li><span class="tbc">Message access between sessions<small>Voice notes or messages, answered within 48 h</small></span><span class="v tbc">€___</span></li>
+    <li><span class="tbc">Your 2027 map<small>A written summary of your Why, Where and How to keep</small></span><span class="v tbc">€___</span></li>
+  </ul>
+  <p class="tbc-note">Hormozi value stack: list every deliverable with its stand-alone price so €499 reads as a fraction of total value. Only include what Gabs will really deliver.</p>
+  <div class="price"><span class="mute">Total value <s class="tbc">€____</s></span><span class="big">€499</span><span class="mute">or <span class="tbc">2 × €259</span></span></div>
+</section>
+
+<!-- 7. RISK REVERSAL -->
+<section>
+  <div class="guar">
+    <span class="eyebrow">Proposed guarantee</span>
+    <h3 class="tbc">If session 1 isn't right for you, you get every cent back.</h3>
+    <p class="mute">And the free fit call comes first, so you only join if Gabriela agrees it's a fit.</p>
+  </div>
+</section>
+
+<!-- 8. AUTHORITY -->
+<section class="about">
+  <img src="__IMG__" alt="Gabriela standing by a carved wooden door">
+  <div class="stack">
+    <span class="eyebrow">Your guide</span>
+    <h2>I'm Gabriela</h2>
+    <p>I'm a psychotherapist with more than 10 years in practice, and I also read charts. In my work the astrology stays a map: the chart shows where and when. The psychology explains why.</p>
+    <p>For the first 90 days of 2027 I'm working 1:1 with a small group on three questions: why you still believe it, where it started, and how you move forward.</p>
+    <div class="creds"><span>Psychotherapist · 10+ yrs</span><span>Astrologer</span><span class="tbc">EN / ES</span><span class="tbc">Barcelona · online</span></div>
+  </div>
+</section>
+
+<!-- 9. PROOF -->
+<section class="stack">
+  <span class="eyebrow">What clients say</span>
+  <div class="testi">
+    <blockquote><p class="tbc">"Real client quote naming the wall they hit and what changed."</p><cite>Name, city · placeholder</cite></blockquote>
+    <blockquote><p class="tbc">"Real client quote from the 'reached it, still empty' group."</p><cite>Name, city · placeholder</cite></blockquote>
+  </div>
+  <p class="tbc-note">Use real quotes from the testimonials table. Outcome-specific beats generic praise.</p>
+</section>
+
+<!-- 10. FAQ: objections -->
+<section class="stack">
+  <span class="eyebrow">Questions</span>
+  <div>
+    <details><summary>Do I need to believe in astrology?</summary><p>No. The chart is used as a map of where and when a pattern started. The work itself is psychological.</p></details>
+    <details><summary>Is this therapy?</summary><p class="tbc">It's a focused 90-day program led by a psychotherapist, built around one goal. It isn't a replacement for ongoing clinical treatment.</p></details>
+    <details><summary>What happens on the free call?</summary><p>20 minutes. You talk about your goal, Gabriela asks a few questions, and you both decide if the 90 days is the right fit. No pressure to join.</p></details>
+    <details><summary>Do I need my exact birth time?</summary><p class="tbc">It helps, but it isn't required. Gabriela can still work with your date and place.</p></details>
+    <details><summary>Can I pay in instalments?</summary><p class="tbc">Yes, 2 × €259. Choose it on the form.</p></details>
+    <details><summary>Online or in person? Which language?</summary><p class="tbc">Online, in English or Spanish.</p></details>
+    <details><summary>When does it start?</summary><p>January 2027. Places are limited because every session is 1:1.</p></details>
+  </div>
+</section>
+
+<!-- 11. FINAL CTA -->
+<section class="stack final">
+  <h2>Don't let the same story run 2027</h2>
+  <p class="mute">Book a free 20-minute call. We'll see if it's the right fit.</p>
+  <a class="btn" href="#quiz">Book your free fit call</a>
+</section>
+</div>
+</main>
+
+<footer><div class="wrap">Astropsyche Lab · Privacy · Cookie settings</div></footer>
+<div class="sticky" id="sticky"><a class="btn" href="#quiz">Book your free fit call</a></div>
+
+<script>
+(function(){
+  const steps=[...document.querySelectorAll('.q')];
+  const order=['1','2','3','4','5','6','7'];
+  const bar=document.getElementById('barFill');
+  let hist=['1'];
+  function show(id){
+    steps.forEach(s=>s.hidden=s.dataset.step!==id);
+    const i=order.indexOf(id);
+    bar.style.width=(i<0?100:Math.round((i+1)/order.length*100))+'%';
+  }
+  document.getElementById('quiz').addEventListener('click',e=>{
+    const t=e.target.closest('button,a'); if(!t)return;
+    const cur=hist[hist.length-1];
+    if(t.matches('.opt')){t.parentElement.querySelectorAll('.opt').forEach(o=>o.setAttribute('aria-pressed',o===t));}
+    if(t.hasAttribute('data-next')){const n=order[order.indexOf(cur)+1]; if(n){hist.push(n);show(n);}}
+    else if(t.hasAttribute('data-notnow')){hist.push('nn');show('nn');}
+    else if(t.hasAttribute('data-back')){if(hist.length>1){hist.pop();show(hist[hist.length-1]);}}
+    if(t.getAttribute('href')==='#')e.preventDefault();
+  });
+  document.getElementById('quiz').addEventListener('submit',e=>e.preventDefault());
+  show('1');
+  // sticky CTA once the quiz has scrolled out of view
+  const sticky=document.getElementById('sticky');
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(([en])=>{sticky.classList.toggle('on',!en.isIntersecting&&en.boundingClientRect.top<0)}).observe(document.getElementById('quiz'));
+  }
+  const tg=document.getElementById('toggleTbc');
+  tg.addEventListener('click',()=>{const c=document.body.classList.toggle('clean');tg.textContent=c?'Show highlights':'Hide highlights';});
+})();
+</script>

@@ -1066,3 +1066,52 @@ No GPL or AGPL. No Swiss Ephemeris, `pyswisseph` or `kerykeion`. Geocoding is No
 - Don't `dispose()` an autosaver in a React effect cleanup: strict mode runs cleanup then re-runs the effect on the same instance. Flush in cleanup, dispose only on an explicit discard (e.g. after delete).
 - Avoid `router.refresh()` after every autosave on the note page: it re-runs the server component and re-signs the photo URLs, so the images reload. Refresh once on unmount instead.
 - Vitest runs in `node` here, with no testing-library. Put hook logic in a framework-free controller (`createAutosaver`) with injectable timers and test that.
+
+---
+
+# Ad landing page mockup — "Why · Where · How" (€499, 90 days, 1:1)
+
+**Session date:** 2026-11-20
+**Status:** Standalone HTML mockup only. Nothing in `app/` changed. No DB, no Supabase, no migrations.
+
+## What was made
+- `docs/prototypes/why-where-how-landing.html` — mockup source (photo is an `__IMG__` placeholder; swap for `/images/gabriela_door.jpg`).
+- Published as a private claude.ai artifact for review.
+
+## Structure (Hormozi + the LeadAdvisor-style VSL example)
+Hook headline that repeats the ad's shared body line → offer line (price, 4 sessions, free call, scarcity) →
+video → multi-step quiz above the fold → two avatars (from Hook 1) → problem in client's words (Hook 3) →
+mechanism (WHY · WHERE · HOW) → value stack → guarantee → about Gabs → testimonials → FAQ → repeat CTA. Sticky CTA on mobile.
+
+## Decisions / deviations from the ad brief
+- **Quiz order changed.** Q1 is now a one-tap "which sounds like you" (same wall / past the wall / both).
+  The brief's Q1 (open-text goal) is high-friction as a first step; tap-first raises start rate. Brief Q1 moved to step 2.
+- **Price qualifier "Not right now" routes to the free Lab** instead of a dead end (downsell, keeps the lead).
+- **Birth data folded into the contact step** as optional, not its own step.
+
+## Open items for Gabs (highlighted in the mockup)
+- Real number of places (scarcity must be true).
+- Value stack: only 4 sessions / 90 days / 1:1 are confirmed. Session length, chart prep, between-session prompts,
+  message access and "2027 map" are **proposals**; each needs a yes/no and a stand-alone price.
+- Guarantee wording (proposed: refund if session 1 isn't right).
+- Payment plan amount (placeholder 2 × €259).
+- Two real, outcome-specific testimonials.
+- Language/location, "is this therapy?" wording.
+- Landing-page video (≈90 s: ad body + who it's for + what happens on the call).
+
+## Lessons
+- Video upload had no transcript and the Whisper model host is blocked by the session proxy; frames were enough
+  to read the example's structure, but the narration was not available. Ask for a transcript next time.
+- The ad brief (hooks, body, ad text, booking questions) was not in the repo or Drive; it came from chat. Worth saving
+  it to `docs/` so future sessions can match landing copy to ad copy.
+
+## Next session prompt (build into the app)
+Build `/start` from `docs/prototypes/why-where-how-landing.html` once Gabs confirms the highlighted items.
+**Files to touch:**
+- `app/(public)/start/page.tsx` — new route (noindex; ad traffic only)
+- `components/start/QualifyQuiz.tsx` — new multi-step form; on submit POST `/api/leads` with answers, then show Cal.com inline embed prefilled
+- `app/api/leads/route.ts` — accept quiz answers (`source: 'ad_99d'` or similar); check the `leads.source` CHECK constraint first, a schema change is a **hand-run SQL file**, never applied to production by Claude
+- `components/CalendlyBooking.tsx` / Cal.com embed — reuse, new event type for the 20-min fit call
+- `lib/fbpixel.ts` — fire `Lead` on quiz submit and `Schedule` on Cal booking (consent-gated via `ConsentContext`)
+- `SESSION_NOTES_astro_psyche_lab.md` — append notes
+**Do not touch:** admin, Supabase production, existing `/lab` flow.
