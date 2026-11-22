@@ -1105,6 +1105,18 @@ mechanism (WHY · WHERE · HOW) → value stack → guarantee → about Gabs →
 - The ad brief (hooks, body, ad text, booking questions) was not in the repo or Drive; it came from chat. Worth saving
   it to `docs/` so future sessions can match landing copy to ad copy.
 
+## Revision 2026-11-22: page goal = book the intro call (not sell the program)
+Lewis confirmed the page's only job is booking the free 20-min call; Gabs converts to €499 on the call.
+- Offer line and quiz header now lead with "Free 20-min call · No payment today"; €499 stays visible as a qualifier.
+- Added "What happens on the call" (3 steps) right under the quiz, to take away the fear of a sales call.
+- Value stack: per-item prices and "total value" anchor **removed from the page** and moved to Gabs' call script.
+- Guarantee block reframed as "the call is free and isn't a pitch"; the program refund stays as a proposal.
+- Added a post-booking note: thank-you video + reminders 24 h / 1 h before, to protect show-up rate.
+- **Lesson:** confirm the page's single conversion action before writing copy. Version 1 assumed a sell-on-page
+  structure and had to be reworked.
+- **Metrics to judge the ads by:** cost per booked call, show-up rate, call→paid close rate (the ad brief already says
+  judge on booked calls after ~7 days).
+
 ## Next session prompt (build into the app)
 Build `/start` from `docs/prototypes/why-where-how-landing.html` once Gabs confirms the highlighted items.
 **Files to touch:**
@@ -1112,6 +1124,8 @@ Build `/start` from `docs/prototypes/why-where-how-landing.html` once Gabs confi
 - `components/start/QualifyQuiz.tsx` — new multi-step form; on submit POST `/api/leads` with answers, then show Cal.com inline embed prefilled
 - `app/api/leads/route.ts` — accept quiz answers (`source: 'ad_99d'` or similar); check the `leads.source` CHECK constraint first, a schema change is a **hand-run SQL file**, never applied to production by Claude
 - `components/CalendlyBooking.tsx` / Cal.com embed — reuse, new event type for the 20-min fit call
-- `lib/fbpixel.ts` — fire `Lead` on quiz submit and `Schedule` on Cal booking (consent-gated via `ConsentContext`)
+- `lib/fbpixel.ts` — fire `Lead` on quiz submit and `Schedule` on Cal booking (consent-gated via `ConsentContext`). Optimise the Meta campaign for `Schedule`, not `Lead`
+- `app/(public)/start/booked/page.tsx` — thank-you page: what-to-bring video, add-to-calendar
+- Cal.com event settings (not code): 24 h + 1 h reminders on the fit-call event type
 - `SESSION_NOTES_astro_psyche_lab.md` — append notes
 **Do not touch:** admin, Supabase production, existing `/lab` flow.

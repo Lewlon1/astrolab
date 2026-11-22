@@ -76,6 +76,11 @@ body.clean .tbc{background:none} body.clean .tbc-note{display:none}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .pair > div{border:1px solid var(--rule);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .quote{font-family:var(--f-display);font-size:clamp(1.4rem,4vw,1.8rem);font-style:italic;font-weight:400;line-height:1.25;border-left:3px solid var(--rust);padding-left:18px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:36px 1fr;gap:4px 14px;counter-increment:s}
+.steps li::before{content:counter(s);grid-row:span 2;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--rust);color:var(--rust);display:grid;place-items:center;font-family:var(--f-mono);font-size:.9rem}
+.steps b{font-family:var(--f-ui);font-weight:600}
+.steps span{color:var(--ink-soft);grid-column:2}
 .www{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
 .www > div{display:grid;grid-template-columns:96px 1fr;gap:16px;padding-block:18px;border-bottom:1px solid var(--rule)}
 .www .w{font-family:var(--f-display);font-size:1.7rem;color:var(--rust);line-height:1}
@@ -129,7 +134,7 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
   <div class="who"><img src="__IMG__" alt="Gabriela"><span>Gabriela<small>Psychotherapist &amp; Astrologer · 10+ years</small></span></div>
   <h1>It isn't discipline. It's a story about yourself that isn't true, <em class="k">and you still believe it.</em></h1>
   <p class="mute">90 days, 1:1, to find out why you still believe it, where it started, and how you move forward so it doesn't run 2027 for you.</p>
-  <div class="offerline"><span><b>€499</b> for 90 days</span><span>4 sessions · 1:1</span><span>Free 20-min fit call first</span><span class="tbc">Only [X] places, starts Jan 2027</span></div>
+  <div class="offerline"><span><b>Free 20-min call</b></span><span>No payment today</span><span>Program €499 · 90 days · 4 × 1:1</span><span class="tbc">Only [X] places, starts Jan 2027</span></div>
 
   <div class="video" role="img" aria-label="Video placeholder">
     <img src="__IMG__" alt="">
@@ -143,8 +148,8 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
   <form class="quiz" id="quiz" novalidate>
     <div class="top">
       <span class="eyebrow">Start here</span>
-      <h3>See if the 90 days is right for you</h3>
-      <span class="mute" style="font-size:.85rem">Takes 60 seconds, then pick a time for your free call.</span>
+      <h3>Book your free 20-minute fit call</h3>
+      <span class="mute" style="font-size:.85rem">Five quick questions, then pick a time. No payment today.</span>
     </div>
     <div class="bar"><i id="barFill"></i></div>
 
@@ -196,6 +201,7 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
     <div class="q" data-step="7" hidden>
       <label class="qt">Pick a time for your free 20-minute call</label>
       <div class="slot">Cal.com inline embed goes here (prefilled with name + email)</div>
+      <span class="tbc-note">AFTER BOOKING: thank-you screen with a 2-min video from Gabs ("what to bring to the call") + calendar invite + reminder 24 h and 1 h before. This protects show-up rate.</span>
     </div>
 
     <div class="q" data-step="nn" hidden>
@@ -208,6 +214,18 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
 </div>
 
 <div class="wrap">
+<!-- 2b. CALL: remove fear of a sales call -->
+<section class="stack">
+  <span class="eyebrow">What happens on the call</span>
+  <h2>20 minutes, on video, with Gabriela herself</h2>
+  <ol class="steps">
+    <li><b>You tell her the goal</b><span>The one you keep setting, or the one you reached that still feels empty.</span></li>
+    <li><b>She asks what might be in the way</b><span>The story underneath. If you shared your birth details, she'll have looked at your chart first.</span></li>
+    <li><b>You decide together if the 90 days fits</b><span>If it isn't right for you, she'll say so and point you to what is.</span></li>
+  </ol>
+  <a class="btn" href="#quiz" style="flex:none;align-self:flex-start">Book your free fit call</a>
+</section>
+
 <!-- 3. WHO IT'S FOR: the two avatars named in Hook 1 -->
 <section class="stack">
   <span class="eyebrow">Who this is for</span>
@@ -240,25 +258,25 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
 
 <!-- 6. VALUE STACK -->
 <section class="stack">
-  <span class="eyebrow">Everything you get</span>
-  <h2>90 days, 1:1, built around your goal</h2>
+  <span class="eyebrow">If you join after the call</span>
+  <h2>What the 90 days includes</h2>
   <ul class="stackl">
-    <li><span>4 × 1:1 sessions across 90 days<small>Each one designed around your needs and goal. <span class="tbc">60 min each, online</span></small></span><span class="v tbc">€___</span></li>
-    <li><span class="tbc">Your natal chart, read for this one pattern<small>Where and when the story started, prepared before session 1</small></span><span class="v tbc">€___</span></li>
-    <li><span class="tbc">Between-session prompts<small>Short written exercises so the work continues between calls</small></span><span class="v tbc">€___</span></li>
-    <li><span class="tbc">Message access between sessions<small>Voice notes or messages, answered within 48 h</small></span><span class="v tbc">€___</span></li>
-    <li><span class="tbc">Your 2027 map<small>A written summary of your Why, Where and How to keep</small></span><span class="v tbc">€___</span></li>
+    <li><span>4 × 1:1 sessions across 90 days<small>Each one designed around your needs and goal. <span class="tbc">60 min each, online</span></small></span></li>
+    <li><span>The three questions, worked through in order<small>Why you still believe it, where it started, how you move forward</small></span></li>
+    <li><span class="tbc">Your chart, read for this one pattern<small>Prepared before your first session</small></span></li>
+    <li><span class="tbc">Support between sessions<small>Prompts or messages so the work continues between calls</small></span></li>
   </ul>
-  <p class="tbc-note">Hormozi value stack: list every deliverable with its stand-alone price so €499 reads as a fraction of total value. Only include what Gabs will really deliver.</p>
-  <div class="price"><span class="mute">Total value <s class="tbc">€____</s></span><span class="big">€499</span><span class="mute">or <span class="tbc">2 × €259</span></span></div>
+  <div class="price"><span class="big">€499</span><span class="mute">for the full 90 days, <span class="tbc">or a payment plan</span>. You only pay if you both agree it's a fit on the call.</span></div>
+  <p class="tbc-note">The full value stack with stand-alone prices moves to Gabs' call script, where she can tailor it to what the person said.</p>
 </section>
 
 <!-- 7. RISK REVERSAL -->
 <section>
   <div class="guar">
-    <span class="eyebrow">Proposed guarantee</span>
-    <h3 class="tbc">If session 1 isn't right for you, you get every cent back.</h3>
-    <p class="mute">And the free fit call comes first, so you only join if Gabriela agrees it's a fit.</p>
+    <span class="eyebrow">No pressure</span>
+    <h3>The call is free, and it isn't a sales pitch</h3>
+    <p class="mute">You'll leave with one clear idea of what's been in the way, whether you join or not.</p>
+    <p class="tbc" style="font-size:.95rem">If you join: proposed guarantee, full refund if session 1 isn't right for you.</p>
   </div>
 </section>
 
@@ -290,7 +308,7 @@ footer{padding-block:28px 100px;font-family:var(--f-mono);font-size:.72rem;color
   <div>
     <details><summary>Do I need to believe in astrology?</summary><p>No. The chart is used as a map of where and when a pattern started. The work itself is psychological.</p></details>
     <details><summary>Is this therapy?</summary><p class="tbc">It's a focused 90-day program led by a psychotherapist, built around one goal. It isn't a replacement for ongoing clinical treatment.</p></details>
-    <details><summary>What happens on the free call?</summary><p>20 minutes. You talk about your goal, Gabriela asks a few questions, and you both decide if the 90 days is the right fit. No pressure to join.</p></details>
+    <details><summary>Will I be pushed to buy on the call?</summary><p>No. You talk about your goal, Gabriela asks a few questions, and you both decide. If it isn't a fit, she'll tell you.</p></details>
     <details><summary>Do I need my exact birth time?</summary><p class="tbc">It helps, but it isn't required. Gabriela can still work with your date and place.</p></details>
     <details><summary>Can I pay in instalments?</summary><p class="tbc">Yes, 2 × €259. Choose it on the form.</p></details>
     <details><summary>Online or in person? Which language?</summary><p class="tbc">Online, in English or Spanish.</p></details>
